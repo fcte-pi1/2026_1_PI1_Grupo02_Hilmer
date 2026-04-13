@@ -1,0 +1,108 @@
+\chapter{Testes de Verificação e Validação}
+
+\section{Características Gerais}
+
+\textcolor{red}{Introduzir os principais pontos deste capítulo. Cada teste deve conter explicações completas que garantam sua repetibilidade:
+\begin{itemize}
+    \item Hipóteses levantadas
+    \item Condições de contorno
+    \item Resultados esperados
+    \item Materiais e métodos
+    \item Precisão e acurácia das medidas obtidas.
+\end{itemize}
+}
+
+\section{Testes da estrutura}
+
+\textcolor{red}{Apresentar com detalhes os testes feitos para conferir se os objetivos da estrutura foram atendidos, incluindo:}
+
+\begin{itemize}
+    \item \textcolor{red}{Imagem com todas as peças separadas da estrutura (carcaça) do veículo;}
+    \item \textcolor{red}{Imagem que apresente a estrutura já montada (sem necessidade de partes internas, como eletrônica ou motores);}
+    \item \textcolor{red}{Ilustração contemplando o carro montado virtualmente em alguma ferramenta de CAD, no intuito de verificar se as peças foram construídas e montadas em conformidade com o projeto.}
+\end{itemize}
+
+\section{Testes de \textit{hardware}}
+
+\textcolor{red}{Apresentar com detalhes os testes feitos para conferir se os objetivos do \textit{hardware} foram atendidos, incluindo:}
+
+\begin{enumerate}
+    \item \textcolor{red}{Processamento (Arduino, ESP32 etc):}
+    \begin{itemize}
+        \item \textcolor{red}{Definir interface de desenvolvimento;}
+        \item \textcolor{red}{Rodar exemplo mínimo.}
+    \end{itemize}
+    \item \textcolor{red}{Sensores (temperatura, pressão, posição, velocidade etc.):}
+    \begin{itemize}
+        \item \textcolor{red}{Realizar leitura básica de dados;}
+        \item \textcolor{red}{Validar/calibrar leituras;}
+        \item \textcolor{red}{Definir taxas de amostragem e quantidade de dados para transmissão e/ou armazenamento;}
+        \item \textcolor{red}{Validar taxas definidas e quantidade de dados;}
+        \item \textcolor{red}{Realizar processamento básico de dados (\textit{thresholding}, filtro média-móvel etc.).}
+    \end{itemize}
+    \item \textcolor{red}{Armazenamento (memória interna, cartão SD, pendrive etc.):}
+    \begin{itemize}
+        \item \textcolor{red}{Armazenar dados básicos;}
+        \item \textcolor{red}{Armazenar e validar dados de sensores.}
+    \end{itemize}
+    \item \textcolor{red}{Atuadores (Motores DC, relés, LEDs etc.):}
+    \begin{itemize}
+        \item \textcolor{red}{Realizar acionamentos básicos;}
+        \item \textcolor{red}{Realizar acionamentos com base em dados de sensores;}
+        \item \textcolor{red}{Realizar processamento básico de dados (PWM etc.).}
+    \end{itemize}
+    \item \textcolor{red}{Comunicações (UART, I2C, SPI, USB, WiFi, Bluetooth etc.):}
+    \begin{itemize}
+        \item \textcolor{red}{Transmissão básica de dados;}
+        \item \textcolor{red}{Transmissão de dados de sensores dentro da taxa de amostragem.}
+    \end{itemize}
+\end{enumerate}
+
+\section{Testes de consumo energético}
+
+\textcolor{red}{Apresentar com detalhes os testes feitos para conferir se as demandas energéticas do projeto foram atendidas.}
+
+\section{Testes de \textit{software}}
+
+\textcolor{red}{Apresentar com detalhes os testes feitos para conferir se os objetivos do \textit{software} foram atendidos.
+Considerando a implementação de $50\%$ do \textit{backlog} do produto (funcional):}
+
+\begin{itemize}
+    \item \textcolor{red}{Listar as histórias de usuários implementadas.}
+    \item \textcolor{red}{Listar a associação entre as histórias de usuários e os protótipos, deixando claro qual é a funcionalidade que será acessada pelo usuário/professor(a) por meio da interface gráfica.}
+    \item \textcolor{red}{Listar os suítes de testes automatizados em nível:}
+    \begin{itemize}
+        \item \textcolor{red}{Unitário e integração, com cobertura de código-fonte de pelo menos $70\%$;}
+        \item \textcolor{red}{Sistema, do tipo funcional (end-to-end E2E).}
+    \end{itemize}
+\end{itemize}
+
+\textcolor{red}{\textbf{Observações:}}
+\begin{enumerate}
+    \item \textcolor{red}{Em relação ao \textit{backlog} do produto, será considerado como referência aquele descrito no primeiro ponto de controle, contemplando as correções e \textit{feedbacks} da-os professora(e)s. O ideal seria a real atualização entre o planejado X realizado.}
+    \item \textcolor{red}{Os testes mencionados nesta subseção dizem respeito aos testes de \textit{software}. O Roteiro de testes funcionais, entregue no primeiro ponto de controle deve ser corrigido a partir do apontamento da-os professora(e)s. Além disso, ele deve guiar a execução dos testes E2E automatizados. O conjunto de casos de testes funcionais documentados devem estar coerentes com a automação via interface gráfica de entrada de dados.}
+\end{enumerate}
+
+\textcolor{red}{Exemplos de ferramentas de teste funcionais E2E:}
+\begin{itemize}
+    \item \textcolor{red}{Selenium} 
+    \item \textcolor{red}{Cypress}
+    \item \textcolor{red}{Playwright}
+\end{itemize}
+
+\textcolor{red}{Exemplos de ferramentas de testes em nível unitário e integração:}
+\begin{itemize}
+    \item \textcolor{red}{Jest}
+    \item \textcolor{red}{unittest}
+    \item \textcolor{red}{pytest}
+    \item \textcolor{red}{tox}
+    \item \textcolor{red}{gTest}
+    \item \textcolor{red}{Catch2}
+\end{itemize}
+
+\section{Testes de integração}
+
+\textcolor{red}{Apresentar com detalhes os testes feitos para conferir se os objetivos do projeto como um todo foram atendidos.}
+
+%\textcolor{red}{Com relação ao \textit{software}, será necessário apresentar pacotes de componentes de \textit{software}, suas funções e características, e explicar as decisões de projeto.}
+
