@@ -157,13 +157,30 @@ Incorporação física e validação do sistema de energia.
     X
     
 - **4.2 Conexões dos Cabos:**  
-    X
+    Esta atividade foca-se na definição da infraestrutura de cablagens necessária para suportar a corrente de pico de 7,45 A, integrando os componentes do projeto:
+
+    - Dimensionamento de Condutores: Definir a bitola adequada para os cabos de potência que ligarão a bateria aos drivers de motor, garantindo que a resistência não comprometa o torque dos motores N20.
+
+    - Implementação do Conector XT30: Montagem do conector XT30 de forma a assegurar uma ligação robusta e de baixa resistência entre a bateria Li-Po e o circuito principal.
+
+    - definir o posicionamento físico e o método de instalação do fusível de vidro (previsto na planilha) para garantir que este atue eficazmente antes de qualquer dano ao ESP32 ou aos drivers.
+
+    - Organizar o chicote elétrico para alimentar os 6 sensores VL53L0X e o MPU-6050, minimizando a desordem de cabos e interferências no chassi.
+
     
 - **4.3 Telemetria da Energia:**  
     X
 	
-- **4.3 Testes Finais:**  
-    X
+- **4.4 Testes Finais:**  
+    Esta etapa tem como foco garantir o bom funcionamento assim como a segurança operacional da distribuição elétrica:
+
+    - Validação de Autonomia: O sistema precisa de ser testado em operação contínua para confirmar se a configuração final suporta o requisito de 2 a 4 horas de funcionamento no labirinto.
+
+    - Monitorização de Estabilidade (Ripple): É necessário validar, através de medições, se a oscilação de tensão na linha lógica permanece abaixo do limite estabelecido de 30mV, assegurando a integridade do SD Reader e dos sensores.
+
+    - Ensaio de Resiliência Mecânica: O protótipo precisa de ser submetido a manobras de alta aceleração e travagens bruscas para validar se o método de conexão e fixação dos cabos suporta o esforço mecânico sem interrupções de energia.
+
+    - Avaliação Térmica do Regulador: É necessário monitorizar a temperatura do regulador MP1584EN sob carga máxima para definir se a dissipação térmica natural é suficiente para a autonomia pretendida ou se requer ajustes.
 
 ---
 
@@ -175,3 +192,4 @@ Incorporação física e validação do sistema de energia.
 | 0.1 | 17/04/2026 | Estruturação do documento de EAP escrito | João Maurício |
 | 0.2 | 19/04/2026 | Especificação da seção "Projeto" | João Maurício |
 | 0.3 | 19/04/2026 | Especificação da seção "Teoria" | Giovanna Aguiar |
+| 0.4 | 19/04/2026 | Especificação parcial da seção "Integração" | Cristiano Morais |
