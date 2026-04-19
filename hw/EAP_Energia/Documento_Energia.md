@@ -35,7 +35,7 @@ Definição das necessidades energéticas do sistema e das restrições de taman
 
    ---
 
-- **1.2 Autonomia:**  
+- **1.2 Autonomia:**  	
     
     A autonomia depende diretamente da capacidade da bateria utilizada.
 
@@ -97,19 +97,33 @@ Definição das necessidades energéticas do sistema e das restrições de taman
 
 ## **2. Seleção**
 
-Escolha da melhor tecnologia de bateria para o projeto.
+A seleção da bateria foi feita com base na corrente total estimada do sistema (**7453,6 mA**), nas tensões exigidas pelos subsistemas (**3,3 V** para ESP32 e sensores, e **6 V** para os motores) e nas restrições de peso e espaço do micromouse.
 
 - **2.1 Tipo de Bateria:**  
-    X
+    A bateria mais adequada para o projeto é uma **Li-Po 2S (7,4 V)**.  
+    Essa escolha se deve à sua **alta densidade de energia**, **capacidade de descarga elevada**, **baixo peso** e **boa compatibilidade com os reguladores do sistema**.  
+    A tensão de 7,4 V também oferece margem adequada para alimentar os motores e os circuitos de 3,3 V por meio de regulação
     
 - **2.2 Capacidade:**  
-    X
+    A bateria deve suportar a corrente total estimada de **7,45 A** com margem de segurança.  
+    Por isso, recomenda-se uma bateria entre **850 mAh e 1000 mAh**, com taxa de descarga de pelo menos **10C**, sendo **20C** a opção mais segura.
+
+    A corrente máxima fornecida pela bateria é dada por:
+
+    **Corrente máxima = Capacidade (Ah) × Taxa de descarga (C)**
+
+    Exemplo:
+    - **850 mAh a 20C** → até **17 A**
+    - **1000 mAh a 20C** → até **20 A**
+
+    Essa faixa atende ao sistema com folga e mantém o peso do robô reduzido.
     
 - **2.3 Conector:**  
-    X
+    O conector recomendado é o **XT30**, por suportar correntes elevadas com maior segurança e menor resistência de contato.  
+    Isso reduz riscos de aquecimento e mau contato durante a operação do micromouse.
     
 - **2.3 Preço:**  
-    X
+    O preço da solução de alimentação deve considerar não apenas a bateria, mas também sua compatibilidade elétrica e mecânica com o projeto. Para isso, devem ser comparados modelos reais quanto à tensão, capacidade, taxa de descarga, peso, dimensões, tipo de conector incluído e custo de carregamento. Caso a bateria já possua conector compatível com o sistema, esse item não gera custo adicional; caso contrário, deve-se considerar o uso de adaptadores ou a substituição do conector. Assim, o critério de preço deve ser analisado com base no custo total de integração da solução energética.
 	
 ---
 
