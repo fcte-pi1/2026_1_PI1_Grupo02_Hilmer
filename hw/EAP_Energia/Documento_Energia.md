@@ -9,13 +9,89 @@ Estrutura Analítica do Projeto voltada para o sistema responsável por fornecer
 Definição das necessidades energéticas do sistema e das restrições de tamanho.
 
 - **1.1  Consumo de Energético:**  
-    X
     
+    O consumo energético do sistema foi estimado a partir da soma das correntes dos componentes eletrônicos utilizados no micromouse.
+
+    Com base no levantamento realizado, os principais componentes incluem:
+
+    - ESP32  
+    - Sensores VL53L0X  
+    - Motores DC com encoder  
+    - Driver DRV8833  
+    - MPU-6050  
+    - Regulador de tensão (MP1584EN)  
+
+    A corrente total estimada do sistema é:
+
+    **7453,6 mA (≈ 7,45 A)**
+
+    Esse valor representa o consumo máximo considerando todos os componentes em operação simultânea, especialmente os motores, que são os maiores responsáveis pelo gasto energético.
+
+    ###  Análise importante
+
+    - Motores DC são os principais consumidores (pico alto de corrente)  
+    - Sensores e microcontrolador têm consumo relativamente baixo  
+    - O sistema precisa de uma fonte que suporte picos de corrente elevados, não só a média  
+
+   ---
+
 - **1.2 Autonomia:**  
-    X
+    
+    A autonomia depende diretamente da capacidade da bateria utilizada.
+
+    É importante garantir uma bateria com autonomia de, no mínimo:
+
+    **2 a 4 horas**
+
+    ### Fórmula base
+
+    $\text{Autonomia (h)} = \frac{\text{Capacidade da bateria (mAh)}}{\text{Corrente total (mA)}}$
+
+    ---
     
 - **1.3 Dimensão e Peso:**  
-    X
+    O peso total estimado dos componentes é:
+
+    **92 g**
+
+    Isso é extremamente relevante porque:
+
+    - O peso influencia diretamente o consumo energético  
+    - Quanto maior o peso → maior esforço dos motores → maior corrente  
+    - Afeta também a velocidade e eficiência no labirinto  
+
+    ### Implicações no projeto
+
+    - Escolher bateria leve é essencial  
+    - Evitar componentes desnecessários  
+    - Otimizar estrutura mecânica  
+
+    ### Estimativa de dimensão dos componentes energéticos
+
+    Para estimar corretamente a dimensão dos componentes do sistema energético, especialmente da bateria, é necessário considerar um conjunto de fatores que relacionam requisitos elétricos e restrições físicas do projeto.
+
+    Primeiramente, deve-se conhecer o consumo total do sistema, obtido a partir da soma das correntes de todos os componentes eletrônicos. Esse valor é fundamental, pois determina a capacidade mínima que a bateria deve possuir para garantir o funcionamento adequado do micromouse.
+
+    Além disso, é necessário definir a autonomia desejada, ou seja, o tempo durante o qual o robô deve operar sem necessidade de recarga. Mesmo sendo uma aplicação de curta duração, como a navegação em labirinto, a autonomia deve ser suficiente para testes, ajustes e múltiplas tentativas.
+
+    Outro fator essencial é a densidade de energia da bateria, que relaciona a quantidade de energia armazenada com seu volume e peso. Esse parâmetro permite selecionar baterias que ofereçam maior capacidade ocupando menos espaço, o que é ideal para sistemas compactos como o micromouse.
+
+    ### Fatores adicionais importantes
+
+    - **Dimensões físicas disponíveis no chassi:**  
+    O espaço interno do robô limita diretamente o tamanho máximo da bateria e dos demais componentes.  
+
+    - **Peso máximo suportado:**  
+    O aumento de peso impacta o desempenho dos motores e o consumo energético.  
+
+    - **Formato da bateria:**  
+    Diferentes formatos (retangulares, cilíndricos, tipo pouch) influenciam a facilidade de integração na estrutura.  
+
+    - **Distribuição dos componentes:**  
+    A posição da bateria afeta o centro de massa e a estabilidade do robô.  
+
+    Por fim, deve-se garantir que a bateria escolhida seja capaz de fornecer não apenas a corrente média, mas também os **picos de corrente exigidos**, principalmente durante a aceleração dos motores.
+
     
 ---
 
@@ -84,3 +160,4 @@ Incorporação física e validação do sistema de energia.
 | :--- | :--- | :--- | :--- |
 | 0.1 | 17/04/2026 | Estruturação do documento de EAP escrito | João Maurício |
 | 0.2 | 19/04/2026 | Especificação da seção "Projeto" | João Maurício |
+| 0.3 | 19/04/2026 | Especificação da seção "Teoria" | Giovanna Aguiar |
