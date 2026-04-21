@@ -154,7 +154,15 @@ Intercessão com a eletrônica necessária para transformar a bateria selecionad
 Incorporação física e validação do sistema de energia.
 
 - **4.1 Acoplamento da Estrutura:**  
-    X
+	Esta atividade define o método de fixação física da bateria Li-Po 2S e dos demais componentes do sistema de energia ao chassi do micromouse, equilíbrio de massa e facilidade de manutenção.
+
+	**Posicionamento da Bateria**
+
+	 É preferível posicionar a bateria de forma centralizada no eixo longitudinal do robô, preferencialmente entre os dois motores, próxima ao centro de massa do conjunto. Isso minimiza o momento de inércia durante as curvas no labirinto e reduz o esforço compensatório dos motores. Vale ressaltar que caso algum componente seja sensível a temperatura, este não deve permanecer próximo a bateria ou vice versa.
+
+	**Método de Fixação**
+
+	Com base em outros micromouses usados para competição, os métodos mais utilizados são tanto colar diretamente a bateria no micromouse, como também o uso de encaixes fixados nele. A primeira opção é mais fácil de ser implementada, é mais barata, mas dificulta a manutenção. Já a segunda tem uma melhor manutenção ao custo de ser mais difícil de ser implementada.
     
 - **4.2 Conexões dos Cabos:**  
     Esta atividade foca-se na definição da infraestrutura de cablagens necessária para suportar a corrente de pico de 7,45 A, integrando os componentes do projeto:
@@ -168,8 +176,48 @@ Incorporação física e validação do sistema de energia.
     - Organizar o chicote elétrico para alimentar os 6 sensores VL53L0X e o MPU-6050, minimizando a desordem de cabos e interferências no chassi.
 
     
-- **4.3 Telemetria da Energia:**  
-    X
+- **4.3 Telemetria da Energia:**
+Esta etapa tem como objetivo implementar um sistema de monitoramento em tempo real do consumo energético do micromouse, permitindo análise de desempenho e validação de autonomia.
+
+  **Objetivos de Medição**
+
+  Para atender às necessidades do projeto e validar os requisitos definidos nas seções anteriores, o sistema de telemetria deve medir:
+
+  -   **Corrente (A)**
+    Utilizada para validar a estimativa de consumo total (**7,45 A**) e identificar picos de corrente dos motores, que são importantes para o dimensionamento da bateria e da proteção contra sobrecorrente.
+  -   **Tensão (V)**
+    Necessária para verificar a estabilidade da alimentação, especialmente nas linhas de **3,3 V**, garantindo funcionamento correto do sistema eletrônico.
+  -   **Potência (W)**
+    Permite analisar o consumo instantâneo do sistema, correlacionando diretamente com o esforço dos motores e o comportamento dinâmico do micromouse.
+  -   **Energia consumida (Wh)**  
+    Fundamental para validar a autonomia real do sistema, comparando os resultados experimentais com a estimativa teórica baseada na capacidade da bateria.
+
+  **Sensor Selecionado**
+
+  O sensor escolhido para essa aplicação é o **INA226**, por apresentar melhor desempenho em relação a outras alternativas como o **INA219** pelo mesmo valor.
+
+  **Características principais**
+
+  -   **Medição de**:
+      -   Corrente
+      -   Tensão
+      -   Potência (diretamente pelo hardware)
+  -   **Alta precisão (16 bits)** → melhor resolução para análise detalhada
+  -   **Comunicação via I2C (digital)** → fácil integração com o ESP32
+  -   **Shunt digital integrado** → simplifica o circuito de medição
+  -   **Baixo custo**:
+      -   ~R$15 (importação)
+      -   ~R$30 (mercado nacional)
+
+  **Cálculo de Energia**
+
+  A energia consumida não é medida diretamente pelo sensor, mas pode ser obtida via integração da potência ao longo do tempo:
+
+  $E(Wh) = \int P(t)\, dt$
+
+   Na prática, isso será implementado no ESP32 via amostragem discreta:
+  -   Leitura periódica da potência
+  -   Soma acumulada ao longo do tempo
 	
 - **4.4 Testes Finais:**  
     Esta etapa tem como foco garantir o bom funcionamento assim como a segurança operacional da distribuição elétrica:
@@ -192,4 +240,6 @@ Incorporação física e validação do sistema de energia.
 | 0.1 | 17/04/2026 | Estruturação do documento de EAP escrito | João Maurício |
 | 0.2 | 19/04/2026 | Especificação da seção "Projeto" | João Maurício |
 | 0.3 | 19/04/2026 | Especificação da seção "Teoria" | Giovanna Aguiar |
-| 0.4 | 19/04/2026 | Especificação parcial da seção "Integração" | Cristiano Morais |
+| 0.4 | 19/04/2026 | Especificação da seção de "Seleção" | Tiago Balieiro |
+| 0.5 | 19/04/2026 | Especificação parcial da seção "Integração" | Cristiano Morais |
+| 1.0 | 20/04/2026 | Especificação final da seção "Integração" | Rafael Melatti |
