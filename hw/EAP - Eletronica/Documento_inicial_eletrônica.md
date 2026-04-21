@@ -80,3 +80,6 @@ Verificação da autonomia do micromouse.
 ### 5.3 Validação em Labirinto
 
 Testes práticos de navegação na pista, avaliação do tempo de resposta e validação dos códigos embarcados e integração final com o software web desenvolvido.
+
+## Documento em PDF
+[eap___eletrônica.pdf](https://github.com/user-attachments/files/26937088/eap___eletronica.pdf)
