@@ -50,9 +50,15 @@ Definição das necessidades energéticas do sistema e das restrições de taman
     ---
     
 - **1.3 Dimensão e Peso:**  
-    O peso total estimado dos componentes é:
+    O peso estimado dos componentes eletrônicos é:
 
     **92 g**
+
+    No entanto, é importante considerar que esse valor não representa o peso total do micromouse. A estrutura mecânica, rodas, chassi, fixadores e outros elementos adicionais também contribuem para o peso final do sistema.
+
+    Assim, estima-se um acréscimo de **pelo menos 16 g**, resultando em um peso total aproximado de:
+
+    **≈ 108 g ou mais**
 
     Isso é extremamente relevante porque:
 
@@ -243,3 +249,4 @@ Esta etapa tem como objetivo implementar um sistema de monitoramento em tempo re
 | 0.4 | 19/04/2026 | Especificação da seção de "Seleção" | Tiago Balieiro |
 | 0.5 | 19/04/2026 | Especificação parcial da seção "Integração" | Cristiano Morais |
 | 1.0 | 20/04/2026 | Especificação final da seção "Integração" | Rafael Melatti |
+| 1.1 | 21/04/2026 | Correção na sessão "Teoria" | Giovanna Aguiar |
