@@ -14,9 +14,10 @@ assignees: ''
 Descreva a restrição ou atributo de qualidade (performance, segurança, etc).
 
 ## Tipo
+- Compatibilidade/Usabilidade/etc
 
 ## Rastreabilidade
-HU-XX  
+- HU-XX  
 
 ## Tasks
 - [ ] Implementação  
