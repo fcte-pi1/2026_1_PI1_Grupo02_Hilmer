@@ -1,22 +1,33 @@
 ---
 name: Major Issue template
-about: Modelo para issues principais
+about: Modelo para issues principais(HUs)
 title: ''
 labels: ''
 assignees: ''
 
 ---
 
-# Issue X: [Título da Issue]
+# ID: HU-XX  
+# Título:  
 
-## Objetivo
-Descreva claramente o resultado final esperado (foco no impacto, não nas tarefas).
+## Descrição
+Como [tipo de usuário],  
+quero [objetivo],  
+para [valor/benefício].
 
-## Critérios de Sucesso
-- [ ] Critério 1
-- [ ] Critério 2
-- [ ] Critério 3
+## Rastreabilidade
+RF relacionados:  
+- RF-XX  
+- RF-XX  
 
-## Dependências
-- Issues relacionadas:
-- Recursos necessários:
+RNF relacionados:  
+- RNF-XX  
+- RNF-XX  
+
+## Critérios de Aceite
+- CA-XX.1:  
+- CA-XX.2:  
+
+## Sub-issues
+- [ ] RF-XX  
+- [ ] RNF-XX
