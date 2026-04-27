@@ -16,13 +16,7 @@ quero [objetivo],
 para [valor/benefício].
 
 ## Rastreabilidade
-RF relacionados:  
-- RF-XX  
-- RF-XX  
-
-RNF relacionados:  
-- RNF-XX  
-- RNF-XX  
+- Épico A/B/C/etc.
 
 ## Critérios de Aceite
 - CA-XX.1:  
