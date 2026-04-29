@@ -1,0 +1,7 @@
+- [Home](pages/docs/README.md)
+- [Cronograma Geral](pages/docs/cronograma.md)
+- Núcleos
+  - [1. Eletrônica](pages/docs/nucleos/eletronica.md)
+  - [2. Energia](pages/docs/nucleos/energia.md)
+  - [3. Estrutura](pages/docs/nucleos/estrutura.md)
+  - [4. Software](pages/docs/nucleos/software.md)
