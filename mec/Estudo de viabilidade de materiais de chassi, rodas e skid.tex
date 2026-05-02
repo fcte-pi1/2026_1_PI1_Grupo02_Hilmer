@@ -1,0 +1,372 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{helvet}  % Fonte Helvetica (similar à Arial)
+\usepackage{indentfirst}
+
+% Configuração de fonte ABNT (Arial/Helvetica)
+\renewcommand{\familydefault}{\sfdefault}
+
+% Margens ABNT
+\geometry{top=3cm, bottom=2cm, left=3cm, right=2cm}
+
+% Espaçamento 1,5
+\usepackage{setspace}
+\setstretch{1.5}
+
+% Espaçamento simples para tabelas e figuras
+\usepackage{etoolbox}
+\AtBeginEnvironment{table}{\setstretch{1.0}\fontsize{10}{12}\selectfont}
+\AtBeginEnvironment{tabular}{\setstretch{1.0}}
+
+% Cabeçalho para numeração de páginas
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% Recuo de parágrafo
+\setlength{\parindent}{1.25cm}
+
+% Comando para fonte em tabelas
+\newcommand{\fonte}[1]{\vspace{0.2cm}\par\noindent\fontsize{9}{11}\selectfont Fonte: #1}
+
+\title{Estudo de Viabilidade: Materiais para Chassi, Rodas e Skid \\ 
+\large Micromouse - Competição de Robôs Autônomos}
+\author{Geovana Almeida Miranda Sant'Ana \\ Caio Venâncio do Rosário}
+\date{1 de maio de 2026}
+
+\begin{document}
+
+\maketitle
+
+\newpage
+\setcounter{page}{2}
+
+\subsection*{Elaboração do estudo}
+
+O presente estudo foi realizado em uma sessão colaborativa na plataforma Discord, com duração total de 5 horas e 28 minutos. Foram responsáveis pela pesquisa, consolidação dos dados e redação final:
+
+\begin{itemize}
+    \item Geovana Almeida Miranda Sant'Ana (231027088)
+    \item Caio Venâncio do Rosário (231027195)
+\end{itemize}
+
+Todo o levantamento de coeficientes de atrito, propriedades térmicas dos materiais e análise de viabilidade técnica e orçamentária foi executado pelos autores durante o período mencionado.
+
+\section{Introdução e Objetivo}
+
+Este documento avalia a viabilidade de diferentes materiais poliméricos para três componentes principais de um robô \textit{Micromouse}: \textbf{chassi}, \textbf{rodas} e \textbf{skid} (patim deslizante). O estudo considera três cenários de piso: asfalto (caso extremo de alto atrito), MDF (piso real da competição) e vidro (caso hipotético de baixo atrito).
+
+O robô foi modelado para atingir velocidade de pico de $6 \, m/s$, caracterizando um cenário de alto desempenho. Materiais aprovados neste cenário são automaticamente adequados para robôs mais lentos.
+
+\section{Metodologia de Cálculo Térmico}
+
+A geração de calor por fricção foi estimada pelo modelo de potência dissipada:
+
+\begin{equation}
+P = \mu \cdot N \cdot v
+\end{equation}
+
+Onde:
+\begin{itemize}
+    \item $P$ = potência térmica dissipada [W]
+    \item $\mu$ = coeficiente de atrito cinético [adimensional]
+    \item $N$ = força normal (peso do robô) [N]
+    \item $v$ = velocidade [m/s]
+\end{itemize}
+
+\textbf{Parâmetros adotados:}
+\begin{itemize}
+    \item Massa do robô: $m = 0,1 \, kg$ (100 gramas)
+    \item Força normal: $N = m \cdot g = 0,1 \cdot 9,81 = 0,981 \, N \approx 1 \, N$
+    \item Velocidade: $v = 6 \, m/s$
+\end{itemize}
+
+A Tabela \ref{tab:potencia} apresenta a potência gerada para diferentes coeficientes de atrito.
+
+\begin{table}[h]
+\centering
+\caption{Potência térmica gerada por fricção a 6 m/s}
+\label{tab:potencia}
+\begin{tabular}{c|c}
+\hline
+$\mu$ & $P$ (W) \\ \hline
+0,05 & 0,30 \\
+0,10 & 0,60 \\
+0,30 & 1,80 \\
+0,50 & 3,00 \\
+0,70 & 4,20 \\ \hline
+\end{tabular}
+\fonte{Elaboração própria (2026).}
+\end{table}
+
+\subsection*{Critério de Falha Térmica}
+
+Um material falha quando sua superfície atinge a \textbf{Temperatura de Transição Vítrea} ($T_g$), passando do estado rígido ao borrachudo, perdendo forma e aumentando o atrito irreversivelmente. Para elastômeros (TPU), a $T_g$ não é definida, sendo mais resistentes.
+
+\section{Análise de Coeficientes de Atrito por Superfície}
+
+A Tabela \ref{tab:coef_atrito} apresenta os coeficientes de atrito estimados para cada material nas três superfícies analisadas.
+
+\begin{table}[h]
+\centering
+\caption{Coeficientes de atrito estimados por material e superfície}
+\label{tab:coef_atrito}
+\begin{tabular}{l|c|c|c}
+\hline
+\textbf{Material} & \textbf{Asfalto} & \textbf{MDF} & \textbf{Vidro} \\ \hline
+PLA & 0,4 - 0,5 & 0,5 - 0,6 & 0,3 - 0,4 \\
+PETG & 0,3 - 0,4 & 0,4 - 0,5 & 0,15 - 0,25 \\
+ABS & 0,5 - 0,6 & 0,4 - 0,55 & 0,2 - 0,3 \\
+ASA & 0,5 - 0,6 & 0,4 - 0,55 & 0,2 - 0,3 \\
+Nylon & 0,4 - 0,5 & 0,3 - 0,45 & 0,15 - 0,25 \\
+TPU & 0,6 - 0,8 & 0,5 - 0,7 & 0,5 - 0,6 \\
+PTFE (fita) & 0,05 - 0,10 & 0,04 - 0,08 & 0,04 - 0,07 \\ \hline
+\end{tabular}
+\fonte{Elaboração própria a partir de dados estimados (2026).}
+\end{table}
+
+\section{Risco de Falha Térmica a 6 m/s}
+
+A Tabela \ref{tab:falha} avalia o risco de derretimento/deformação para cada material na velocidade máxima.
+
+\begin{table}[h]
+\centering
+\caption{Risco de falha térmica a 6 m/s}
+\label{tab:falha}
+\begin{tabular}{l|c|c}
+\hline
+\textbf{Material} & $T_g$ (°C) & \textbf{Risco de Falha} \\ \hline
+PLA & 60 - 65 & ALTO (excede $T_g$ rapidamente) \\
+PETG & 75 - 85 & MODERADO-ALTO \\
+ABS & 105 - 115 & MODERADO \\
+ASA & 110 - 120 & MODERADO \\
+Nylon & 45 - 70* & MODERADO-ALTO (*$T_g$ baixa mas tenacidade alta) \\
+TPU & --- & BAIXO (elastômero, dissipa bem) \\
+PTFE & $>$300 & MUITO BAIXO \\ \hline
+\end{tabular}
+\fonte{Elaboração própria com base em fichas técnicas (2026).}
+\end{table}
+
+\section{Aplicação por Componente}
+
+\subsection{Chassi}
+
+Requisitos: rigidez, resistência ao impacto, baixa deformação térmica.
+
+\begin{table}[h]
+\centering
+\caption{Materiais para chassi - ordem de preferência}
+\label{tab:chassi}
+\begin{tabular}{l|c}
+\hline
+\textbf{Material} & \textbf{Desempenho} \\ \hline
+ASA & Excelente (rígido, estável, fácil de imprimir) \\
+ABS & Bom (similar ao ASA, porém menos estável) \\
+PETG & Regular (mais flexível, pode torcer) \\
+PLA & Péssimo (frágil, deforma com calor) \\
+TPU & Inadequado (muito flexível) \\ \hline
+\end{tabular}
+\fonte{Elaboração própria (2026).}
+\end{table}
+
+\subsection{Rodas Motorizadas}
+
+Requisitos: alto atrito para aceleração e frenagem.
+
+\begin{table}[h]
+\centering
+\caption{Materiais para rodas - ordem de preferência}
+\label{tab:rodas}
+\begin{tabular}{l|c}
+\hline
+\textbf{Material} & \textbf{Desempenho} \\ \hline
+TPU & Excelente (maior $\mu$, dissipa calor bem) \\
+ABS/ASA & Bom (atrito médio-alto, alternativas rígidas) \\
+PLA/PETG & Não recomendado (falha térmica ou baixo atrito) \\ \hline
+\end{tabular}
+\fonte{Elaboração própria (2026).}
+\end{table}
+
+\subsection{Skid (Patim Deslizante)}
+
+Requisitos: mínimo atrito, alta resistência ao desgaste.
+
+\begin{table}[h]
+\centering
+\caption{Materiais para skid - ordem de preferência}
+\label{tab:skid}
+\begin{tabular}{l|c}
+\hline
+\textbf{Material} & \textbf{Desempenho} \\ \hline
+Fita PTFE (Teflon) & Excelente ($\mu \approx 0,05$) \\
+POM (Acetal/Delrin) & Ótimo ($\mu \approx 0,13$) \\
+Nylon & Regular ($\mu \approx 0,34$) \\
+ASA/ABS & Péssimo ($\mu \approx 0,5$) \\ \hline
+\end{tabular}
+\fonte{Elaboração própria (2026).}
+\end{table}
+
+\section{Recomendação Final para o Projeto}
+
+Considerando:
+\begin{itemize}
+    \item Impressora disponível: Bambu Lab X1 Carbon (câmara fechada)
+    \item Orçamento: R\$ 100 por pessoa (20 pessoas = R\$ 2.000 total)
+    \item Desejo de usar \textbf{um único filamento} para chassi + skid
+    \item Rodas adquiridas separadamente (Lego ou comerciais)
+    \item Evitar compósitos devido à anisotropia
+\end{itemize}
+
+\subsection*{Material Escolhido: ASA (Acrilonitrila Estireno Acrilato)}
+
+\begin{table}[h]
+\centering
+\caption{Justificativa para escolha do ASA}
+\label{tab:justificativa}
+\begin{tabular}{l|l}
+\hline
+\textbf{Critério} & \textbf{Avaliação} \\ \hline
+Custo (1kg) & R\$ 120 - 150 \\
+Chassi & Excelente (rígido, resistente ao calor) \\
+Skid (puro) & Ruim (alto atrito) \\
+Skid + fita PTFE & Excelente (solução híbrida) \\
+Impressão na X1 Carbon & Ideal (câmara fechada) \\
+Anisotropia & Baixa (diferente de compósitos) \\ \hline
+\end{tabular}
+\fonte{Elaboração própria (2026).}
+\end{table}
+
+\subsection*{Solução Proposta}
+
+\begin{enumerate}
+    \item Imprimir \textbf{chassi} em ASA.
+    \item Imprimir \textbf{skid} em ASA.
+    \item Colar \textbf{fita de PTFE} (R\$ 41,46 por 2 rolos) na superfície de contato do skid.
+    \item Adquirir \textbf{rodas prontas} (Lego ou rodízios comerciais).
+\end{enumerate}
+
+\section{Orçamento Estimado (20 pessoas)}
+
+\begin{table}[h]
+\centering
+\caption{Orçamento detalhado}
+\label{tab:orcamento}
+\begin{tabular}{l|c}
+\hline
+\textbf{Item} & \textbf{Valor (R\$)} \\ \hline
+2 kg de ASA (2 rolos de 1kg) & 300 \\
+Fita PTFE (2 rolos) & 42 \\
+Rodas/rodízios (opção econômica) & $\sim$ 50 \\
+\textbf{Total} & $\sim$ 392 \\ \hline
+\end{tabular}
+\fonte{Elaboração própria com base em cotações (2026).}
+\end{table}
+
+\textit{Obs: Orçamento muito abaixo do limite de R\$100/pessoa, permitindo folga para componentes eletrônicos.}
+
+\section{Conclusão}
+
+A combinação \textbf{ASA + fita PTFE} atende a todos os requisitos:
+\begin{itemize}
+    \item Chassi rígido e resistente termicamente.
+    \item Skid de baixíssimo atrito com a fita.
+    \item Custo acessível para o grupo.
+    \item Aproveitamento máximo da impressora Bambu Lab X1 Carbon.
+\end{itemize}
+
+Alternativa secundária: \textbf{ABS} (mais barato, porém menos estável dimensionalmente) ou \textbf{PETG} (mais fácil de imprimir, porém chassi menos rígido).
+
+\newpage
+
+\begin{thebibliography}{99}
+
+\bibitem{CALLISTER} CALLISTER, W. D.; RETHWISCH, D. G. \textit{Materials Science and Engineering: An Introduction}. 10. ed. Hoboken: Wiley, 2018.
+
+\bibitem{MATWEB} MATWEB. \textit{Propriedades de materiais poliméricos}. Disponível em: \url{www.matweb.com}. Acesso em: 30 abr. 2026.
+
+\bibitem{3DLAB} 3D LAB. \textit{Fichas técnicas de filamentos ASA, ABS, PETG, PLA, TPU, Nylon}. Disponível em: \url{www.3dlab.com.br}. Acesso em: 30 abr. 2026.
+
+\bibitem{BAMBU} BAMBU LAB. \textit{Especificações da impressora X1 Carbon}. Disponível em: \url{www.bambulab.com}. Acesso em: 30 abr. 2026.
+
+\bibitem{IEEE} IEEE ROBOTICS AND AUTOMATION SOCIETY. \textit{IEEE Micromouse Competition: Rules and Guidelines}. Nova York: IEEE, 2023.
+
+\end{thebibliography}
+
+\newpage
+
+\section*{ANEXO A — Levantamento de Componentes para Skid, Esferas e Rodízios}
+
+Como parte do estudo de viabilidade, foram levantadas opções tanto para \textbf{manufatura própria (impressão 3D)} quanto para \textbf{aquisição comercial} de componentes de baixo atrito ou rolamento. Os preços foram cotados em dólares (US\$) ou reais (R\$) conforme a origem.
+
+\subsection*{Opções para impressão própria (Thingiverse)}
+
+\begin{itemize}
+    \item \textbf{Suporte para esfera / caster caseiro} – arquivo com geometria para alojar esfera de rolamento.  
+    \url{https://www.thingiverse.com/thing:8959}
+
+    \item \textbf{Skid fixo com base para fixação} – modelo simples de patim deslizante para impressão em ABS/ASA ou nylon.  
+    \url{https://www.thingiverse.com/thing:3145120}
+\end{itemize}
+
+Ambos os projetos podem ser impressos com o filamento ASA escolhido e, se necessário, receber a fita de PTFE na superfície de contato.
+
+\subsection*{Componentes comerciais avaliados}
+
+\subsubsection*{Rodízios adesivos (mini casters)}
+
+\begin{itemize}
+    \item \textbf{VXB – 1/2" Mini Swivel Adhesive Caster Wheels (pacote com 8)}  
+    Pequenos rodízios giratórios com placa autoadesiva.  
+    \url{https://vxb.com/products/1-2in-mini-swivel-adhesive-caster-wheels-8pack}
+
+    \item \textbf{GNYOHUA – Self-Adhesive Casters (Amazon EUA)}  
+    Modelo similar, com 8 peças, aplicação leve.  
+    \url{https://www.amazon.com/GNYOHUA-Adhesive-Furniture-Appliances-Light-Duty/dp/B0CXPQSC9R}  
+    \textbf{Preço:} US\$ 9,99 + frete de importação.
+\end{itemize}
+
+\subsubsection*{Múltiplas esferas ou esfera única}
+
+\begin{itemize}
+    \item \textbf{Esfera única para móvel (transferidor universal)} – pode ser adaptada como ponto de contato de baixo atrito.  
+    \url{https://www.amazon.com/Appliance-Universal-Transfers-Furniture-Appliances/dp/B0D8PHFKRQ}  
+    \textbf{Preço:} US\$ 8,49.
+\end{itemize}
+
+\subsubsection*{Fita de PTFE (baixíssimo atrito)}
+
+\begin{itemize}
+    \item \textbf{Fita deslizante para gaveta – 1,5 cm x 10 m (2 rolos)}  
+    Material: PTFE, resistente à abrasão e ao calor. Disponível na Amazon Brasil.  
+    \textbf{Preço:} R\$ 41,46 (2 rolos).
+\end{itemize}
+
+\subsection*{Análise de custo-benefício}
+
+\begin{table}[h]
+\centering
+\caption{Comparativo entre soluções para baixo atrito}
+\label{tab:comp_solucoes}
+\begin{tabular}{l|c|c|c}
+\hline
+\textbf{Solução} & \textbf{Atrito estimado} & \textbf{Custo (R\$)} & \textbf{Observação} \\ \hline
+Fita PTFE + skid impresso & Muito baixo ($\mu \approx 0,05$) & 20-30 & Mais flexível e barato \\
+Caster adesivo (8 unid.) & Baixo (rolamento) & $\approx$ 60-80 & Bom, mas mais caro \\
+Esfera única (móvel) & Baixo (rolamento) & $\approx$ 50 & Útil para pontos localizados \\ \hline
+\end{tabular}
+\fonte{Elaboração própria com base em cotações (2026).}
+\end{table}
+
+A fita de PTFE com skid impresso foi a opção selecionada por apresentar o menor custo total, maior adaptabilidade geométrica e coeficiente de atrito mais baixo entre todas as alternativas.
+
+\end{document}
