@@ -57,8 +57,22 @@ Nesta opção, uma polia no motor transmite movimento para uma polia na roda usa
 ```text
 motor → polia pequena → correia GT2 → polia maior → eixo da roda → roda
 ```
+**Vantagens:**
 
-É uma solução boa e suave, mas exige tensionamento correto da correia. Se a correia ficar frouxa, pode pular dente; se ficar apertada demais, aumenta o atrito e pode forçar o motor. Por isso, para um primeiro protótipo, essa opção tem mais variáveis a controlar.
+- transmissão mais suave e silenciosa;
+- permite deixar o motor mais afastado da roda;
+- reduz o contato direto entre engrenagens;
+- permite alterar a relação de velocidade/torque trocando as polias;
+- é comum em projetos de robótica e impressoras 3D.
+
+**Desvantagens:**
+
+- precisa de tensionamento correto da correia;
+- se a correia ficar frouxa, pode pular dente;
+- se ficar apertada demais, aumenta o atrito e pode forçar o motor;
+- exige mais cuidado no CAD para prever ajuste de tensão;
+- pode ocupar mais espaço no chassi.
+
 
 ---
 
