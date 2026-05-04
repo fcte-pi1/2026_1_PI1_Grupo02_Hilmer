@@ -273,9 +273,9 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 
 ## 12. Histórico de Versões
 
-|Versão|Data|Autor|Descrição|
-|---|---|---|---|
-|1.0|03/05/2026|[Euller](https://github.com/Potatoyz908)|Criação do documento|
-|1.1|04/05/2026|[Euller](https://github.com/Potatoyz908)|Atualização dos diagramas e adição de mais informações|
+|Versão|Data|Autor|Descrição|Revisor |
+|---|---|---|---|---|
+|1.0|03/05/2026|[Euller](https://github.com/Potatoyz908)|Criação do documento|[Gabriel Castelo](https://github.com/GabrielCastelo-31)|
+|1.1|04/05/2026|[Euller](https://github.com/Potatoyz908)|Atualização dos diagramas e adição de mais informações|[Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão|
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|
