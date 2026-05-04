@@ -6,3 +6,5 @@
   - [2. Energia](pages/docs/nucleos/energia.md)
   - [3. Estrutura](pages/docs/nucleos/estrutura.md)
   - [4. Software](pages/docs/nucleos/software.md)
+- **Software**
+  - [Arquitetura de Software](docs/software/arquitetura-software.md)
