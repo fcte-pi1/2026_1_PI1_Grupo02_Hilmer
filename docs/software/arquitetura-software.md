@@ -149,9 +149,9 @@ A comunicação entre os nós ocorre por meio dos seguintes protocolos:
 
 #### Diagrama de Implantação
 
-> Inserir aqui a imagem do diagrama de implantação.
-
 ![Diagrama de Implantação](../assets/software/diagrama-implantacao.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
 
 ---
 
@@ -194,9 +194,9 @@ Ele contempla estados como:
 
 Esse diagrama auxilia na compreensão do comportamento dinâmico do sistema e dos eventos que provocam transições entre estados.
 
-> Inserir aqui a imagem do diagrama de estados.
-
 ![Diagrama de Estados](../assets/software/diagrama-estados.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
 
 ---
 
@@ -207,6 +207,8 @@ O diagrama de implantação apresenta uma visão física e tecnológica da solu�
 A arquitetura proposta considera que o usuário acessa o sistema por meio de um navegador. A interface web é desenvolvida em React e se comunica com o backend desenvolvido em FastAPI. O backend recebe os dados do Micromouse, processa a telemetria, envia atualizações em tempo real para o frontend via WebSocket e persiste os dados no PostgreSQL.
 
 ![Diagrama de Implantação](../assets/software/diagrama-implantacao.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
 
 ---
 
@@ -253,3 +255,13 @@ A arquitetura proposta atende aos principais requisitos da frente de software:
 A arquitetura proposta busca equilibrar simplicidade, clareza e capacidade de atender aos requisitos do projeto. A separação entre frontend, backend e banco de dados facilita o desenvolvimento em equipe, enquanto o uso de WebSocket permite o monitoramento em tempo real necessário para acompanhar a corrida do Micromouse.
 
 Essa estrutura também permite evolução futura, como melhorias na interface, novos filtros de consulta, exportação de dados e integração mais robusta com o sistema embarcado.
+
+---
+
+## 12. Histórico de Versões
+
+|Versão|Data|Autor|Descrição|
+|---|---|---|---|
+|1.0|03/05/2026|[Euller](https://github.com/Potatoyz908)|Criação do documento|
+|1.1|04/05/2026|[Euller](https://github.com/Potatoyz908)|Atualização dos diagramas e adição de mais informações|
+|1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão|
