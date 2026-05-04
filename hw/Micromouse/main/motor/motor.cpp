@@ -1,4 +1,4 @@
-#include "motor.hpp"
+#include "motor/motor.hpp"
 
 Motor::Motor(int pwm, int ain1, int ain2, int stby, int enc_a, int enc_b, ledc_channel_t channel)
     : pwm_pin((gpio_num_t)pwm),

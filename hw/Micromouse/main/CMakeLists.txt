@@ -1,5 +1,9 @@
 idf_component_register(
-    SRCS "battery.cpp" "main.cpp" "motor.cpp"
-    INCLUDE_DIRS "."
+    SRCS
+        "app/main.cpp"
+        "battery/battery.cpp"
+        "motor/motor.cpp"
+        "vl53l0x/IV_Vl53l0x.cpp"
+    INCLUDE_DIRS "." "app" "battery" "motor" "vl53l0x" "sd_card"
     REQUIRES esp_driver_i2c
 )

@@ -3,7 +3,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/ledc.h"
-#include "motor.hpp"
+#include "motor/motor.hpp"
+#include "vl53l0x/IV_Vl53l0x.hpp"
 
 extern "C" void app_main(void) {
     printf("Projeto base em C++ pronto!\n");
@@ -38,4 +39,15 @@ extern "C" void app_main(void) {
         vTaskDelay(pdMS_TO_TICKS(100));
     }
     */
+    IV_Vl53l0x tof;
+    if (!tof.init()) {
+        printf("Falha ao inicializar VL53L0X\n");
+        return;
+    }
+
+    while (true) {
+        float distance_mm = tof.readDistanceMm();
+        printf("Distancia: %.2f mm\n", distance_mm);
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
 }

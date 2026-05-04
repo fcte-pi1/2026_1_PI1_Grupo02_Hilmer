@@ -15,3 +15,7 @@ dependencies:
   #   # All dependencies of `main` are public by default.
   #   public: true
   espp/ina226: ^1.0.36
+  espp/vl53l: ^1.0.36
+  espp/i2c: ^1.0.36
+  espp/logger: ^1.0.36
+  espp/timer: ^1.0.36
