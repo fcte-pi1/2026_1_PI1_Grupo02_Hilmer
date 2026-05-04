@@ -41,3 +41,34 @@ Considerando fator de utilização de 70% (nem todos os componentes operam conti
 
 I_real = 2.00 A × 0.7  
 I_real ≈ 1.40 A
+
+---
+
+## Cálculo da capacidade da bateria
+
+### Para 2 horas de autonomia
+
+Capacidade = 1.40 A × 2 h  
+Capacidade ≈ 2.8 Ah ≈ 2800 mAh
+
+---
+
+### Para 3 horas de autonomia
+
+Capacidade = 1.40 A × 3 h  
+Capacidade ≈ 4.2 Ah ≈ 4200 mAh
+
+---
+
+## Resultado final
+
+| Autonomia | Capacidade recomendada |
+|-----------|------------------------|
+| 2 horas   | 2500 – 3000 mAh        |
+| 3 horas   | 4000 – 4500 mAh        |
+
+---
+
+# Observação importante
+
+A corrente dos motores foi considerada em regime nominal de operação e não em condição de stall, evitando superdimensionamento do sistema de energia.
