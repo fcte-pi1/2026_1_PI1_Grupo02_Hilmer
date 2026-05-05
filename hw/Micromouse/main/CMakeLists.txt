@@ -5,6 +5,7 @@ idf_component_register(
         "motor/motor.cpp"
         "vl53l0x/IV_Vl53l0x.cpp"
         "imu/imu.cpp"
+        "sd_card/sd_card.cpp"
     INCLUDE_DIRS "." "app" "battery" "motor" "vl53l0x" "sd_card" "imu"
     REQUIRES esp_driver_i2c
 )
