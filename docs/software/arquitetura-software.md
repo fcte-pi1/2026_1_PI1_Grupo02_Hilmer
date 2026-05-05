@@ -149,6 +149,10 @@ A comunicação entre os nós ocorre por meio dos seguintes protocolos:
 
 #### Diagrama de Implantação
 
+O diagrama de implantação apresenta uma visão física e tecnológica da solução. Ele mostra onde cada parte do sistema será executada e como os componentes se comunicam.
+
+A arquitetura proposta considera que o usuário acessa o sistema por meio de um navegador. A interface web é desenvolvida em React e se comunica com o backend desenvolvido em FastAPI. O backend recebe os dados do Micromouse, processa a telemetria, envia atualizações em tempo real para o frontend via WebSocket e persiste os dados no PostgreSQL.
+
 ![Diagrama de Implantação](../assets/software/diagrama-implantacao.png)
 
 <div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
@@ -233,19 +237,7 @@ O fluxo é dividido em duas raias (swimlanes) que operam de forma coordenada:
 
 ---
 
-## 9. Diagrama de Implantação
-
-O diagrama de implantação apresenta uma visão física e tecnológica da solução. Ele mostra onde cada parte do sistema será executada e como os componentes se comunicam.
-
-A arquitetura proposta considera que o usuário acessa o sistema por meio de um navegador. A interface web é desenvolvida em React e se comunica com o backend desenvolvido em FastAPI. O backend recebe os dados do Micromouse, processa a telemetria, envia atualizações em tempo real para o frontend via WebSocket e persiste os dados no PostgreSQL.
-
-![Diagrama de Implantação](../assets/software/diagrama-implantacao.png)
-
-<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
-
----
-
-## 10. Justificativa da Stack
+## . Justificativa da Stack
 
 A stack foi escolhida considerando a familiaridade da equipe, a simplicidade de implementação e a adequação aos requisitos do projeto.
 
@@ -267,7 +259,7 @@ O WebSocket foi escolhido para permitir comunicação em tempo real entre backen
 
 ---
 
-## 11. Relação com os Requisitos do Sistema
+## 10. Relação com os Requisitos do Sistema
 
 A arquitetura proposta atende aos principais requisitos da frente de software:
 
@@ -283,7 +275,7 @@ A arquitetura proposta atende aos principais requisitos da frente de software:
 
 ---
 
-## 12. Considerações Finais
+## 11. Considerações Finais
 
 A arquitetura proposta busca equilibrar simplicidade, clareza e capacidade de atender aos requisitos do projeto. A separação entre frontend, backend e banco de dados facilita o desenvolvimento em equipe, enquanto o uso de WebSocket permite o monitoramento em tempo real necessário para acompanhar a corrida do Micromouse.
 
@@ -291,7 +283,7 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 
 ---
 
-## 13. Histórico de Versões
+## 12. Histórico de Versões
 
 |Versão|Data|Autor|Descrição|Revisor |
 |---|---|---|---|---|
@@ -300,3 +292,4 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
 |1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML|
+|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML|
