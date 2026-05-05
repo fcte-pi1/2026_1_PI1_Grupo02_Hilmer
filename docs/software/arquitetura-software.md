@@ -213,7 +213,27 @@ Esse diagrama auxilia na compreensão do comportamento dinâmico do sistema e do
 
 ---
 
-## 8. Diagrama de Implantação
+## 8. Diagrama de Atividades UML
+
+O Diagrama de Atividades detalha o fluxo operacional e a interação entre os dois principais atores do sistema: o Micromouse (Sistema Embarcado) e o Sistema Web (Interface de Monitoramento). Ele descreve desde o processo de calibração inicial até a persistência final dos dados após a conclusão do desafio.
+
+#### Descrição do Fluxo
+
+O fluxo é dividido em duas raias (swimlanes) que operam de forma coordenada:
+
+- Micromouse: Inicia com a calibração automática de luz. Caso a calibração falhe, o sistema sinaliza erro; se for bem-sucedida, inicia a exploração. Durante o percurso, o robô processa dados dos sensores IR e encoders, transmitindo pacotes via Bluetooth/Wi-Fi continuamente.
+
+- Sistema Web: Recebe os pacotes de telemetria e realiza a validação. Dados inválidos são descartados, enquanto dados válidos atualizam a interface em tempo real (mapa, bateria e velocidade). O sistema também monitora alertas críticos e a conectividade.
+
+- Encerramento: Ao identificar que o desafio foi cumprido, o sistema web altera o status da corrida e realiza a persistência automática de todos os dados coletados no Banco de Dados PostgreSQL.
+
+![Diagrama de Atividades UML](../assets/software/diagrama_de_atividades_uml.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
+
+---
+
+## 9. Diagrama de Implantação
 
 O diagrama de implantação apresenta uma visão física e tecnológica da solução. Ele mostra onde cada parte do sistema será executada e como os componentes se comunicam.
 
@@ -225,7 +245,7 @@ A arquitetura proposta considera que o usuário acessa o sistema por meio de um 
 
 ---
 
-## 9. Justificativa da Stack
+## 10. Justificativa da Stack
 
 A stack foi escolhida considerando a familiaridade da equipe, a simplicidade de implementação e a adequação aos requisitos do projeto.
 
@@ -247,7 +267,7 @@ O WebSocket foi escolhido para permitir comunicação em tempo real entre backen
 
 ---
 
-## 10. Relação com os Requisitos do Sistema
+## 11. Relação com os Requisitos do Sistema
 
 A arquitetura proposta atende aos principais requisitos da frente de software:
 
@@ -263,7 +283,7 @@ A arquitetura proposta atende aos principais requisitos da frente de software:
 
 ---
 
-## 11. Considerações Finais
+## 12. Considerações Finais
 
 A arquitetura proposta busca equilibrar simplicidade, clareza e capacidade de atender aos requisitos do projeto. A separação entre frontend, backend e banco de dados facilita o desenvolvimento em equipe, enquanto o uso de WebSocket permite o monitoramento em tempo real necessário para acompanhar a corrida do Micromouse.
 
@@ -271,11 +291,12 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 
 ---
 
-## 12. Histórico de Versões
+## 13. Histórico de Versões
 
 |Versão|Data|Autor|Descrição|Revisor |
 |---|---|---|---|---|
 |1.0|03/05/2026|[Euller](https://github.com/Potatoyz908)|Criação do documento|[Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 |1.1|04/05/2026|[Euller](https://github.com/Potatoyz908)|Atualização dos diagramas e adição de mais informações|[Gabriel Castelo](https://github.com/GabrielCastelo-31)|
-|1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão|
-|1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|
+|1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
+|1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
+|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML|
