@@ -183,13 +183,13 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 
 #### 6.5.2 Diagrama Entidade-Relacionamento (DER)
 
-![Diagrama Entidade-Relacionamento](../assets/software/diagrama_entidade_relacionamento.jpeg)
+![Diagrama Entidade-Relacionamento](../assets/software/diagrama_entidade_relacionamento.png)
 
 <div style="text-align: center;">Autores: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a> e <a href="https://github.com/mtsmgn0">Mateus Magno</a></div>
 
 #### 6.5.3 Diagrama Lógico de Dados (DLD)
 
-![Diagrama Lógico de Dados](../assets/software/diagrama_logico_de_dados.jpeg)
+![Diagrama Lógico de Dados](../assets/software/diagrama_logico_de_dados.png)
 
 <div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
