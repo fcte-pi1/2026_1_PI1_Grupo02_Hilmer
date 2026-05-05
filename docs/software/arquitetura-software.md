@@ -159,7 +159,7 @@ A comunicação entre os nós ocorre por meio dos seguintes protocolos:
 
 A visão de dados descreve como as informações do sistema serão persistidas.
 
-Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo Entidade-Relacionamento (MER)** e seu respectivo **Diagrama Entidade-Relacionamento (DER)**.
+Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo Entidade-Relacionamento (MER)** e seu respectivo **Diagrama Entidade-Relacionamento (DER)**, além do diagrama lógico de dados(DLD).
 
 #### 6.5.1 Modelo Entidade-Relacionamento (MER)
 
@@ -174,14 +174,20 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 
 * **LABIRINTO** (**id_labirinto**, dimensao)
 * **CELULA** (**id_celula**, coordenada_x, coordenada_y, parede_norte, parede_sul, parede_leste, parede_oeste, id_labirinto)
-* **CORRIDA** (**id_percurso**, desafio_cumprido, finalizada, id_labirinto)
+* **CORRIDA** (**id_corrida**, desafio_cumprido, finalizada, id_labirinto)
 * **TELEMETRIA** (velocidade_media, tempo_total, tensao_media, corrente_media, velocidade_maxima_percurso, id_percurso)
 
 #### 6.5.2 Diagrama Entidade-Relacionamento (DER)
 
-![Diagrama Entidade-Relacionamento](../assets/software/diagrama_entidade_relacionamento.png)
+![Diagrama Entidade-Relacionamento](../assets/software/diagrama_entidade_relacionamento.jpeg)
 
 <div style="text-align: center;">Autores: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a> e <a href="https://github.com/mtsmgn0">Mateus Magno</a></div>
+
+#### 6.5.3 Diagrama Lógico de Dados (DLD)
+
+![Diagrama Lógico de Dados](../assets/software/diagrama_logico_de_dados.jpeg)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
 ---
 
@@ -300,3 +306,4 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
 |1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML|
+|1.5 | 05/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama lógico de dados|
