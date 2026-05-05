@@ -154,6 +154,6 @@ direct_dependencies:
 - espp/timer
 - espp/vl53l
 - idf
-manifest_hash: c4e1d5eeb8ec9d8d6fd49be89d745689c99690f0952c2525d0c3473e32a3981a
+manifest_hash: 394fe2eda7d83f94c235508aa801ee42038a14db71bafd458158a3b06e7cf7c0
 target: esp32
 version: 3.0.0
