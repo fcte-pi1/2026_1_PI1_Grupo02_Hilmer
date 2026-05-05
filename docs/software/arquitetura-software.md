@@ -297,7 +297,7 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.1|04/05/2026|[Euller](https://github.com/Potatoyz908)|Atualização dos diagramas e adição de mais informações|[Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
-|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML|
-|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML|
+|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
+|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 
-|1.5 | 05/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama lógico de dados|
+|1.5 | 05/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama lógico de dados| [Euller Júlio](https://github.com/Potatoyz908)|
