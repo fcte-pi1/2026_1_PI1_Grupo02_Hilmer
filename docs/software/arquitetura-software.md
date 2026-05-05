@@ -175,7 +175,7 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 * **LABIRINTO** (**id_labirinto**, dimensao)
 * **CELULA** (**id_celula**, coordenada_x, coordenada_y, parede_norte, parede_sul, parede_leste, parede_oeste, id_labirinto)
 * **CORRIDA** (**id_percurso**, desafio_cumprido, finalizada, id_labirinto)
-* **TELEMETRIA** (**id_telemetria**, velocidade_media, tempo_total, tensao_media, corrente_media, velocidade_maxima_percurso, id_percurso)
+* **TELEMETRIA** (velocidade_media, tempo_total, tensao_media, corrente_media, velocidade_maxima_percurso, id_percurso)
 
 #### 6.5.2 Diagrama Entidade-Relacionamento (DER)
 
