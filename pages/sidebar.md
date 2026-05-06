@@ -4,6 +4,8 @@
 - **Núcleos**
   - [*1. Eletrônica*](pages/docs/nucleos/eletronica.md)
   - [*2. Energia*](pages/docs/nucleos/energia.md)
-  - [*3. Estrutura*](pages/docs/nucleos/estrutura.md)
+  - *3. Estrutura*
+    - [Métodos de Transmissão](mec/estudo_metodos_transmissao.md)
+    - [Características da Roda](mec/esboco_caracteristicas_desejaveis_rodas.md)
   - *4. Software*
     - [Arquitetura de Software](docs/software/arquitetura-software.md)
