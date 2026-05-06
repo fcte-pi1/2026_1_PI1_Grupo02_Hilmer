@@ -169,17 +169,17 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 
 **IDENTIFICAÇÃO DAS ENTIDADES**
 
-* **LABIRINTO**
-* **CELULA**
-* **CORRIDA**
-* **TELEMETRIA**
+- **LABIRINTO**
+- **CELULA**
+- **CORRIDA**
+- **TELEMETRIA**
 
 **DESCRIÇÃO DAS ENTIDADES (ATRIBUTOS)**
 
-* **LABIRINTO** (**id_labirinto**, dimensao)
-* **CELULA** (**id_celula**, coordenada_x, coordenada_y, parede_norte, parede_sul, parede_leste, parede_oeste, id_labirinto)
-* **CORRIDA** (**id_corrida**, desafio_cumprido, finalizada, id_labirinto)
-* **TELEMETRIA** (velocidade_media, tempo_total, tensao_media, corrente_media, velocidade_maxima_percurso, id_percurso)
+- **LABIRINTO** (**id_labirinto**, tipo_labirinto)
+- **CELULA** (**id_celula**, coordenada_x, coordenada_y, parede_norte, parede_sul, parede_leste, parede_oeste, id_labirinto)
+- **CORRIDA** (**id_corrida**, desafio_cumprido, status_corrida, data_hora_inicio, data_hora_fim, id_labirinto)
+- **TELEMETRIA** (velocidade_media, tempo_total, tensao_media, corrente_media, velocidade_maxima_percurso, id_corrida)
 
 #### 6.5.2 Diagrama Entidade-Relacionamento (DER)
 
