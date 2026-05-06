@@ -1,1 +1,0 @@
-Página (ou subpasta) de Software
