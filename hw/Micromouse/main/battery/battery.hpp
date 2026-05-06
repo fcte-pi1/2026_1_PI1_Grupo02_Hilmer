@@ -21,7 +21,7 @@ public:
     /**
     * @brief Inicializa o sensor INA226 e configura os parâmetros iniciais da bateria.
     */
-    void init();
+    bool init();
 
     /**
     * @brief Atualiza as leituras do sensor e recalcula o estado de carga (SOC).

@@ -20,12 +20,6 @@
 #ifndef IMU_H
 #define IMU_H
 
-// -----------------------------------------------------------------------------
-//  Mapeamento de Hardware (I2C)
-// -----------------------------------------------------------------------------
-#define IMU_PIN_SDA  21   // Pino de dados[cite: 6]
-#define IMU_PIN_SCL  22   // Pino de clock[cite: 6]
-
 // Endereço I2C do MPU-9250. Padrão 0x68 (AD0 em GND)[cite: 6].
 #define IMU_ENDERECO_I2C  0x68
 

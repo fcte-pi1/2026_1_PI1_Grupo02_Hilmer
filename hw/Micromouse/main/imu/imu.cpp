@@ -6,6 +6,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/i2c_master.h" // API I2C do ESP-IDF v6+[cite: 7]
+#include "i2c_manager.hpp"
+#include "../pins.hpp"
 
 // O bloco extern "C" impede que o compilador C++ altere o nome das funções
 // da biblioteca Truita, garantindo a linkagem correta na hora do build[cite: 7].
@@ -72,17 +74,11 @@ static bool carregar_calibracao_da_nvs() {
 bool imu_init() {
     ESP_LOGI(TAG, "Iniciando módulo IMU e barramento I2C...");
 
-    // 1. Configuração de baixo nível do barramento I2C (padrão v6)
-    i2c_master_bus_config_t i2c_mst_config = {};
-    i2c_mst_config.i2c_port = I2C_NUM_0;                 // Usa a controladora I2C 0[cite: 7]
-    i2c_mst_config.sda_io_num = (gpio_num_t)IMU_PIN_SDA; // Casting para o tipo nativo[cite: 7]
-    i2c_mst_config.scl_io_num = (gpio_num_t)IMU_PIN_SCL;
-    i2c_mst_config.clk_source = I2C_CLK_SRC_DEFAULT;     // Clock derivado da APB[cite: 7]
-    i2c_mst_config.glitch_ignore_cnt = 7;                // Filtro digital contra ruído[cite: 7]
-    i2c_mst_config.flags.enable_internal_pullup = true;  // Ativa resistores internos[cite: 7]
-
-    // Registra o barramento no kernel do ESP-IDF
-    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &i2c_bus_handle));
+    if (!i2c_manager_init()) {
+        ESP_LOGE(TAG, "Falha ao inicializar o barramento I2C compartilhado.");
+        return false;
+    }
+    i2c_bus_handle = i2c_manager_get_bus();
 
     // 2. Configuração lógica do sensor MPU9250
     mpu9250_config_t config = {

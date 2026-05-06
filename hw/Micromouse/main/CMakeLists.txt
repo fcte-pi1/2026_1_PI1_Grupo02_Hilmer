@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS
         "app/main.cpp"
+        "i2c_manager.cpp"
         "battery/battery.cpp"
         "motor/motor.cpp"
         "vl53l0x/IV_Vl53l0x.cpp"

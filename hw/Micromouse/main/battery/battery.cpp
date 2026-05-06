@@ -1,5 +1,6 @@
 #include "battery/battery.hpp"
 #include "driver/i2c_master.h"
+#include "esp_log.h"
 #include "esp_timer.h"
 #include <system_error>
 #include <cmath>
@@ -7,8 +8,8 @@
 
 
 #define I2C_MASTER_PORT     I2C_NUM_0
-#define I2C_SDA_PIN         GPIO_NUM_1
-#define I2C_SCL_PIN         GPIO_NUM_2
+#include "pins.hpp"
+#include "i2c_manager.hpp"
 #define I2C_SPEED_HZ        100000
 #define I2C_TIMEOUT_MS      50
 
@@ -48,16 +49,16 @@ Battery::Battery()
     memset(filters_, 0, sizeof(filters_));
 }
 
-void Battery::init() {
+bool Battery::init() {
     // Configuração do barramento I2C
-    i2c_master_bus_config_t bus_cfg = {};
-    bus_cfg.i2c_port                     = I2C_MASTER_PORT;
-    bus_cfg.sda_io_num                   = I2C_SDA_PIN;
-    bus_cfg.scl_io_num                   = I2C_SCL_PIN;
-    bus_cfg.clk_source                   = I2C_CLK_SRC_DEFAULT;
-    bus_cfg.glitch_ignore_cnt            = 7;   // Filtra ruídos rápidos na linha I2C
-    bus_cfg.flags.enable_internal_pullup = true;
-    ESP_ERROR_CHECK(i2c_new_master_bus(&bus_cfg, &s_bus_handle));
+    // Use shared I2C manager to avoid double initialization
+    extern bool i2c_manager_init();
+    extern i2c_master_bus_handle_t i2c_manager_get_bus();
+    if (!i2c_manager_init()) {
+        ESP_LOGE("Battery", "Failed to init shared I2C bus");
+        return false;
+    }
+    s_bus_handle = i2c_manager_get_bus();
 
     i2c_device_config_t dev_cfg = {};
     dev_cfg.dev_addr_length = I2C_ADDR_BIT_LEN_7;
@@ -88,6 +89,7 @@ void Battery::init() {
 
     soc_            = voltageToSOC(v0);
     last_update_us_ = esp_timer_get_time();
+    return true;
 }
 
 void Battery::update() {

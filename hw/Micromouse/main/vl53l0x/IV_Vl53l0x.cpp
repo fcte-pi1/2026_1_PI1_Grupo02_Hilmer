@@ -1,9 +1,8 @@
 #include "vl53l0x/IV_Vl53l0x.hpp"
-
-#include <chrono>
-#include <thread>
-
-using namespace std::chrono_literals;
+#include "pins.hpp"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "i2c_manager.hpp"
 
 IV_Vl53l0x::IV_Vl53l0x()
     : logger_({.tag = "IV_Vl53l0x", .level = espp::Logger::Verbosity::INFO}) {}
@@ -13,21 +12,38 @@ bool IV_Vl53l0x::init() {
         return true;
     }
 
-    i2c_ = std::make_unique<espp::I2c>(espp::I2c::Config{
-        .port = kI2cPort,
-        .sda_io_num = kSdaPin,
-        .scl_io_num = kSclPin,
-        .sda_pullup_en = GPIO_PULLUP_ENABLE,
-        .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .clk_speed = kI2cClockHz,
-    });
+    if (!i2c_manager_init()) {
+        logger_.error("Failed to init shared I2C bus");
+        return false;
+    }
+
+    auto bus = i2c_manager_get_bus();
+    if (!bus) {
+        logger_.error("Shared I2C bus is null");
+        return false;
+    }
+
+    i2c_device_config_t dev_cfg = {};
+    dev_cfg.dev_addr_length = I2C_ADDR_BIT_LEN_7;
+    dev_cfg.device_address = kAddress;
+    dev_cfg.scl_speed_hz = kI2cClockHz;
+    if (i2c_master_bus_add_device(bus, &dev_cfg, &dev_handle_) != ESP_OK) {
+        logger_.error("Failed to add VL53L0X device to I2C bus");
+        return false;
+    }
+
+    auto write_cb = [this](uint8_t /*dev_addr*/, const uint8_t *data, size_t len) -> bool {
+        return dev_handle_ && i2c_master_transmit(dev_handle_, data, len, 50) == ESP_OK;
+    };
+
+    auto read_cb = [this](uint8_t /*dev_addr*/, uint8_t *data, size_t len) -> bool {
+        return dev_handle_ && i2c_master_receive(dev_handle_, data, len, 50) == ESP_OK;
+    };
 
     sensor_ = std::make_unique<espp::Vl53l>(espp::Vl53l::Config{
         .device_address = kAddress,
-        .write = std::bind(&espp::I2c::write, i2c_.get(), std::placeholders::_1,
-                           std::placeholders::_2, std::placeholders::_3),
-        .read = std::bind(&espp::I2c::read, i2c_.get(), std::placeholders::_1,
-                          std::placeholders::_2, std::placeholders::_3),
+        .write = write_cb,
+        .read = read_cb,
         .log_level = espp::Logger::Verbosity::WARN,
     });
 
@@ -125,7 +141,7 @@ float IV_Vl53l0x::readDistanceMm() {
             logger_.error("Failed while waiting for data: {}", ec.message());
             return -1.0f;
         }
-        std::this_thread::sleep_for(1ms);
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 
     if (!sensor_->clear_interrupt(ec)) {
