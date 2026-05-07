@@ -52,59 +52,50 @@
 \textcolor{red}{Itens fundamentais:}
 
 \begin{itemize}
-    \item \textcolor{red}{ \textbf{Diagrama BPMN para entender o \textit{software} proposto:} deve deixar claro os principais atores do sistema, suas atividades (de negócios), insumos e resultados.}
-    \item \textcolor{red}{\textbf{\textit{Backlog} funcional do \textit{software}:}}
+    \item \textcolor{red}{ \textbf{Diagrama Atividades UML:}  descrever e explicar o fluxo do comportamento funcional do produto proposto, evidenciando, de forma clara e estruturada, como as atividades são executadas, em que ordem e sob quais condições. Esse diagrama permite compreender o funcionamento dinâmico do sistema, destacando:}
+
     \begin{itemize}
-        \item \textcolor{red}{ Escrito no formato de histórias de usuário ou casos de uso (decisão da equipe);}
-        \item \textcolor{red}{ Ao declarar o \textit{backlog} de requisitos funcionais, usar a  classificação de MoSCoW (\textit{Must have}, \textit{Should have} e \textit{Could have}),  para um melhor entendimento do próprio \textit{backlog}.}
-    \end{itemize}
-    \item \textcolor{red}{\textbf{ \textit{Backlog} não-funcional do \textit{software}:}}
+        \item \textcolor{red}{ os principais atores (usuários ou sistemas externos) envolvidos no processo;
+        \item as atividades de negócio realizadas por cada ator ou pelo próprio sistema;
+        \item os insumos (entradas) necessários para a execução das atividades;
+        \item os resultados (saídas) gerados ao longo do fluxo;
+        \item os pontos de decisão, paralelismo e sincronização das atividades;
+        \item Entre as notações mais relevantes, destacam-se o estado iniciail e final, atividades, nós de decisão e junção, barras de bifurcação, Raias (\textit{swimlanes}) e Fluxos de controle. }
+        \end{itemize}
+
+    \item \textcolor{red}{\textbf{\textit{Backlog} do Produto}}
     \begin{itemize}
-        \item \textcolor{red}{ Descrever os requisitos não-funcionais de forma objetiva;}
-        \item \textcolor{red}{ Mais facilmente, mais rapidamente, são descrições subjetivas não-válidas. Um exemplo de requisito não-funcional de desempenho: ``a página deve carregar em até 5s quando em conexão 4G''. }
-    \end{itemize}
-    \item \textcolor{red}{ \textbf{Diagrama de casos de uso,} contendo os atores do sistema, os requisitos com os quais eles interagem e os tipos de relacionamentos entre requisitos realizados por um mesmo ator (ex.: \textit{include}, \textit{extend}). Obs.: este é um diagrama sobre requisitos funcionais.}
+        \item \textcolor{red}{ Descrever os   requisitos funcionais (RF) com a técnica de documentação e especificação de história de usuário (HU);}
+        \item \textcolor{red}{ Descrever os requisitos não-funcionais (RNF) de forma objetiva; Mais facilmente, mais rapidamente, mais responsivo, de fácil uso, são descrições subjetivas não-válidas. Um exemplo de requisito não-funcional de desempenho: ``a página deve carregar em até 5s quando em conexão 4G''. }
+        \item \textcolor{red}{ Ao descrever os requisitos (RF e RNF), usar a  classificação MoSCoW (\textit{Must have}, \textit{Should have} e \textit{Could have}),  para auxiliar a priorização dos itens do backlog.}
+        \item \textcolor{red}{ Protótipos de interfafe gráfica do \textit{software} em alta fidelidade.}
+        \begin{itemize}
+            \item \textcolor{red}{\textbf{ Todas HUs devem conter sua descrição (Eu-Como-Para), critérios de aceitação e protótipos de interface, documentadas no github. }}
+            \end{itemize} 
+
+        \end{itemize}
+
     \item \textcolor{red}{ \textbf{Descrição da arquitetura da solução de \textit{software} proposta:}}
     \begin{itemize}
+    
+        \item \textcolor{red}{ Esta subseção deve contemplar o documento de arquitetura do sistema e deve ser estruturado segundo as visões (4+1) previstas no processo unificado (UP): lógica, de processos;  implementação, implantação e dados (substuirá a visão de casos de uso).}
+        
         \item \textcolor{red}{ Propósito do \textit{software} (qual o seu papel no sistema);}
-        \item \textcolor{red}{ Estilo arquitetural contendo:}
-        \begin{itemize}
-            \item \textcolor{red}{ Padrão adotado: MVC, MVP, Microsserviços, Monolítico, etc (Justificar);}
-            \item \textcolor{red}{ Linguagens de programação: Java, Python, C\#, JavaScript, etc.}
-            \item \textcolor{red}{ \textit{Frameworks} e bibliotecas: Spring Boot, .NET Core, React, Angular, Django, etc.}
+        \item \textcolor{red}{ Padrão adotado: MVC, MVP, Microsserviços, Monolítico, etc (Justificar);}
+        \item \textcolor{red}{ Linguagens de programação: Java, Python, C\#, JavaScript, etc.}
+        \item \textcolor{red}{ \textit{Frameworks} e bibliotecas: Spring Boot, .NET Core, React, Angular, Django, etc.}
             \item \textcolor{red}{ Banco de dados: Relacional (PostgreSQL, MySQL, etc) X NãoSQL (MongoDB,etc). }
-        \end{itemize}
-        \item \textcolor{red}{ Diagrama de alto nível: representação esquemática dos componentes da arquitetura, suas responsabilidades e comunicações, esclarecendo a composição do \textit{front-end} e do \textit{back-end}.}
-    \end{itemize}
-    \item \textcolor{red}{ \textbf{Persistência de dados:} diagrama de entidade relacionamento do banco de dados usado na solução proposta.}
-    \item \textcolor{red}{ \textbf{Análise de dados:} as variáveis definidas nos requisitos do projeto em abordagem numérica e gráfica.}
-    \item \textcolor{red}{ \textbf{Diagrama de estados} esclarecendo os estados assumidos pelo \textit{software} e os eventos que causam as mudanças de estado do \textit{software}.}
-    \item \textcolor{red}{ \textbf{Protótipo funcional do \textit{software}, navegável.}}
+        \item \textcolor{red}{Persistência de dados: Modelo Entidade‑Relacionamento (MER) e seu respectivo Diagrama Entidade‑Relacionamento (DER), aplicáveis quando a solução utiliza banco de dados relacional; alternativamente, diagrama de estrutura de documentos, empregado nos casos em que a arquitetura adota banco de dados não relacional.}
+         \end{itemize}     
+    
     \item \textcolor{red}{\textbf{ Roteiro de testes funcionais:} }
     \begin{itemize}
         \item \textcolor{red}{Código do caso de teste;}
         \item \textcolor{red}{Nome do caso de teste;}
-        \item \textcolor{red}{Tipo do caso de teste (unitário, integrado ou sistema);}
         \item \textcolor{red}{ Objetivo do caso de teste;}
-        \item \textcolor{red}{ Pré-condições do sistema para o teste ser realizado;}
+        \item \textcolor{red}{ Pré-condições do sistema para o teste ser realizado, quando se aplicar;}
         \item \textcolor{red}{ Descrição dos procedimentos a serem executados para o teste;}
         \item \textcolor{red}{ Resultado esperado para o teste ser aprovado (pós-condição após realizado o teste);}
-        \item \textcolor{red}{ Especificação do reparo a ser executado (caso o teste não seja aprovado);}
-        \item \textcolor{red}{ Resultado após reparo (o caso do teste ser necessário de ser repetido após reparo).}
     \end{itemize}
 \end{itemize}
 
-
-% \textcolor{red}{Com relação ao \textit{software}, será necessário apresentar os seguintes itens: % pacotes de componentes de \textit{software}, suas funções e características, e explicar as decisões de projeto:
-% \begin{enumerate}
-%     \item Um diagrama do processo de negócio do problema que a máquina se propõe a resolver (BPNM) – não é UML, mas é fundamental para entender como o sistema se comporta como um todo, incluindo o usuário;
-%     \item Lista de casos de uso (backlog do sistema). Backlog funcional;
-%     \item Lista de requisitos não-funcionais a serem satisfeitos pelo sistema;
-%     \item Diagrama de casos de uso: mostrando os requisitos funcionais, seus atores e como eles interagem entre si;
-%     \item Diagrama de Classes: apresentando quais dados são manipulados pelo sistema (internamente e externamente – ex.: resultados de experimentos);
-%     \item Diagrama de arquitetura, identificando todos os componentes da máquina e suas iterações com o software;
-%     \item Diagrama de estados da máquina (sistema);
-%     \item Descrição dos testes dos componentes da máquina e dos testes funcionais que deveriam ser feitos para avaliar o funcionamento da máquina e identificar defeitos. São importantes os testes unitários (componentes) e de integração (conjunto de componentes) e o roteiro de testes.
-% \end{enumerate}
-% }
-%\textcolor{red}{Com relação ao \textit{software}, será necessário apresentar pacotes de componentes de \textit{software}, suas funções e características, e explicar as decisões de projeto.}

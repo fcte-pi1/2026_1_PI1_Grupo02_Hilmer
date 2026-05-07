@@ -1,18 +1,34 @@
-\usepackage{cmap}
-\usepackage{longtable}
-\usepackage{lmodern}	
-\usepackage[T1]{fontenc}	
-\usepackage[utf8]{inputenc}		
-\usepackage{lastpage}		
-\usepackage{indentfirst}
-\usepackage{color}	
-\usepackage{graphicx}	
-\usepackage{units}
-\usepackage[brazilian,hyperpageref]{backref}
-\usepackage{hyperref}
-\usepackage[alf]{abntex2cite}
-\usepackage{bold-extra}
-\usepackage{eso-pic}
-\usepackage{pdflscape}
-\usepackage{makecell}
+% Codificação e fontes
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
 \usepackage{textcomp}
+\usepackage{bold-extra}
+
+% Estrutura e layout
+\usepackage{longtable}
+\usepackage{makecell}
+\usepackage{pdflscape}
+\usepackage{eso-pic}
+\usepackage{lastpage}
+\usepackage{indentfirst}
+
+% Gráficos e cores
+\usepackage{graphicx}
+\usepackage{color}
+
+% Unidades
+\usepackage{units}
+
+% Citações ABNT (ANTES do hyperref)
+\usepackage[alf]{abntex2cite}
+
+% Backref (ANTES do hyperref)
+\usepackage[brazilian,hyperpageref]{backref}
+
+% Microtipografia (resolve overfull/underfull)
+\usepackage{microtype}
+\setlength{\emergencystretch}{2em}
+
+% Hyperlinks — SEMPRE por último
+\usepackage{hyperref}
