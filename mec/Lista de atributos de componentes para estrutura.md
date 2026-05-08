@@ -1,5 +1,8 @@
 # Lista de atributos de componentes
 
+Este documento foi criado pela equipe de estrutura para ter uma referência mais precisa para os componentes a serem
+utilizados no robô, com intermédio da equipe de eletrônica.
+
 ## Tabela de atributos dos Componentes
 
 | Componente                | Qtde | Peso (g) | Tamanho (CxLxA) |
@@ -11,7 +14,7 @@
 | Sensor MPU6050            | 1    | 3g       | 20 x 16 x 2mm |
 | SD Reader hw125           | 1    | 5g       | 42 x 24 x 12mm | 
 | Regulador (MP1584EN)      | 1    | 5g       | 22 x 17 x 4mm  | 
-| Bateria                   | 1    |          | | 
+| Bateria                   | 1    | 100g     | 65 x 35 x 20mm | 
 
 Referências:
 - [Referência da ESP32*](https://www.eletrogate.com/modulo-wifi-esp32s-bluetooth-38-pinos?srsltid=AfmBOopyGJ3nwGXZRahs2H5VF0Ur1nGGex64eXnssLeQTyQKqBAv6oVc)
@@ -21,17 +24,17 @@ Referências:
 - [Referência do MPU6050](https://www.saravati.com.br/modulo-acelerometro-e-giroscopio-3-eixos-mpu-6050-gy-521.html)
 - [Referência do SD Reader](https://www.huinfinito.com.br/modulos/1432-modulo-cartao-micro-sd.html)
 - [Referência do Regulador](https://www.saravati.com.br/modulo-mini-conversor-de-tensao-dc-dc-mp1584en-step-down.html?srsltid=AfmBOoocrsjrH_pjCwVyNkEC7YieClfVTYvXfCCQ5yOXWMQZ2zF1jQQy)
-- [Referência da bateria]()
+- [Referência da bateria](https://www.robocore.net/baterias-fontes/pack-bateria-li-ion-7_4v-2500mah-com-bms?srsltid=AfmBOor3H3ldPhWH_Yp_2gVdpid0qleK5-dM-lhbusvmbkz49z4cOjeb)
 
 ## Tabela de tipos de encaixes dos componentes
 
 | Componente                | Qtde | Tipo de enxaixe | Observação |
-|---------------------------|------|-----------------|------------|--------------------|
-| Microcontrolador ESP32    | 1    | Espaçador de Latão | | 
-| Sensor VL53L0X            | 6    | | | 
-| Motor N20 (6V)            | 2    | | | 
-| Driver (DRV8833/TB6612)   | 1    | Espaçador de Latão | | 
-| Sensor MPU6050            | 1    | Espaçador de Latão | | 
-| SD Reader                 | 1    | Espaçador de Latão | | 
-| Regulador (MP1584EN)      | 1    | Espaçador de Latão | | 
-| Bateria                   | —    | | | 
+|---------------------------|------|-----------------|------------|
+| Microcontrolador ESP32    | 1    | Espaçador de Latão (PCB) | - | 
+| Sensor VL53L0X            | 6    | Suporte especial         | - | 
+| Motor N20 (6V)            | 2    | Suporte rígido           | - | 
+| Driver (DRV8833/TB6612)   | 1    | Espaçador de Latão (PCB) | - | 
+| Sensor MPU6050            | 1    | Espaçador de Latão (PCB) | - | 
+| SD Reader                 | 1    | Espaçador de Latão (PCB) | - | 
+| Regulador (MP1584EN)      | 1    | Espaçador de Latão (PCB) | - | 
+| Bateria                   | 1    | Berço no meio com velcro | - | 
