@@ -1,20 +1,61 @@
-# _Frontend_
+# Frontend do Projeto
 
-Esta pasta deverá armazenar arquivos referentes a:
+Este diretório contém a aplicação web do projeto, construída com React + TypeScript, empacotada com Vite e estilizada com Tailwind CSS.
 
-- Código-fonte da interface: componentes, páginas, estilos e lógica de apresentação, organizados conforme o framework utilizado ([React](https://react.dev/), [Vue](https://vuejs.org/), [Angular](https://angular.io/) etc.).
-- Arquivos de marcação e estilo estáticos: `index.html`, arquivos `.css`, `.scss` ou `.sass` de estilização global.
-- Arquivos de definição de dependências: `package.json` e `package-lock.json` (ou `yarn.lock`) com todas as bibliotecas utilizadas.
-- Arquivos de configuração do bundler/toolchain: `vite.config.js`, `webpack.config.js`, `tsconfig.json` etc.
-- Arquivos de configuração de ambiente: `.env.example` com as variáveis de ambiente públicas necessárias (ex.: URL base da API).
-- Arquivos de containerização: `Dockerfile` e `docker-compose.yml`, caso a aplicação seja servida via contêiner.
+## Pré-requisitos
 
-Evite incluir:
+- Node.js 20 ou superior
+- npm 10 ou superior
 
-- Dependências instaladas: a pasta `node_modules/` deve ser gerada localmente via `npm install` ou equivalente e nunca incluída no repositório.
-- Artefatos de build: diretórios como `dist/`, `build/` ou `.next/` são gerados pelo processo de compilação e não devem ser versionados.
-- Arquivos de configuração pessoal: arquivos como `.directory` (Linux/KDE) ou configurações locais de editor (ex.: `.vscode/settings.json`), salvo configurações compartilhadas como `.editorconfig`.
-- Credenciais e segredos: arquivos `.env` com valores reais nunca devem ser versionados.
+## Como rodar em desenvolvimento
 
-> [!WARNING]
-> **Não acrescente arquivos referentes ao _backend_ nesta pasta.** Eles deverão ser armazenados na pasta [backend](https://github.com/fcte-pi1/template/tree/main/src/backend) deste repositório.
+1. Abra o terminal na raiz do repositório.
+2. Entre na pasta do frontend:
+
+```bash
+cd src/frontend
+```
+
+3. Instale as dependências:
+
+```bash
+npm install
+```
+
+4. Inicie o servidor de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+5. Acesse no navegador o endereço exibido no terminal (normalmente http://localhost:5173).
+
+## Scripts disponíveis
+
+- `npm run dev`: inicia o servidor de desenvolvimento com recarregamento automático.
+- `npm run build`: faz a checagem TypeScript e gera a versão de produção.
+- `npm run preview`: serve localmente a build de produção para validação.
+- `npm run lint`: executa a análise estática com ESLint.
+
+## Organização da pasta frontend
+
+- `index.html`: arquivo HTML base que carrega a aplicação.
+- `src/main.tsx`: ponto de entrada do React.
+- `src/App.tsx`: componente principal da interface.
+- `src/index.css`: estilos globais e importação do Tailwind.
+- `vite.config.ts`: configuração do Vite, incluindo plugins de React e Tailwind.
+- `package.json`: scripts e dependências do frontend.
+
+## Tecnologias principais
+
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS 4
+- ESLint
+
+## Observações importantes
+
+- A pasta `node_modules` não deve ser versionada.
+- A pasta de build (`dist`) é gerada automaticamente e também não deve ser versionada.
+- Se houver necessidade de variáveis de ambiente no futuro, recomenda-se criar um arquivo `.env.example` documentando as chaves públicas necessárias.
