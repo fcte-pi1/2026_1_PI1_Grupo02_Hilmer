@@ -102,7 +102,74 @@ Os módulos principais são:
 - **Módulo de Persistência:** armazena os dados finais das corridas;
 - **Módulo de Consulta:** permite visualizar resultados históricos.
 
+### 6.1.1 Comportamento Dinâmico (Diagrama de Estados)
+
+O comportamento do sistema durante o ciclo de uma corrida é regido por estados que garantem a integridade da telemetria e o controle da sessão. O fluxo transita desde a configuração inicial até o salvamento final dos dados no PostgreSQL.
+
+Ele contempla estados como:
+
+- aguardando configuração;
+- sessão iniciada;
+- aguardando largada;
+- mapeamento inicial;
+- conexão perdida;
+- mapa consolidado;
+- cálculo de rota otimizada;
+- execução da rota otimizada;
+- alerta crítico;
+- desafio cumprido;
+- desafio não cumprido;
+- salvamento dos dados;
+- corrida finalizada.
+
+Esse diagrama auxilia na compreensão do comportamento dinâmico do sistema e dos eventos que provocam transições entre estados.
+
+<p style="text-align: center;">
+  <em>Figura 2: Diagrama de Estados</em>
+</p>
+
+![Diagrama de Estados](../assets/software/diagrama-estados.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
+
+### 6.1.2 Fluxo Operacional (Diagrama de Atividades UML)
+
+O Diagrama de Atividades detalha o comportamento funcional e a coordenação entre o sistema embarcado e a interface de monitoramento, evidenciando a lógica de controle e o processamento de dados.
+
+#### Estrutura do Diagrama
+
+O fluxo utiliza **Raias (swimlanes)** para delimitar as responsabilidades entre os dois atores principais:
+
+*   **Micromouse (Embarcado):** Responsável pela execução do algoritmo de navegação (Flood Fill), coleta de dados sensoriais (bateria, velocidade, sensores) e transmissão de telemetria.
+*   **Sistema Web:** Responsável pela orquestração da sessão, validação de pacotes, interface de usuário e persistência de dados no PostgreSQL.
+
+#### Descrição Detalhada das Atividades
+
+1.  **Início e Decisão de Sessão:** O processo inicia no Sistema Web com a seleção do tipo de labirinto. Um **nó de decisão** garante que a sessão só avance se o labirinto for selecionado e a sessão iniciada corretamente.
+
+2.  **Paralelismo no Micromouse:** Após o sinal de início, o robô utiliza uma **barra de bifurcação (fork)** para executar simultaneamente a coleta de dados e o processamento de movimentação.
+
+3.  **Ciclo de Telemetria (Insumos e Resultados):**
+    *   **Entrada:** Pacotes de telemetria transmitidos via Bluetooth/Wi-Fi.
+    *   **Processamento:** O Sistema Web recebe e valida os pacotes. Caso sejam inválidos (**nó de decisão**), o pacote é descartado com a respectiva sinalização de falha de validação.
+
+4.  **Sincronização e Atualização:** Se os dados forem válidos, o fluxo utiliza uma nova **barra de bifurcação** para atualizar simultaneamente o trajeto no mapa, os indicadores de performance e a checagem de alertas críticos (visuais e sonoros).
+
+5.  **Pontos de Controle e Encerramento:**
+    *   O sistema monitora continuamente, através de nós de decisão, se o **Objetivo foi alcançado** ou se houve um **Encerramento Manual** da sessão.
+    *   **Saída Final:** Dependendo do desfecho, o status da corrida é alterado para "Desafio Cumprido" ou "Desafio Não Cumprido".
+    *   A persistência automática dos dados ocorre no Banco de Dados antes de o fluxo convergir para o **estado final**.
+
+<p style="text-align: center;">
+  <em>Figura 3: Diagrama de Atividades UML</em>
+</p>
+
+![Diagrama de Atividades UML](../assets/software/diagrama_de_atividades_uml.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
+
 ---
+
 
 ### 6.2 Visão de Processos
 
@@ -209,55 +276,7 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 
 ---
 
-## 7. Diagrama de Estados
-
-O diagrama de estados representa o comportamento do sistema durante o ciclo de uma corrida.
-
-Ele contempla estados como:
-
-- aguardando configuração;
-- sessão iniciada;
-- aguardando largada;
-- mapeamento inicial;
-- conexão perdida;
-- mapa consolidado;
-- cálculo de rota otimizada;
-- execução da rota otimizada;
-- alerta crítico;
-- desafio cumprido;
-- desafio não cumprido;
-- salvamento dos dados;
-- corrida finalizada.
-
-Esse diagrama auxilia na compreensão do comportamento dinâmico do sistema e dos eventos que provocam transições entre estados.
-
-![Diagrama de Estados](../assets/software/diagrama-estados.png)
-
-<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
-
----
-
-## 8. Diagrama de Atividades UML
-
-O Diagrama de Atividades detalha o fluxo operacional e a interação entre os dois principais atores do sistema: o Micromouse (Sistema Embarcado) e o Sistema Web (Interface de Monitoramento). Ele descreve desde o processo de calibração inicial até a persistência final dos dados após a conclusão do desafio.
-
-#### Descrição do Fluxo
-
-O fluxo é dividido em duas raias (swimlanes) que operam de forma coordenada:
-
-- Micromouse: Inicia com a calibração automática de luz. Caso a calibração falhe, o sistema sinaliza erro; se for bem-sucedida, inicia a exploração. Durante o percurso, o robô processa dados dos sensores IR e encoders, transmitindo pacotes via Bluetooth/Wi-Fi continuamente.
-
-- Sistema Web: Recebe os pacotes de telemetria e realiza a validação. Dados inválidos são descartados, enquanto dados válidos atualizam a interface em tempo real (mapa, bateria e velocidade). O sistema também monitora alertas críticos e a conectividade.
-
-- Encerramento: Ao identificar que o desafio foi cumprido, o sistema web altera o status da corrida e realiza a persistência automática de todos os dados coletados no Banco de Dados PostgreSQL.
-
-![Diagrama de Atividades UML](../assets/software/diagrama_de_atividades_uml.png)
-
-<div style="text-align: center;">Autor: <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
-
----
-
-## 9. Justificativa da Stack
+## 7. Justificativa da Stack
 
 A stack foi escolhida considerando a familiaridade da equipe, a simplicidade de implementação e a adequação aos requisitos do projeto.
 
@@ -279,7 +298,7 @@ O WebSocket foi escolhido para permitir comunicação em tempo real entre backen
 
 ---
 
-## 10. Relação com os Requisitos do Sistema
+## 8. Relação com os Requisitos do Sistema
 
 A arquitetura proposta atende aos principais requisitos da frente de software:
 
@@ -295,7 +314,7 @@ A arquitetura proposta atende aos principais requisitos da frente de software:
 
 ---
 
-## 11. Considerações Finais
+## 9. Considerações Finais
 
 A arquitetura proposta busca equilibrar simplicidade, clareza e capacidade de atender aos requisitos do projeto. A separação entre frontend, backend e banco de dados facilita o desenvolvimento em equipe, enquanto o uso de WebSocket permite o monitoramento em tempo real necessário para acompanhar a corrida do Micromouse.
 
@@ -303,7 +322,7 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 
 ---
 
-## 12. Histórico de Versões
+## 10. Histórico de Versões
 
 |Versão|Data|Autor|Descrição|Revisor |
 |---|---|---|---|---|
@@ -311,6 +330,7 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.1|04/05/2026|[Euller](https://github.com/Potatoyz908)|Atualização dos diagramas e adição de mais informações|[Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
-|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML|
-|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML|
-|1.5 | 09/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Adição de diagramas de sequência e explicação da arquitetura adotada|
+|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| - |
+|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Maria Eduarda](https://github.com/dudaa28) |
+|1.5 | 09/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do Diagrama  de Sequências e Atualização da página| [Euller Júlio](https://github.com/Potatoyz908) |
+|1.6 | 09/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Adição de diagramas de sequência e explicação da arquitetura adotada|
