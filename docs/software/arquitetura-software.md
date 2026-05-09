@@ -106,11 +106,31 @@ Os módulos principais são:
 
 ### 6.2 Visão de Processos
 
-A visão de processos descreve o comportamento dinâmico do sistema durante uma corrida.
+A visão de processos descreve o comportamento dinâmico do sistema durante uma corrida. O foco aqui é a comunicação, a sincronização e o fluxo de dados entre os componentes em tempo real.
 
-O sistema inicia aguardando configuração da sessão. Após a seleção do labirinto e início da corrida, passa a receber telemetria, atualizar a interface em tempo real e acompanhar o estado da execução. Ao final da corrida, o sistema salva os dados e encerra a sessão.
+O sistema inicia aguardando a configuração da sessão. Após a seleção do labirinto e início da corrida, passa a receber telemetria, atualizar a interface em tempo real e acompanhar o estado da execução. Ao final da corrida, o sistema salva os dados e encerra a sessão. Também são considerados estados de exceção, como perda de conexão, alerta crítico, desafio não cumprido e falha na execução.
 
-Também são considerados estados de exceção, como perda de conexão, alerta crítico, desafio não cumprido e falha na execução.
+#### 6.2.1 Diagrama de Sequência: Ciclo de Vida da Corrida e Telemetria
+
+<p style="text-align: center;">
+  <em>Figura 1: Fluxo de comunicação entre Micromouse, Backend FastAPI e Frontend React.</em>
+</p>
+
+![Diagrama de Sequência - Ciclo de Vida da Corrida](../assets/software/diagrama_sequencia.png)
+
+
+<div style="text-align: center;">
+  Autores: 
+  <a href="https://github.com/Potatoyz908">Euller</a> e 
+  <a href="https://github.com/dudaa28">Maria Eduarda</a>
+</div>
+
+
+#### 6.2.2 Descrição dos Componentes e Fluxos
+
+*   **Sincronização via WebSockets:** O uso de WebSockets entre o **Frontend React** e o **Backend FastAPI** permite a atualização reativa do mapa e dos indicadores de desempenho (bateria e velocidade) com baixa latência, eliminando a necessidade de *polling* constante.
+*   **Validação e Resiliência (HU-09 e HU-10):** O backend atua como um filtro de integridade. Pacotes com campos ausentes ou formatos inválidos são descartados para evitar a poluição do banco de dados **PostgreSQL**. O monitoramento de *timeout* (3 segundos) garante que o avaliador seja notificado imediatamente sobre instabilidades na conexão Wi-Fi.
+*   **Persistência Automática (HU-16):** Independente do sucesso no labirinto, o sistema garante a persistência do trajeto percorrido e dos eventos críticos, permitindo que a equipe realize a análise pós-corrida mesmo em casos de falha do robô.
 
 ---
 
