@@ -26,16 +26,16 @@ As principais responsabilidades do sistema são:
 
 ## 3. Padrão Arquitetural Adotado
 
-A solução adota uma arquitetura **monolítica em camadas**, dividida em:
+A solução adota uma arquitetura **monolítica em camadas**, separando as responsabilidades de interface, aplicação/API, comunicação em tempo real e persistência de dados. Essa estrutura está dividida em:
 
 - **Camada de Apresentação:** interface web desenvolvida em React;
 - **Camada de Aplicação/API:** backend desenvolvido em FastAPI;
 - **Camada de Persistência:** banco de dados relacional PostgreSQL;
 - **Camada de Comunicação em Tempo Real:** uso de WebSocket para atualização da telemetria.
 
-Essa escolha foi feita porque o projeto possui escopo acadêmico, prazo limitado e necessidade de integração direta entre os módulos. Uma arquitetura monolítica em camadas é suficiente para atender aos requisitos do projeto, mantendo a solução simples, compreensível e de fácil manutenção pela equipe.
+Essa escolha foi feita por ser mais simples, adequada ao escopo acadêmico do projeto e compatível com o prazo da disciplina. Além disso, uma arquitetura monolítica em camadas é suficiente para atender aos requisitos de telemetria, monitoramento, armazenamento e consulta de resultados.
 
-Não foi adotada uma arquitetura de microsserviços, pois ela aumentaria a complexidade de desenvolvimento, implantação e manutenção sem necessidade para o tamanho atual do sistema.
+Não foram adotadas alternativas mais complexas, como microsserviços, pois destacamos que elas aumentariam a complexidade de implantação, comunicação e manutenção sem necessidade para o tamanho atual da solução.
 
 ---
 
@@ -257,7 +257,7 @@ O fluxo é dividido em duas raias (swimlanes) que operam de forma coordenada:
 
 ---
 
-## . Justificativa da Stack
+## 9. Justificativa da Stack
 
 A stack foi escolhida considerando a familiaridade da equipe, a simplicidade de implementação e a adequação aos requisitos do projeto.
 
@@ -313,3 +313,4 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
 |1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML|
 |1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML|
+|1.5 | 09/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Adição de diagramas de sequência e explicação da arquitetura adotada|
