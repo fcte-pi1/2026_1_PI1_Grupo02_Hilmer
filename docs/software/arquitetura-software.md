@@ -26,16 +26,16 @@ As principais responsabilidades do sistema são:
 
 ## 3. Padrão Arquitetural Adotado
 
-A solução adota uma arquitetura **monolítica em camadas**, dividida em:
+A solução adota uma arquitetura **monolítica em camadas**, separando as responsabilidades de interface, aplicação/API, comunicação em tempo real e persistência de dados. Essa estrutura está dividida em:
 
 - **Camada de Apresentação:** interface web desenvolvida em React;
 - **Camada de Aplicação/API:** backend desenvolvido em FastAPI;
 - **Camada de Persistência:** banco de dados relacional PostgreSQL;
 - **Camada de Comunicação em Tempo Real:** uso de WebSocket para atualização da telemetria.
 
-Essa escolha foi feita porque o projeto possui escopo acadêmico, prazo limitado e necessidade de integração direta entre os módulos. Uma arquitetura monolítica em camadas é suficiente para atender aos requisitos do projeto, mantendo a solução simples, compreensível e de fácil manutenção pela equipe.
+Essa escolha foi feita por ser mais simples, adequada ao escopo acadêmico do projeto e compatível com o prazo da disciplina. Além disso, uma arquitetura monolítica em camadas é suficiente para atender aos requisitos de telemetria, monitoramento, armazenamento e consulta de resultados.
 
-Não foi adotada uma arquitetura de microsserviços, pois ela aumentaria a complexidade de desenvolvimento, implantação e manutenção sem necessidade para o tamanho atual do sistema.
+Não foram adotadas alternativas mais complexas, como microsserviços, pois destacamos que elas aumentariam a complexidade de implantação, comunicação e manutenção sem necessidade para o tamanho atual da solução.
 
 ---
 
@@ -173,11 +173,31 @@ O fluxo utiliza **Raias (swimlanes)** para delimitar as responsabilidades entre 
 
 ### 6.2 Visão de Processos
 
-A visão de processos descreve o comportamento dinâmico do sistema durante uma corrida.
+A visão de processos descreve o comportamento dinâmico do sistema durante uma corrida. O foco aqui é a comunicação, a sincronização e o fluxo de dados entre os componentes em tempo real.
 
-O sistema inicia aguardando configuração da sessão. Após a seleção do labirinto e início da corrida, passa a receber telemetria, atualizar a interface em tempo real e acompanhar o estado da execução. Ao final da corrida, o sistema salva os dados e encerra a sessão.
+O sistema inicia aguardando a configuração da sessão. Após a seleção do labirinto e início da corrida, passa a receber telemetria, atualizar a interface em tempo real e acompanhar o estado da execução. Ao final da corrida, o sistema salva os dados e encerra a sessão. Também são considerados estados de exceção, como perda de conexão, alerta crítico, desafio não cumprido e falha na execução.
 
-Também são considerados estados de exceção, como perda de conexão, alerta crítico, desafio não cumprido e falha na execução.
+#### 6.2.1 Diagrama de Sequência: Ciclo de Vida da Corrida e Telemetria
+
+<p style="text-align: center;">
+  <em>Figura 1: Fluxo de comunicação entre Micromouse, Backend FastAPI e Frontend React.</em>
+</p>
+
+![Diagrama de Sequência - Ciclo de Vida da Corrida](../assets/software/diagrama_sequencia.png)
+
+
+<div style="text-align: center;">
+  Autores: 
+  <a href="https://github.com/Potatoyz908">Euller</a> e 
+  <a href="https://github.com/dudaa28">Maria Eduarda</a>
+</div>
+
+
+#### 6.2.2 Descrição dos Componentes e Fluxos
+
+*   **Sincronização via WebSockets:** O uso de WebSockets entre o **Frontend React** e o **Backend FastAPI** permite a atualização reativa do mapa e dos indicadores de desempenho (bateria e velocidade) com baixa latência, eliminando a necessidade de *polling* constante.
+*   **Validação e Resiliência (HU-09 e HU-10):** O backend atua como um filtro de integridade. Pacotes com campos ausentes ou formatos inválidos são descartados para evitar a poluição do banco de dados **PostgreSQL**. O monitoramento de *timeout* (3 segundos) garante que o avaliador seja notificado imediatamente sobre instabilidades na conexão Wi-Fi.
+*   **Persistência Automática (HU-16):** Independente do sucesso no labirinto, o sistema garante a persistência do trajeto percorrido e dos eventos críticos, permitindo que a equipe realize a análise pós-corrida mesmo em casos de falha do robô.
 
 ---
 
@@ -256,8 +276,7 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 
 ---
 
-
-## Justificativa da Stack
+## 7. Justificativa da Stack
 
 A stack foi escolhida considerando a familiaridade da equipe, a simplicidade de implementação e a adequação aos requisitos do projeto.
 
@@ -279,7 +298,7 @@ O WebSocket foi escolhido para permitir comunicação em tempo real entre backen
 
 ---
 
-## 10. Relação com os Requisitos do Sistema
+## 8. Relação com os Requisitos do Sistema
 
 A arquitetura proposta atende aos principais requisitos da frente de software:
 
@@ -295,7 +314,7 @@ A arquitetura proposta atende aos principais requisitos da frente de software:
 
 ---
 
-## 11. Considerações Finais
+## 9. Considerações Finais
 
 A arquitetura proposta busca equilibrar simplicidade, clareza e capacidade de atender aos requisitos do projeto. A separação entre frontend, backend e banco de dados facilita o desenvolvimento em equipe, enquanto o uso de WebSocket permite o monitoramento em tempo real necessário para acompanhar a corrida do Micromouse.
 
@@ -303,7 +322,7 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 
 ---
 
-## 12. Histórico de Versões
+## 10. Histórico de Versões
 
 |Versão|Data|Autor|Descrição|Revisor |
 |---|---|---|---|---|
@@ -312,5 +331,6 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
 |1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| - |
-|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| - |
-|1.5 | 09/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do Diagrama  de Sequências e Atualização da página| - |
+|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Maria Eduarda](https://github.com/dudaa28) |
+|1.5 | 09/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do Diagrama  de Sequências e Atualização da página| [Euller Júlio](https://github.com/Potatoyz908) |
+|1.6 | 09/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Adição de diagramas de sequência e explicação da arquitetura adotada|
