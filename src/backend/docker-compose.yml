@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    container_name: micromouse_db
+    environment:
+      POSTGRES_USER: micromouse
+      POSTGRES_PASSWORD: micromouse
+      POSTGRES_DB: micromouse_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+volumes:
+  pgdata:
