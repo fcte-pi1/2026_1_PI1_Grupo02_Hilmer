@@ -260,29 +260,35 @@ A arquitetura proposta considera que o usuário acessa o sistema por meio de um 
 
 A visão de dados descreve como as informações do sistema serão persistidas.
 
-Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo Entidade-Relacionamento (MER)** e seu respectivo **Diagrama Entidade-Relacionamento (DER)**.
+Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo Entidade-Relacionamento (MER)** e seu respectivo **Diagrama Entidade-Relacionamento (DER)**, além do diagrama lógico de dados(DLD).
 
 #### 6.5.1 Modelo Entidade-Relacionamento (MER)
 
 **IDENTIFICAÇÃO DAS ENTIDADES**
 
-* **LABIRINTO**
-* **CELULA**
-* **CORRIDA**
-* **TELEMETRIA**
+- **LABIRINTO**
+- **CELULA**
+- **CORRIDA**
+- **TELEMETRIA**
 
 **DESCRIÇÃO DAS ENTIDADES (ATRIBUTOS)**
 
-* **LABIRINTO** (**id_labirinto**, dimensao)
-* **CELULA** (**id_celula**, coordenada_x, coordenada_y, parede_norte, parede_sul, parede_leste, parede_oeste, id_labirinto)
-* **CORRIDA** (**id_percurso**, desafio_cumprido, finalizada, id_labirinto)
-* **TELEMETRIA** (velocidade_media, tempo_total, tensao_media, corrente_media, velocidade_maxima_percurso, id_percurso)
+- **LABIRINTO** (**id_labirinto**, tipo_labirinto)
+- **CELULA** (**id_celula**, coordenada_x, coordenada_y, parede_norte, parede_sul, parede_leste, parede_oeste, id_labirinto)
+- **CORRIDA** (**id_corrida**, desafio_cumprido, status_corrida, data_hora_inicio, data_hora_fim, id_labirinto)
+- **TELEMETRIA** (velocidade_media, tempo_total, tensao_media, corrente_media, velocidade_maxima_percurso, id_corrida)
 
 #### 6.5.2 Diagrama Entidade-Relacionamento (DER)
 
 ![Diagrama Entidade-Relacionamento](../assets/software/diagrama_entidade_relacionamento.png)
 
 <div style="text-align: center;">Autores: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a> e <a href="https://github.com/mtsmgn0">Mateus Magno</a></div>
+
+#### 6.5.3 Diagrama Lógico de Dados (DLD)
+
+![Diagrama Lógico de Dados](../assets/software/diagrama_logico_de_dados.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
 ---
 
@@ -340,7 +346,7 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.1|04/05/2026|[Euller](https://github.com/Potatoyz908)|Atualização dos diagramas e adição de mais informações|[Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
-|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| - |
-|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Maria Eduarda](https://github.com/dudaa28) |
-|1.5 | 09/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do Diagrama  de Sequências e Atualização da página| [Euller Júlio](https://github.com/Potatoyz908) |
-|1.6 | 09/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Adição de diagramas de sequência e explicação da arquitetura adotada|
+|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
+|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
+
+|1.5 | 05/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama lógico de dados| [Euller Júlio](https://github.com/Potatoyz908)|
