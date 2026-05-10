@@ -1,0 +1,6 @@
+dependencies:
+  idf:
+    version: '>=5.0'
+description: A dead simple library for the MPU9250
+url: https://sr.ht/~truita/esp-mpu9250
+version: 1.0.1

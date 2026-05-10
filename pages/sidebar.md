@@ -2,9 +2,11 @@
 - [**Cronograma Geral**](pages/docs/cronograma.md)
 - [**EAP Geral**](pages/docs/eap_geral.md)
 - **Núcleos**
-  - [1. Eletrônica](pages/docs/nucleos/eletronica.md)
-  - [2. Energia](pages/docs/nucleos/energia.md)
-  - [3. Estrutura](pages/docs/nucleos/estrutura.md)
-  - [4. Software](pages/docs/nucleos/software.md)
-- **Software**
-  - [Arquitetura de Software](docs/software/arquitetura-software.md)
+  - [*1. Eletrônica*](pages/docs/nucleos/eletronica.md)
+  - [*2. Energia*](pages/docs/nucleos/energia.md)
+  - *3. Estrutura*
+    - [Métodos de Transmissão](mec/estudo_metodos_transmissao.md)
+    - [Características da Roda](mec/esboco_caracteristicas_desejaveis_rodas.md)
+  - *4. Software*
+    - [Arquitetura de Software](docs/software/arquitetura-software.md)
+    - [Roteiro de Testes Funcionais](/pages/docs/software/roteiro-testes-funcionais.md)

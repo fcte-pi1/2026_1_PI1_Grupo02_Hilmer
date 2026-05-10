@@ -26,16 +26,16 @@ As principais responsabilidades do sistema são:
 
 ## 3. Padrão Arquitetural Adotado
 
-A solução adota uma arquitetura **monolítica em camadas**, dividida em:
+A solução adota uma arquitetura **monolítica em camadas**, separando as responsabilidades de interface, aplicação/API, comunicação em tempo real e persistência de dados. Essa estrutura está dividida em:
 
 - **Camada de Apresentação:** interface web desenvolvida em React;
 - **Camada de Aplicação/API:** backend desenvolvido em FastAPI;
 - **Camada de Persistência:** banco de dados relacional PostgreSQL;
 - **Camada de Comunicação em Tempo Real:** uso de WebSocket para atualização da telemetria.
 
-Essa escolha foi feita porque o projeto possui escopo acadêmico, prazo limitado e necessidade de integração direta entre os módulos. Uma arquitetura monolítica em camadas é suficiente para atender aos requisitos do projeto, mantendo a solução simples, compreensível e de fácil manutenção pela equipe.
+Essa escolha foi feita por ser mais simples, adequada ao escopo acadêmico do projeto e compatível com o prazo da disciplina. Além disso, uma arquitetura monolítica em camadas é suficiente para atender aos requisitos de telemetria, monitoramento, armazenamento e consulta de resultados.
 
-Não foi adotada uma arquitetura de microsserviços, pois ela aumentaria a complexidade de desenvolvimento, implantação e manutenção sem necessidade para o tamanho atual do sistema.
+Não foram adotadas alternativas mais complexas, como microsserviços, pois destacamos que elas aumentariam a complexidade de implantação, comunicação e manutenção sem necessidade para o tamanho atual da solução.
 
 ---
 
@@ -102,15 +102,102 @@ Os módulos principais são:
 - **Módulo de Persistência:** armazena os dados finais das corridas;
 - **Módulo de Consulta:** permite visualizar resultados históricos.
 
+### 6.1.1 Comportamento Dinâmico (Diagrama de Estados)
+
+O comportamento do sistema durante o ciclo de uma corrida é regido por estados que garantem a integridade da telemetria e o controle da sessão. O fluxo transita desde a configuração inicial até o salvamento final dos dados no PostgreSQL.
+
+Ele contempla estados como:
+
+- aguardando configuração;
+- sessão iniciada;
+- aguardando largada;
+- mapeamento inicial;
+- conexão perdida;
+- mapa consolidado;
+- cálculo de rota otimizada;
+- execução da rota otimizada;
+- alerta crítico;
+- desafio cumprido;
+- desafio não cumprido;
+- salvamento dos dados;
+- corrida finalizada.
+
+Esse diagrama auxilia na compreensão do comportamento dinâmico do sistema e dos eventos que provocam transições entre estados.
+
+<p style="text-align: center;">
+  <em>Figura 2: Diagrama de Estados</em>
+</p>
+
+![Diagrama de Estados](../assets/software/diagrama-estados.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
+
+### 6.1.2 Fluxo Operacional (Diagrama de Atividades UML)
+
+O Diagrama de Atividades detalha o comportamento funcional e a coordenação entre o sistema embarcado e a interface de monitoramento, evidenciando a lógica de controle e o processamento de dados.
+
+#### Estrutura do Diagrama
+
+O fluxo utiliza **Raias (swimlanes)** para delimitar as responsabilidades entre os dois atores principais:
+
+*   **Micromouse (Embarcado):** Responsável pela execução do algoritmo de navegação (Flood Fill), coleta de dados sensoriais (bateria, velocidade, sensores) e transmissão de telemetria.
+*   **Sistema Web:** Responsável pela orquestração da sessão, validação de pacotes, interface de usuário e persistência de dados no PostgreSQL.
+
+#### Descrição Detalhada das Atividades
+
+1.  **Início e Decisão de Sessão:** O processo inicia no Sistema Web com a seleção do tipo de labirinto. Um **nó de decisão** garante que a sessão só avance se o labirinto for selecionado e a sessão iniciada corretamente.
+
+2.  **Paralelismo no Micromouse:** Após o sinal de início, o robô utiliza uma **barra de bifurcação (fork)** para executar simultaneamente a coleta de dados e o processamento de movimentação.
+
+3.  **Ciclo de Telemetria (Insumos e Resultados):**
+    *   **Entrada:** Pacotes de telemetria transmitidos via Bluetooth/Wi-Fi.
+    *   **Processamento:** O Sistema Web recebe e valida os pacotes. Caso sejam inválidos (**nó de decisão**), o pacote é descartado com a respectiva sinalização de falha de validação.
+
+4.  **Sincronização e Atualização:** Se os dados forem válidos, o fluxo utiliza uma nova **barra de bifurcação** para atualizar simultaneamente o trajeto no mapa, os indicadores de performance e a checagem de alertas críticos (visuais e sonoros).
+
+5.  **Pontos de Controle e Encerramento:**
+    *   O sistema monitora continuamente, através de nós de decisão, se o **Objetivo foi alcançado** ou se houve um **Encerramento Manual** da sessão.
+    *   **Saída Final:** Dependendo do desfecho, o status da corrida é alterado para "Desafio Cumprido" ou "Desafio Não Cumprido".
+    *   A persistência automática dos dados ocorre no Banco de Dados antes de o fluxo convergir para o **estado final**.
+
+<p style="text-align: center;">
+  <em>Figura 3: Diagrama de Atividades UML</em>
+</p>
+
+![Diagrama de Atividades UML](../assets/software/diagrama_de_atividades_uml.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
+
 ---
+
 
 ### 6.2 Visão de Processos
 
-A visão de processos descreve o comportamento dinâmico do sistema durante uma corrida.
+A visão de processos descreve o comportamento dinâmico do sistema durante uma corrida. O foco aqui é a comunicação, a sincronização e o fluxo de dados entre os componentes em tempo real.
 
-O sistema inicia aguardando configuração da sessão. Após a seleção do labirinto e início da corrida, passa a receber telemetria, atualizar a interface em tempo real e acompanhar o estado da execução. Ao final da corrida, o sistema salva os dados e encerra a sessão.
+O sistema inicia aguardando a configuração da sessão. Após a seleção do labirinto e início da corrida, passa a receber telemetria, atualizar a interface em tempo real e acompanhar o estado da execução. Ao final da corrida, o sistema salva os dados e encerra a sessão. Também são considerados estados de exceção, como perda de conexão, alerta crítico, desafio não cumprido e falha na execução.
 
-Também são considerados estados de exceção, como perda de conexão, alerta crítico, desafio não cumprido e falha na execução.
+#### 6.2.1 Diagrama de Sequência: Ciclo de Vida da Corrida e Telemetria
+
+<p style="text-align: center;">
+  <em>Figura 1: Fluxo de comunicação entre Micromouse, Backend FastAPI e Frontend React.</em>
+</p>
+
+![Diagrama de Sequência - Ciclo de Vida da Corrida](../assets/software/diagrama_sequencia.png)
+
+
+<div style="text-align: center;">
+  Autores: 
+  <a href="https://github.com/Potatoyz908">Euller</a> e 
+  <a href="https://github.com/dudaa28">Maria Eduarda</a>
+</div>
+
+
+#### 6.2.2 Descrição dos Componentes e Fluxos
+
+*   **Sincronização via WebSockets:** O uso de WebSockets entre o **Frontend React** e o **Backend FastAPI** permite a atualização reativa do mapa e dos indicadores de desempenho (bateria e velocidade) com baixa latência, eliminando a necessidade de *polling* constante.
+*   **Validação e Resiliência (HU-09 e HU-10):** O backend atua como um filtro de integridade. Pacotes com campos ausentes ou formatos inválidos são descartados para evitar a poluição do banco de dados **PostgreSQL**. O monitoramento de *timeout* (3 segundos) garante que o avaliador seja notificado imediatamente sobre instabilidades na conexão Wi-Fi.
+*   **Persistência Automática (HU-16):** Independente do sucesso no labirinto, o sistema garante a persistência do trajeto percorrido e dos eventos críticos, permitindo que a equipe realize a análise pós-corrida mesmo em casos de falha do robô.
 
 ---
 
@@ -125,7 +212,17 @@ A implementação será dividida em:
 - **Banco PostgreSQL:** responsável pela persistência dos dados estruturados;
 - **WebSocket:** responsável pela atualização em tempo real dos dados da corrida.
 
----
+### 6.3.1 Estrutura de Camadas e Pacotes (Diagrama de Pacotes)
+
+O diagrama a seguir apresenta a organização do sistema em camadas (Apresentação, Aplicação e Dados) e os respectivos pacotes/módulos que compõem cada uma delas, detalhando a estrutura lógica descrita acima.
+
+<p style="text-align: center;">
+  <em>Figura: Diagrama de Pacotes</em>
+</p>
+
+![Diagrama de Pacotes](../assets/software/diagrama-pacotes.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
 ### 6.4 Visão de Implantação
 
@@ -195,55 +292,7 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 
 ---
 
-## 7. Diagrama de Estados
-
-O diagrama de estados representa o comportamento do sistema durante o ciclo de uma corrida.
-
-Ele contempla estados como:
-
-- aguardando configuração;
-- sessão iniciada;
-- aguardando largada;
-- mapeamento inicial;
-- conexão perdida;
-- mapa consolidado;
-- cálculo de rota otimizada;
-- execução da rota otimizada;
-- alerta crítico;
-- desafio cumprido;
-- desafio não cumprido;
-- salvamento dos dados;
-- corrida finalizada.
-
-Esse diagrama auxilia na compreensão do comportamento dinâmico do sistema e dos eventos que provocam transições entre estados.
-
-![Diagrama de Estados](../assets/software/diagrama-estados.png)
-
-<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
-
----
-
-## 8. Diagrama de Atividades UML
-
-O Diagrama de Atividades detalha o fluxo operacional e a interação entre os dois principais atores do sistema: o Micromouse (Sistema Embarcado) e o Sistema Web (Interface de Monitoramento). Ele descreve desde o processo de calibração inicial até a persistência final dos dados após a conclusão do desafio.
-
-#### Descrição do Fluxo
-
-O fluxo é dividido em duas raias (swimlanes) que operam de forma coordenada:
-
-- Micromouse: Inicia com a calibração automática de luz. Caso a calibração falhe, o sistema sinaliza erro; se for bem-sucedida, inicia a exploração. Durante o percurso, o robô processa dados dos sensores IR e encoders, transmitindo pacotes via Bluetooth/Wi-Fi continuamente.
-
-- Sistema Web: Recebe os pacotes de telemetria e realiza a validação. Dados inválidos são descartados, enquanto dados válidos atualizam a interface em tempo real (mapa, bateria e velocidade). O sistema também monitora alertas críticos e a conectividade.
-
-- Encerramento: Ao identificar que o desafio foi cumprido, o sistema web altera o status da corrida e realiza a persistência automática de todos os dados coletados no Banco de Dados PostgreSQL.
-
-![Diagrama de Atividades UML](../assets/software/diagrama_de_atividades_uml.png)
-
-<div style="text-align: center;">Autor: <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
-
----
-
-## . Justificativa da Stack
+## 7. Justificativa da Stack
 
 A stack foi escolhida considerando a familiaridade da equipe, a simplicidade de implementação e a adequação aos requisitos do projeto.
 
@@ -265,7 +314,7 @@ O WebSocket foi escolhido para permitir comunicação em tempo real entre backen
 
 ---
 
-## 10. Relação com os Requisitos do Sistema
+## 8. Relação com os Requisitos do Sistema
 
 A arquitetura proposta atende aos principais requisitos da frente de software:
 
@@ -281,7 +330,7 @@ A arquitetura proposta atende aos principais requisitos da frente de software:
 
 ---
 
-## 11. Considerações Finais
+## 9. Considerações Finais
 
 A arquitetura proposta busca equilibrar simplicidade, clareza e capacidade de atender aos requisitos do projeto. A separação entre frontend, backend e banco de dados facilita o desenvolvimento em equipe, enquanto o uso de WebSocket permite o monitoramento em tempo real necessário para acompanhar a corrida do Micromouse.
 
@@ -289,7 +338,7 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 
 ---
 
-## 12. Histórico de Versões
+## 10. Histórico de Versões
 
 |Versão|Data|Autor|Descrição|Revisor |
 |---|---|---|---|---|

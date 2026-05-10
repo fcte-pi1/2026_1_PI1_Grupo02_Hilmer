@@ -330,3 +330,5 @@ TSWLatexianTemp*
 
 # xwatermark package
 *.xwm
+
+.venv
