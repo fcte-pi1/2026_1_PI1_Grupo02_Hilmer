@@ -212,7 +212,17 @@ A implementação será dividida em:
 - **Banco PostgreSQL:** responsável pela persistência dos dados estruturados;
 - **WebSocket:** responsável pela atualização em tempo real dos dados da corrida.
 
----
+### 6.3.1 Estrutura de Camadas e Pacotes (Diagrama de Pacotes)
+
+O diagrama a seguir apresenta a organização do sistema em camadas (Apresentação, Aplicação e Dados) e os respectivos pacotes/módulos que compõem cada uma delas, detalhando a estrutura lógica descrita acima.
+
+<p style="text-align: center;">
+  <em>Figura: Diagrama de Pacotes</em>
+</p>
+
+![Diagrama de Pacotes](../assets/software/diagrama-pacotes.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
 ### 6.4 Visão de Implantação
 
