@@ -28,14 +28,23 @@ cp .env.example .env
 ```
 *(O arquivo `.env.example` já vem configurado para conectar ao banco de dados local via Docker)*.
 
-### 3. Banco de Dados (Docker)
-Inicie o container do banco de dados PostgreSQL:
-```bash
-docker compose up -d
-```
-O banco será inicializado automaticamente com as configurações definidas no `docker-compose.yml` e o script `init.sql`.
+### 3. Usando Docker (Recomendado)
+Para rodar a aplicação completa (API + Banco de Dados) via Docker:
 
-### 4. Executando o Backend
+```bash
+docker compose up -d --build
+```
+Isso iniciará o banco de dados PostgreSQL e a API FastAPI.
+O servidor estará disponível em: [http://localhost:8000](http://localhost:8000)
+
+### 4. Rodando Localmente (Desenvolvimento)
+Caso prefira rodar apenas o banco no Docker e a API localmente:
+
+Inicie apenas o banco de dados:
+```bash
+docker compose up db -d
+```
+
 Crie e ative um ambiente virtual:
 ```bash
 python -m venv .venv

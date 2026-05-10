@@ -13,5 +13,16 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: unless-stopped
 
+  api:
+    build: .
+    container_name: micromouse_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://micromouse:micromouse@db:5432/micromouse_db
+    depends_on:
+      - db
+    restart: unless-stopped
+
 volumes:
   pgdata:
