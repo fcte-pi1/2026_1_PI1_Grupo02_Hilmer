@@ -11,6 +11,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U micromouse -d micromouse_db"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   api:
@@ -21,8 +26,10 @@ services:
     environment:
       - DATABASE_URL=postgresql://micromouse:micromouse@db:5432/micromouse_db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   pgdata:
+
