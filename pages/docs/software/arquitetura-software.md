@@ -160,7 +160,81 @@ Neste projeto, a visão de casos de uso foi substituída por uma visão de dados
 
 ### 6.1 Visão Lógica
 
-A visão lógica descreve os principais módulos da solução e suas responsabilidades.
+A visão lógica descreve os principais módulos da solução de software e suas responsabilidades.
+
+Os módulos principais são:
+
+- **Interface Web:** exibe dados de monitoramento e telas de consulta;
+- **Módulo de Telemetria:** recebe e valida os dados enviados pelo Micromouse;
+- **Módulo de Monitoramento:** atualiza a interface em tempo real;
+- **Módulo de Persistência:** armazena os dados finais das corridas;
+- **Módulo de Consulta:** permite visualizar resultados históricos.
+
+### 6.1.1 Comportamento Dinâmico (Diagrama de Estados)
+
+O comportamento do sistema durante o ciclo de uma corrida é regido por estados que garantem a integridade da telemetria e o controle da sessão. O fluxo transita desde a configuração inicial até o salvamento final dos dados no PostgreSQL.
+
+Ele contempla estados como:
+
+- aguardando configuração;
+- sessão iniciada;
+- aguardando largada;
+- mapeamento inicial;
+- conexão perdida;
+- mapa consolidado;
+- cálculo de rota otimizada;
+- execução da rota otimizada;
+- alerta crítico;
+- desafio cumprido;
+- desafio não cumprido;
+- salvamento dos dados;
+- corrida finalizada.
+
+Esse diagrama auxilia na compreensão do comportamento dinâmico do sistema e dos eventos que provocam transições entre estados.
+
+<p style="text-align: center;">
+  <em>Figura 2: Diagrama de Estados</em>
+</p>
+
+![Diagrama de Estados](../../../docs/assets/software/diagrama-estados.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
+
+### 6.1.2 Fluxo Operacional (Diagrama de Atividades UML)
+
+O Diagrama de Atividades detalha o comportamento funcional e a coordenação entre o sistema embarcado e a interface de monitoramento, evidenciando a lógica de controle e o processamento de dados.
+
+#### Estrutura do Diagrama
+
+O fluxo utiliza **Raias (swimlanes)** para delimitar as responsabilidades entre os dois atores principais:
+
+*   **Micromouse (Embarcado):** Responsável pela execução do algoritmo de navegação (Flood Fill), coleta de dados sensoriais (bateria, velocidade, sensores) e transmissão de telemetria.
+*   **Sistema Web:** Responsável pela orquestração da sessão, validação de pacotes, interface de usuário e persistência de dados no PostgreSQL.
+
+#### Descrição Detalhada das Atividades
+
+1.  **Início e Decisão de Sessão:** O processo inicia no Sistema Web com a seleção do tipo de labirinto. Um **nó de decisão** garante que a sessão só avance se o labirinto for selecionado e a sessão iniciada corretamente.
+
+2.  **Paralelismo no Micromouse:** Após o sinal de início, o robô utiliza uma **barra de bifurcação (fork)** para executar simultaneamente a coleta de dados e o processamento de movimentação.
+
+3.  **Ciclo de Telemetria (Insumos e Resultados):**
+    *   **Entrada:** Pacotes de telemetria transmitidos via Bluetooth/Wi-Fi.
+    *   **Processamento:** O Sistema Web recebe e valida os pacotes. Caso sejam inválidos (**nó de decisão**), o pacote é descartado com a respectiva sinalização de falha de validação.
+
+4.  **Sincronização e Atualização:** Se os dados forem válidos, o fluxo utiliza uma nova **barra de bifurcação** para atualizar simultaneamente o trajeto no mapa, os indicadores de performance e a checagem de alertas críticos (visuais e sonoros).
+
+5.  **Pontos de Controle e Encerramento:**
+    *   O sistema monitora continuamente, através de nós de decisão, se o **Objetivo foi alcançado** ou se houve um **Encerramento Manual** da sessão.
+    *   **Saída Final:** Dependendo do desfecho, o status da corrida é alterado para "Desafio Cumprido" ou "Desafio Não Cumprido".
+    *   A persistência automática dos dados ocorre no Banco de Dados antes de o fluxo convergir para o **estado final**.
+
+<p style="text-align: center;">
+  <em>Figura 3: Diagrama de Atividades UML</em>
+</p>
+
+![Diagrama de Atividades UML](../../../docs/assets/software/diagrama_de_atividades_uml.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
 
 ---
 
@@ -308,11 +382,18 @@ A visão de processos descreve o comportamento dinâmico do sistema durante uma 
 10. O Micromouse executa a rota otimizada.
 11. A sessão é encerrada.
 
----
+![Diagrama de Sequência - Ciclo de Vida da Corrida](../../../docs/assets/software/diagrama_sequencia.png)
+
+<div style="text-align: center;">
+  Autores:
+  <a href="https://github.com/Potatoyz908">Euller</a> e
+  <a href="https://github.com/dudaa28">Maria Eduarda</a>
+</div>
 
 ### 6.2.2 Processos Embarcados
 
 O firmware embarcado executa processos concorrentes utilizando FreeRTOS.
+
 
 ### Tasks principais
 
@@ -331,9 +412,8 @@ O firmware embarcado executa processos concorrentes utilizando FreeRTOS.
 1. Sensores são lidos em tasks independentes.
 2. Os dados são agregados em uma estrutura compartilhada.
 3. A task de agregação monta a estrutura `RobotData`.
-4. Os dados são armazenados localmente no SD Card.
-5. Em paralelo, a telemetria é enviada ao backend.
-6. O backend valida, processa e persiste os dados.
+4. Em paralelo, a telemetria é enviada ao backend.
+5. O backend valida, processa e persiste os dados.
 
 ---
 
@@ -374,16 +454,45 @@ O sistema considera:
 
 A visão de implementação descreve como os componentes são organizados tecnologicamente.
 
----
+### 6.3.1 Estrutura de Camadas e Pacotes (Diagrama de Pacotes)
+
+O diagrama a seguir apresenta a organização do sistema em camadas (Apresentação, Aplicação e Dados) e os respectivos pacotes/módulos que compõem cada uma delas, detalhando a estrutura lógica descrita acima.
+
+<p style="text-align: center;">
+  <em>Figura: Diagrama de Pacotes</em>
+</p>
+
+![Diagrama de Pacotes](../../../docs/assets/software/diagrama-pacotes.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
 ### 6.3.1 Frontend
 
 O frontend React é organizado em:
 
-- componentes reutilizáveis;
-- páginas de monitoramento;
-- páginas de consulta;
-- gerenciamento de estado global.
+- **Computador do Usuário:** executa o navegador;
+- **Servidor Frontend:** disponibiliza a aplicação React;
+- **Servidor Backend:** executa a aplicação FastAPI;
+- **Fonte de Telemetria:** representa o Micromouse;
+- **Servidor de Banco de Dados:** executa o PostgreSQL.
+
+A comunicação entre os nós ocorre por meio dos seguintes protocolos:
+
+- **HTTPS:** comunicação entre navegador e frontend;
+- **HTTPS/REST:** comunicação tradicional entre frontend e backend;
+- **WSS/WebSocket:** comunicação em tempo real entre frontend e backend;
+- **Wi-Fi:** envio de telemetria do Micromouse ao backend;
+- **TCP/IP:** comunicação entre backend e banco de dados.
+
+#### Diagrama de Implantação
+
+O diagrama de implantação apresenta uma visão física e tecnológica da solução. Ele mostra onde cada parte do sistema será executada e como os componentes se comunicam.
+
+A arquitetura proposta considera que o usuário acessa o sistema por meio de um navegador. A interface web é desenvolvida em React e se comunica com o backend desenvolvido em FastAPI. O backend recebe os dados do Micromouse, processa a telemetria, envia atualizações em tempo real para o frontend via WebSocket e persiste os dados no PostgreSQL.
+
+![Diagrama de Implantação](../../../docs/assets/software/diagrama-implantacao.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
 
 ---
 
@@ -396,6 +505,36 @@ O backend FastAPI é organizado em:
 - serviços de telemetria;
 - serviços de persistência;
 - modelos de dados.
+
+Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo Entidade-Relacionamento (MER)** e seu respectivo **Diagrama Entidade-Relacionamento (DER)**, além do diagrama lógico de dados(DLD).
+
+#### 6.5.1 Modelo Entidade-Relacionamento (MER)
+
+**IDENTIFICAÇÃO DAS ENTIDADES**
+
+- **LABIRINTO**
+- **CELULA**
+- **CORRIDA**
+- **TELEMETRIA**
+
+**DESCRIÇÃO DAS ENTIDADES (ATRIBUTOS)**
+
+- **LABIRINTO** (**id_labirinto**, tipo_labirinto)
+- **CELULA** (**id_celula**, coordenada_x, coordenada_y, parede_norte, parede_sul, parede_leste, parede_oeste, id_labirinto)
+- **CORRIDA** (**id_corrida**, desafio_cumprido, status_corrida, data_hora_inicio, data_hora_fim, id_labirinto)
+- **TELEMETRIA** (velocidade_media, tempo_total, tensao_media, corrente_media, velocidade_maxima_percurso, id_corrida)
+
+#### 6.5.2 Diagrama Entidade-Relacionamento (DER)
+
+![Diagrama Entidade-Relacionamento](../../../docs/assets/software/diagrama_entidade_relacionamento.png)
+
+<div style="text-align: center;">Autores: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a> e <a href="https://github.com/mtsmgn0">Mateus Magno</a></div>
+
+#### 6.5.3 Diagrama Lógico de Dados (DLD)
+
+![Diagrama Lógico de Dados](../../../docs/assets/software/diagrama_logico_de_dados.png)
+
+<div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
 ---
 
@@ -665,7 +804,11 @@ No sistema embarcado, a utilização de FreeRTOS, ESP-IDF e organização modula
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
 |1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| - |
-|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Maria Eduarda](https://github.com/dudaa28) |
-|1.5 | 09/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do Diagrama  de Sequências e Atualização da página| [Euller Júlio](https://github.com/Potatoyz908) |
-|1.6 | 09/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Adição de diagramas de sequência e explicação da arquitetura adotada| [Victor Pontual](https://github.com/VictorPontual)|
+|1.4.1 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
+|1.4.2 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
+|1.5 | 05/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama lógico de dados| [Euller Júlio](https://github.com/Potatoyz908)|
+|1.5.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Maria Eduarda](https://github.com/dudaa28) |
+|1.6 | 08/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama de pacotes| [Euller Júlio](https://github.com/Potatoyz908)
+|1.7 | 09/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do Diagrama  de Sequências e Atualização da página| [Euller Júlio](https://github.com/Potatoyz908) |
+|1.8 | 09/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Adição de diagramas de sequência e explicação da arquitetura adotada| [Victor Pontual](https://github.com/VictorPontual)|
 |2.0 | 10/05/2026 | [Victor Pontual](https://github.com/VictorPontual) | Revisão estrutural da arquitetura e integração completa das visões de hardware e software embarcado | - |

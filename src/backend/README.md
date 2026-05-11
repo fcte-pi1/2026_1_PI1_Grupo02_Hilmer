@@ -1,19 +1,93 @@
-# _Backend_
+# Micromouse Backend
 
-Esta pasta deverá armazenar arquivos referentes a:
+Este é o servidor backend para o projeto Micromouse, desenvolvido com FastAPI e PostgreSQL.
 
-- Código-fonte da API REST: rotas, controladores, modelos e lógica de negócio.
-- Arquivos de configuração do servidor: `app.py`, `server.js`, `main.go` etc., dependendo da linguagem/framework utilizado ([Flask](https://flask.palletsprojects.com/), [FastAPI](https://fastapi.tiangolo.com/), [Express](https://expressjs.com/), [Django](https://www.djangoproject.com/) etc.).
-- Arquivos de definição de dependências: `requirements.txt` ou `pyproject.toml` (Python), `package.json` (Node.js), `pom.xml` (Java/Maven) etc.
-- Scripts de migração e esquemas de banco de dados: arquivos `.sql`, scripts de migração ([Alembic](https://alembic.sqlalchemy.org/), [Sequelize](https://sequelize.org/) etc.) e seeds de dados para desenvolvimento.
-- Arquivos de configuração de ambiente: `.env.example` com as variáveis de ambiente necessárias (nunca o `.env` real).
-- Arquivos de containerização: `Dockerfile` e `docker-compose.yml`, caso o serviço seja executado em contêiner.
+## 🚀 Tecnologias
+- [Python 3.12+](https://www.python.org/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [SQLModel](https://sqlmodel.tiangolo.com/) (SQLAlchemy + Pydantic)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
 
-Evite incluir:
+## 🛠️ Como rodar o projeto
 
-- Credenciais e segredos: arquivos `.env`, chaves de API, senhas, tokens de acesso ou qualquer dado sensível **nunca** devem ser versionados.
-- Artefatos de build: diretórios como `__pycache__/`, `dist/`, `build/`, `.eggs/` devem ser gerados localmente e ignorados via `.gitignore`.
-- Dependências instaladas: pastas como `node_modules/` ou ambientes virtuais Python (`venv/`, `.env/`) não devem ser incluídos no repositório.
-- Arquivos temporários/específicos do sistema operacional: arquivos gerados automaticamente pelo sistema ou pelo gerenciador de arquivos (ex.: `*~`, `.DS_Store`, `Thumbs.db`).
-> [!WARNING]
-> **Não acrescente arquivos referentes ao _frontend_ nesta pasta.** Eles deverão ser armazenados na pasta [frontend](https://github.com/fcte-pi1/template/tree/main/src/frontend) deste repositório.
+### 1. Pré-requisitos
+Certifique-se de ter instalado:
+- Python 3.12 ou superior
+- Docker e Docker Compose
+
+### 2. Configuração do Ambiente
+Navegue até a pasta do backend:
+```bash
+cd src/backend
+```
+
+Crie um arquivo `.env` baseado no exemplo:
+```bash
+cp .env.example .env
+```
+*(O arquivo `.env.example` já vem configurado para conectar ao banco de dados local via Docker)*.
+
+### 3. Usando Docker (Recomendado)
+Para rodar a aplicação completa (API + Banco de Dados) via Docker:
+
+```bash
+docker compose up -d --build
+```
+Isso iniciará o banco de dados PostgreSQL e a API FastAPI.
+O servidor estará disponível em: [http://localhost:8000](http://localhost:8000)
+
+### 4. Rodando Localmente (Desenvolvimento)
+Caso prefira rodar apenas o banco no Docker e a API localmente:
+
+Inicie apenas o banco de dados:
+```bash
+docker compose up db -d
+```
+
+Crie e ative um ambiente virtual:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# ou
+.venv\Scripts\activate     # Windows
+```
+
+Instale as dependências:
+```bash
+pip install -r requirements.txt
+```
+
+Inicie o servidor de desenvolvimento:
+```bash
+fastapi dev app/main.py
+```
+
+O servidor estará disponível em: [http://localhost:8000](http://localhost:8000)
+
+## 🔄 Migrações (Alembic)
+
+O projeto utiliza o **Alembic** para gerenciar as migrações do banco de dados. Certifique-se de estar com o ambiente virtual ativado e na pasta `src/backend`.
+
+### Aplicar Migrações
+Para aplicar as migrações existentes ao banco de dados (atualizar o banco):
+```bash
+alembic upgrade head
+```
+
+### Criar uma Nova Migração
+Se você fizer alterações nos modelos em `app/models/`, gere uma nova migração com:
+```bash
+alembic revision --autogenerate -m "Descrição da migração"
+```
+
+### Verificar o Estado Atual
+Para ver qual a migração atual aplicada no banco:
+```bash
+alembic current
+```
+
+## 📖 Documentação (Swagger)
+Após iniciar o servidor, você pode acessar a documentação interativa da API:
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Redoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
