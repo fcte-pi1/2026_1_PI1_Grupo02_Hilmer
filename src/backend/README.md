@@ -65,6 +65,28 @@ fastapi dev app/main.py
 
 O servidor estará disponível em: [http://localhost:8000](http://localhost:8000)
 
+## 🔄 Migrações (Alembic)
+
+O projeto utiliza o **Alembic** para gerenciar as migrações do banco de dados. Certifique-se de estar com o ambiente virtual ativado e na pasta `src/backend`.
+
+### Aplicar Migrações
+Para aplicar as migrações existentes ao banco de dados (atualizar o banco):
+```bash
+alembic upgrade head
+```
+
+### Criar uma Nova Migração
+Se você fizer alterações nos modelos em `app/models/`, gere uma nova migração com:
+```bash
+alembic revision --autogenerate -m "Descrição da migração"
+```
+
+### Verificar o Estado Atual
+Para ver qual a migração atual aplicada no banco:
+```bash
+alembic current
+```
+
 ## 📖 Documentação (Swagger)
 Após iniciar o servidor, você pode acessar a documentação interativa da API:
 - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)

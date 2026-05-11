@@ -38,7 +38,7 @@ class Percurso(SQLModel, table=True):
     )
 
     # --- relationships ---
-    #util para atualizar os objetos em tempo real, sem precisar explicitar consultas ao banco de dados
+    #utilizado para atualizar os objetos em tempo real, sem precisar explicitar consultas ao banco de dados
     celula: Optional["Celula"] = Relationship(
         back_populates="percursos"
     )

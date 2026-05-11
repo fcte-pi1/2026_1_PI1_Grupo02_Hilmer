@@ -35,7 +35,7 @@ class Celula(SQLModel, table=True):
     )
 
     # --- relacionamentos entre tabelas ---
-    #util para atualizar os objetos em tempo real, sem precisar explicitar consultas ao banco de dados
+    #utilizado para atualizar os objetos em tempo real, sem precisar explicitar consultas ao banco de dados
     labirinto: Optional["Labirinto"] = Relationship(
         back_populates="celulas"
     )
