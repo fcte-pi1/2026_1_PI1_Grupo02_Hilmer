@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    container_name: micromouse_db
+    environment:
+      POSTGRES_USER: micromouse
+      POSTGRES_PASSWORD: micromouse
+      POSTGRES_DB: micromouse_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U micromouse -d micromouse_db"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: .
+    container_name: micromouse_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://micromouse:micromouse@db:5432/micromouse_db
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
