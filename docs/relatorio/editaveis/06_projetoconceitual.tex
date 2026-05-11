@@ -34,17 +34,301 @@
 
 \section{Análise de consumo energético}
 
-\textcolor{red}{Com relação ao consumo energético do produto desenvolvido, será necessário apresentar cálculos de consumo dos diversos componentes utilizados e explicar as decisões de projeto para atender a estas demandas.}
+\subsection{Identificação dos Subsistemas Elétricos}
+\label{sec:identificacao_subsistemas}
 
+A identificação dos subsistemas elétricos foi realizada com base nos componentes que consumirão energia durante a operação do micromouse, incluindo sensores, microcontroladores, atuadores, módulos de armazenamento e circuitos de suporte. Para fins de dimensionamento, foi adotado um tempo estimado de uso de 7200\,s, correspondente a uma missão de aproximadamente 2 horas. Os valores de tensão e corrente média foram obtidos a partir de \textit{datasheets} sempre que disponíveis, ou por estimativas conservadoras baseadas em condições realistas de operação.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Identificação dos subsistemas elétricos e parâmetros de operação}
+    \label{tab:subsistemas_eletricos}
+
+    \renewcommand{\arraystretch}{1.2}
+
+    \begin{tabular}{lcccc}
+        \hline
+        \textbf{Componente} &
+        \textbf{Qtde} &
+        \textbf{Tensão (V)} &
+        \textbf{Corrente média (mA)} &
+        \textbf{Tempo (s)} \\
+        \hline
+
+        ESP32 & 1 & 3,3 & 200 & 7200 \\
+        VL53L0X & 6 & 3,3 & 20 & 7200 \\
+        Motor N20 (6V) & 2 & 6,0 & 400 & 7200 \\
+        Driver (TB6612) & 1 & 3,3 & 30 & 7200 \\
+        MPU6050 & 1 & 3,3 & 4 & 7200 \\
+        INA226 & 1 & 3,3 & 0,33 & 7200 \\
+        SD Reader & 1 & 3,3 & 80 & 7200 \\
+        Regulador (MP1584EN) & 1 & 3,3 & 100 & 7200 \\
+        Outros (LEDs, perdas) & -- & 3,3 & 100 & 7200 \\
+
+        \hline
+    \end{tabular}
+\end{table}
+
+Os valores apresentados na Tabela~\ref{tab:subsistemas_eletricos} contemplam os principais elementos energizados do sistema.
+
+\subsection{Cálculo da Energia Consumida por Componente}
+\label{sec:calculo_energia_componente}
+
+A energia consumida por cada componente foi calculada por meio da expressão:
+
+\begin{equation}
+E = V \cdot I \cdot t
+\end{equation}
+
+em que $E$ representa a energia em joules, $V$ a tensão em volts, $I$ a corrente em ampères e $t$ o tempo de uso em segundos. Para os cálculos, as correntes em miliampères foram convertidas para ampères.
+
+A seguir, apresenta-se o detalhamento da energia consumida por cada subsistema, cujos valores estão sintetizados na Tabela~\ref{tab:energia_por_componente}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Energia consumida por componente}
+    \label{tab:energia_por_componente}
+
+    \renewcommand{\arraystretch}{1.2}
+
+    \begin{tabular}{lc}
+        \hline
+        \textbf{Componente} & \textbf{Energia (J)} \\
+        \hline
+
+        ESP32 & 4752,00 \\
+        VL53L0X & 2851,20 \\
+        Motor N20 (2 unidades) & 34560,00 \\
+        Driver (TB6612) & 712,80 \\
+        MPU6050 & 95,04 \\
+        INA226 & 7,84 \\
+        SD Reader & 1900,80 \\
+        Regulador (MP1584EN) & 2376,00 \\
+        Outros (LEDs, perdas) & 2376,00 \\
+
+        \hline
+        \textbf{Total} & \textbf{49631,68} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Estimativa do Consumo Total de Energia}
+\label{sec:consumo_total_energia}
+
+A energia total estimada por lançamento corresponde à soma das energias individuais dos subsistemas listados anteriormente:
+
+\begin{equation}
+E_{\text{total}}
+=
+4752{,}00 + 2851{,}20 + 34560{,}00 + 712{,}80 + 95{,}04 + 7{,}84 + 1900{,}80 + 2376{,}00 + 2376{,}00
+\end{equation}
+
+\begin{equation}
+E_{\text{total}}
+=
+49631{,}68\,\mathrm{J}
+\end{equation}
+
+Para expressar esse consumo em watt-hora, utiliza-se a relação:
+
+\begin{equation}
+1\,\mathrm{Wh} = 3600\,\mathrm{J}
+\end{equation}
+
+Logo, a conversão do consumo total é dada por:
+
+\begin{equation}
+E_{\text{total,Wh}}
+=
+\frac{49631{,}68}{3600}
+\approx
+13{,}79\,\mathrm{Wh}
+\end{equation}
+
+Também é possível estimar a corrente média total do sistema a partir da soma das correntes nominais:
+
+\begin{equation}
+I_{\text{nom}}
+=
+200 + 120 + 800 + 30 + 4 + 0{,}33 + 80 + 100 + 100
+=
+1434{,}33\,\mathrm{mA}
+\end{equation}
+
+Portanto,
+
+\begin{equation}
+I_{\text{nom}}
+\approx
+1{,}434\,\mathrm{A}
+\end{equation}
+
+Para tornar o dimensionamento mais robusto, foi aplicada uma margem de segurança de 40\%, a fim de contemplar variações de carga, perdas não modeladas e oscilações durante a operação:
+
+\begin{equation}
+I_{\text{proj}}
+=
+I_{\text{nom}} \times 1{,}4
+\end{equation}
+
+Substituindo-se o valor obtido:
+
+\begin{equation}
+I_{\text{proj}}
+=
+1{,}434 \times 1{,}4
+\approx
+2{,}01\,\mathrm{A}
+\end{equation}
+
+Em seguida, considerou-se um fator de utilização de 70\%, uma vez que nem todos os subsistemas operam continuamente em máxima corrente durante toda a missão:
+
+\begin{equation}
+I_{\text{real}}
+=
+I_{\text{proj}} \times 0{,}7
+\end{equation}
+
+Assim,
+
+\begin{equation}
+I_{\text{real}}
+=
+2{,}01 \times 0{,}7
+\approx
+1{,}41\,\mathrm{A}
+\end{equation}
+
+A capacidade mínima da bateria pode ser estimada por:
+
+\begin{equation}
+C_{\text{min}}
+=
+I_{\text{real}} \times t
+\end{equation}
+
+Para uma autonomia de 2 horas:
+
+\begin{equation}
+C_{\text{min}}
+=
+1{,}41 \times 2
+=
+2{,}82\,\mathrm{Ah}
+\approx
+2820\,\mathrm{mAh}
+\end{equation}
+
+Para uma autonomia de 3 horas:
+
+\begin{equation}
+C_{\text{min}}
+=
+1{,}41 \times 3
+=
+4{,}23\,\mathrm{Ah}
+\approx
+4230\,\mathrm{mAh}
+\end{equation}
+
+\subsection{Escolha da Fonte de Alimentação}
+\label{sec:escolha_fonte}
+
+Com base no consumo energético total estimado, a demanda por lançamento é de aproximadamente 13,79\,Wh. Considerando uma margem de segurança adicional de 25\%, obtém-se uma demanda projetada de aproximadamente 17,24\,Wh.
+
+\begin{equation}
+E_{\text{proj,Wh}}
+=
+13{,}79 \times 1{,}25
+\approx
+17{,}24\,\mathrm{Wh}
+\end{equation}
+
+A fonte de alimentação selecionada é um conjunto formado por duas células idênticas em série do modelo N21700CG-50 da BAK Battery. Considerando as especificações típicas informadas, cada célula possui tensão nominal de 3,6\,V e capacidade de 5,0\,Ah. Em série, o conjunto passa a fornecer tensão nominal de 7,2\,V, mantendo a capacidade de 5,0\,Ah.
+
+A energia nominal do conjunto é dada por:
+
+\begin{equation}
+E_{\text{bat}}
+=
+7{,}2 \times 5{,}0
+=
+36\,\mathrm{Wh}
+\end{equation}
+
+Esse valor é superior à demanda projetada de 17,24\,Wh, oferecendo folga energética suficiente para o funcionamento do robô.
+
+Como os motores são nominais de 6\,V, o barramento principal será tratado como a alimentação de potência do sistema, enquanto os blocos de lógica, sensores e microcontrolador serão alimentados com tensão regulada pelo MP1584EN para 3,3\,V.
+
+A tabela a seguir resume a escolha da fonte.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Resumo da fonte de alimentação selecionada}
+    \label{tab:fonte_alimentacao}
+
+    \renewcommand{\arraystretch}{1.2}
+
+    \begin{tabular}{lccc}
+        \hline
+        \textbf{Fonte} & \textbf{Tensão nominal} & \textbf{Capacidade} & \textbf{Energia} \\
+        \hline
+        2 células em série & 7,2\,V & 5,0\,Ah & 36\,Wh \\
+        \hline
+    \end{tabular}
+\end{table}
+
+subsubsection{Síntese do dimensionamento}
+
+Com base nos cálculos apresentados, o sistema possui consumo energético estimado de 49\,631,68\,J por lançamento, equivalente a aproximadamente 13,79\,Wh. Após aplicação de margem de segurança de 25\%, a demanda projetada passa a ser de aproximadamente 17,24\,Wh.
+
+A fonte selecionada, composta por duas células em série, fornece aproximadamente 36\,Wh, o que atende confortavelmente à demanda do projeto. Dessa forma, a solução escolhida supre a necessidade energética do micromouse e oferece margem adequada para picos de corrente, perdas de conversão e variações operacionais.
+
+Ressalta-se que a corrente dos motores foi considerada em regime nominal de operação, e não em condição de \textit{stall}, evitando superdimensionamento excessivo do sistema de alimentação.
+
+\subsection{Planejamento do Circuito de Alimentação}
+\label{sec:planejamento_circuito_alimentacao}
+
+O circuito de alimentação será organizado em dois blocos: potência e lógica. O barramento principal, derivado das duas células em série, alimenta a etapa de potência, enquanto o regulador MP1584EN reduz a tensão para 3,3\,V na etapa lógica.
+
+Para reduzir oscilações de tensão e interferências entre os subsistemas, serão adotadas as seguintes medidas:
+\begin{itemize}
+    \item uso de regulador buck para a linha de 3,3\,V;
+    \item capacitores de desacoplamento próximos aos circuitos integrados;
+    \item capacitor de bulk na entrada do sistema;
+    \item separação física e elétrica entre alimentação dos motores e da lógica;
+    \item uso do driver TB6612 como interface entre ESP32 e motores.
+\end{itemize}
+
+A INA226 será utilizada apenas para monitoração de corrente, tensão e potência, permitindo acompanhar o comportamento energético em tempo real. Assim, a estabilidade do sistema será garantida pela combinação entre regulação adequada, desacoplamento e separação das linhas de alimentação.
+
+\section{Referências dos Datasheets}
+\label{sec:referencias}
 
 \begin{itemize}
-    \item \textcolor{red}{ \textbf{Identificação dos Subsistemas Elétricos:} liste todos os componentes que consumirão energia, como sensores, microcontroladores, atuadores e módulos de armazenamento de dados. Para cada componente, registre a tensão de operação (V), corrente média (mA) e tempo estimado de uso (s).}
-    \item \textcolor{red}{ \textbf{Cálculo da Energia Consumida por Componente:} utilize a fórmula: $E = V I t$, onde $E$ é a energia em joules, $V$ é a tensão em volts, $I$ a corrente em ampères e $t$ o tempo em segundos. Realize esse cálculo para cada componente do sistema.}
-    \item \textcolor{red}{ \textbf{Estimativa do Consumo Total de Energia:} some as energias de todos os componentes para obter o consumo energético total estimado do sistema por lançamento.}
-    \item \textcolor{red}{ \textbf{Escolha da Fonte de Alimentação:} com base no consumo total, converta para watt-hora: 1 Wh = 3600 J. Adicione e justifique uma margem de segurança (pesquisar o que é usual para este tipo de sistema) e selecione uma bateria ou fonte que supra a demanda.}
-    \item \textcolor{red}{ \textbf{Planejamento do Circuito de Alimentação:} analise a necessidade de inclusão de reguladores de tensão, proteções contra sobrecorrente, e isolamento para atuadores. Como as oscilações de tensão serão controladas?}
-    \item \textcolor{red}{ \textbf{Monitoramento via \textit{software}:} implemente, no \textit{software} embarcado, rotinas para medir a tensão da bateria e registrar dados de tempo de operação. Colete os dados para análise.}
-    \item \textcolor{red}{ \textbf{Validação com Testes Reais:} realize testes de campo para comparar o consumo estimado com o real. Ajuste a capacidade da fonte se necessário e refine o software de coleta de dados. Justifique a diferença de resultados (real x teórica), de acordo com a literatura.}
+
+    \item ESP32 -- Espressif Systems. \textit{ESP32 Series Datasheet}. Disponível em:
+    \url{https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf}
+
+    \item VL53L0X -- STMicroelectronics. \textit{VL53L0X Time-of-Flight Ranging Sensor Datasheet}. Disponível em:
+    \url{https://www.st.com/resource/en/datasheet/vl53l0x.pdf}
+
+    \item MPU6050 -- InvenSense. \textit{MPU-6000 and MPU-6050 Product Specification}. Disponível em:
+    \url{https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf}
+
+    \item TB6612FNG -- Toshiba. \textit{TB6612FNG Dual H-Bridge Motor Driver Datasheet}. Disponível em:
+    \url{https://toshiba.semicon-storage.com/info/docget.jsp?did=10660}
+
+    \item MP1584EN -- Monolithic Power Systems. \textit{MP1584 3A Step-Down Converter Datasheet}. Disponível em:
+    \url{https://www.monolithicpower.com/en/documentview/productdocument/index/version/2/document_type/Datasheet/lang/en/sku/MP1584EN-LF-Z/document_id/221}
+
+    \item INA226 -- Texas Instruments. \textit{INA226 Current/Power Monitor Datasheet}. Disponível em:
+    \url{https://www.ti.com/lit/ds/symlink/ina226.pdf}
+
+    \item BAK N21700CG-50 -- BAK Battery. \textit{Product Data Sheet}. Especificações consideradas: tensão nominal de 3,6\,V, capacidade típica de 5,0\,Ah, tensão máxima de carga de 4,2\,V, tensão final de descarga de 2,5\,V, corrente padrão de carga de 0,5C e corrente máxima de descarga de 3C.
+
+    \item Motor N20 6V -- Especificações obtidas a partir do modelo comercial adquirido, complementadas por valores típicos de motores N20 equivalentes utilizados em aplicações embarcadas.
+
 \end{itemize}
 
 \section{Descrição de \textit{software}}
