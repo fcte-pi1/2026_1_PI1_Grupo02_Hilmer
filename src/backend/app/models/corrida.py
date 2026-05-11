@@ -29,6 +29,7 @@ class Corrida(SQLModel, table=True):
     velocidade_maxima_percurso: Optional[float] = None
     velocidade_media: Optional[float] = None
     status_corrida: StatusCorrida = Field(
+        default=StatusCorrida.EM_ANDAMENTO,
         sa_column=Column(
             PgENUM(
                 StatusCorrida,
@@ -53,7 +54,9 @@ class Corrida(SQLModel, table=True):
             Integer, ForeignKey("labirinto.id_labirinto")
         ),
     )
-    desafio_cumprido: Optional[bool] = None
+    desafio_cumprido: Optional[bool] = Field(
+        default=False
+    )
 
     # --- relationships ---
     #utilizado para atualizar os objetos em tempo real, sem precisar explicitar consultas ao banco de dados

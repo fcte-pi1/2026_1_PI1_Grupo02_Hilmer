@@ -22,10 +22,10 @@ class Celula(SQLModel, table=True):
     )
     coordenada_x: Optional[int] = None
     coordenada_y: Optional[int] = None
-    parede_norte: Optional[bool] = None
-    parede_sul: Optional[bool] = None
-    parede_leste: Optional[bool] = None
-    parede_oeste: Optional[bool] = None
+    parede_norte: Optional[bool] = Field(default=False)
+    parede_sul: Optional[bool] = Field(default=False)
+    parede_leste: Optional[bool] = Field(default=False)
+    parede_oeste: Optional[bool] = Field(default=False)
     id_labirinto: Optional[int] = Field(
         default=None,
         sa_column=Column(
