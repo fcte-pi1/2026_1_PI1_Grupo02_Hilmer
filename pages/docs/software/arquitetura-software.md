@@ -128,7 +128,7 @@ Esse diagrama auxilia na compreensão do comportamento dinâmico do sistema e do
   <em>Figura 2: Diagrama de Estados</em>
 </p>
 
-![Diagrama de Estados](../assets/software/diagrama-estados.png)
+![Diagrama de Estados](../../../docs/assets/software/diagrama-estados.png)
 
 <div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
 
@@ -164,7 +164,7 @@ O fluxo utiliza **Raias (swimlanes)** para delimitar as responsabilidades entre 
   <em>Figura 3: Diagrama de Atividades UML</em>
 </p>
 
-![Diagrama de Atividades UML](../assets/software/diagrama_de_atividades_uml.png)
+![Diagrama de Atividades UML](../../../docs/assets/software/diagrama_de_atividades_uml.png)
 
 <div style="text-align: center;">Autor: <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
 
@@ -183,12 +183,12 @@ O sistema inicia aguardando a configuração da sessão. Após a seleção do la
   <em>Figura 1: Fluxo de comunicação entre Micromouse, Backend FastAPI e Frontend React.</em>
 </p>
 
-![Diagrama de Sequência - Ciclo de Vida da Corrida](../assets/software/diagrama_sequencia.png)
+![Diagrama de Sequência - Ciclo de Vida da Corrida](../../../docs/assets/software/diagrama_sequencia.png)
 
 
 <div style="text-align: center;">
-  Autores: 
-  <a href="https://github.com/Potatoyz908">Euller</a> e 
+  Autores:
+  <a href="https://github.com/Potatoyz908">Euller</a> e
   <a href="https://github.com/dudaa28">Maria Eduarda</a>
 </div>
 
@@ -220,7 +220,7 @@ O diagrama a seguir apresenta a organização do sistema em camadas (Apresentaç
   <em>Figura: Diagrama de Pacotes</em>
 </p>
 
-![Diagrama de Pacotes](../assets/software/diagrama-pacotes.png)
+![Diagrama de Pacotes](../../../docs/assets/software/diagrama-pacotes.png)
 
 <div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
@@ -250,7 +250,7 @@ O diagrama de implantação apresenta uma visão física e tecnológica da solu�
 
 A arquitetura proposta considera que o usuário acessa o sistema por meio de um navegador. A interface web é desenvolvida em React e se comunica com o backend desenvolvido em FastAPI. O backend recebe os dados do Micromouse, processa a telemetria, envia atualizações em tempo real para o frontend via WebSocket e persiste os dados no PostgreSQL.
 
-![Diagrama de Implantação](../assets/software/diagrama-implantacao.png)
+![Diagrama de Implantação](../../../docs/assets/software/diagrama-implantacao.png)
 
 <div style="text-align: center;">Autor: <a href="https://github.com/Potatoyz908">Euller</a></div>
 
@@ -280,13 +280,13 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 
 #### 6.5.2 Diagrama Entidade-Relacionamento (DER)
 
-![Diagrama Entidade-Relacionamento](../assets/software/diagrama_entidade_relacionamento.png)
+![Diagrama Entidade-Relacionamento](../../../docs/assets/software/diagrama_entidade_relacionamento.png)
 
 <div style="text-align: center;">Autores: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a> e <a href="https://github.com/mtsmgn0">Mateus Magno</a></div>
 
 #### 6.5.3 Diagrama Lógico de Dados (DLD)
 
-![Diagrama Lógico de Dados](../assets/software/diagrama_logico_de_dados.png)
+![Diagrama Lógico de Dados](../../../docs/assets/software/diagrama_logico_de_dados.png)
 
 <div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
@@ -348,5 +348,5 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
 |1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 |1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
-
 |1.5 | 05/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama lógico de dados| [Euller Júlio](https://github.com/Potatoyz908)|
+|1.6 | 08/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama de pacotes| [Euller Júlio](https://github.com/Potatoyz908)
