@@ -278,6 +278,59 @@ A tabela a seguir resume a escolha da fonte.
     \end{tabular}
 \end{table}
 
+subsubsection{Síntese do dimensionamento}
+
+Com base nos cálculos apresentados, o sistema possui consumo energético estimado de 49\,631,68\,J por lançamento, equivalente a aproximadamente 13,79\,Wh. Após aplicação de margem de segurança de 25\%, a demanda projetada passa a ser de aproximadamente 17,24\,Wh.
+
+A fonte selecionada, composta por duas células em série, fornece aproximadamente 36\,Wh, o que atende confortavelmente à demanda do projeto. Dessa forma, a solução escolhida supre a necessidade energética do micromouse e oferece margem adequada para picos de corrente, perdas de conversão e variações operacionais.
+
+Ressalta-se que a corrente dos motores foi considerada em regime nominal de operação, e não em condição de \textit{stall}, evitando superdimensionamento excessivo do sistema de alimentação.
+
+\subsection{Planejamento do Circuito de Alimentação}
+\label{sec:planejamento_circuito_alimentacao}
+
+O circuito de alimentação será organizado em dois blocos: potência e lógica. O barramento principal, derivado das duas células em série, alimenta a etapa de potência, enquanto o regulador MP1584EN reduz a tensão para 3,3\,V na etapa lógica.
+
+Para reduzir oscilações de tensão e interferências entre os subsistemas, serão adotadas as seguintes medidas:
+\begin{itemize}
+    \item uso de regulador buck para a linha de 3,3\,V;
+    \item capacitores de desacoplamento próximos aos circuitos integrados;
+    \item capacitor de bulk na entrada do sistema;
+    \item separação física e elétrica entre alimentação dos motores e da lógica;
+    \item uso do driver TB6612 como interface entre ESP32 e motores.
+\end{itemize}
+
+A INA226 será utilizada apenas para monitoração de corrente, tensão e potência, permitindo acompanhar o comportamento energético em tempo real. Assim, a estabilidade do sistema será garantida pela combinação entre regulação adequada, desacoplamento e separação das linhas de alimentação.
+
+\section{Referências dos Datasheets}
+\label{sec:referencias}
+
+\begin{itemize}
+
+    \item ESP32 -- Espressif Systems. \textit{ESP32 Series Datasheet}. Disponível em:
+    \url{https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf}
+
+    \item VL53L0X -- STMicroelectronics. \textit{VL53L0X Time-of-Flight Ranging Sensor Datasheet}. Disponível em:
+    \url{https://www.st.com/resource/en/datasheet/vl53l0x.pdf}
+
+    \item MPU6050 -- InvenSense. \textit{MPU-6000 and MPU-6050 Product Specification}. Disponível em:
+    \url{https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf}
+
+    \item TB6612FNG -- Toshiba. \textit{TB6612FNG Dual H-Bridge Motor Driver Datasheet}. Disponível em:
+    \url{https://toshiba.semicon-storage.com/info/docget.jsp?did=10660}
+
+    \item MP1584EN -- Monolithic Power Systems. \textit{MP1584 3A Step-Down Converter Datasheet}. Disponível em:
+    \url{https://www.monolithicpower.com/en/documentview/productdocument/index/version/2/document_type/Datasheet/lang/en/sku/MP1584EN-LF-Z/document_id/221}
+
+    \item INA226 -- Texas Instruments. \textit{INA226 Current/Power Monitor Datasheet}. Disponível em:
+    \url{https://www.ti.com/lit/ds/symlink/ina226.pdf}
+
+    \item BAK N21700CG-50 -- BAK Battery. \textit{Product Data Sheet}. Especificações consideradas: tensão nominal de 3,6\,V, capacidade típica de 5,0\,Ah, tensão máxima de carga de 4,2\,V, tensão final de descarga de 2,5\,V, corrente padrão de carga de 0,5C e corrente máxima de descarga de 3C.
+
+    \item Motor N20 6V -- Especificações obtidas a partir do modelo comercial adquirido, complementadas por valores típicos de motores N20 equivalentes utilizados em aplicações embarcadas.
+
+\end{itemize}
+
 \section{Descrição de \textit{software}}
 
 \textcolor{red}{Itens fundamentais:}
