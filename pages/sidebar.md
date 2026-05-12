@@ -8,4 +8,6 @@
     - [Métodos de Transmissão](mec/estudo_metodos_transmissao.md)
     - [Características da Roda](mec/esboco_caracteristicas_desejaveis_rodas.md)
   - *4. Software*
-    - [Arquitetura de Software](docs/software/arquitetura-software.md)
+    - [Arquitetura de Software](/pages/docs/software/arquitetura-software.md)
+    - [Backlog do Produto](/pages/docs/software/backlog-produto.md)
+    - [Roteiro de Testes Funcionais](/pages/docs/software/roteiro-testes-funcionais.md)

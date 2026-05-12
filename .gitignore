@@ -330,3 +330,15 @@ TSWLatexianTemp*
 
 # xwatermark package
 *.xwm
+
+#python ignores
+__pycache__
+.venv
+venv
+.env
+env
+
+#frontend ignores
+node_modules
+dist
+package-lock.json
