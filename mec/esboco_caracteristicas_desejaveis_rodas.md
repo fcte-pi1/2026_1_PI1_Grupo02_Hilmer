@@ -61,3 +61,11 @@ JAIN, J. **Robot Wheel Traction: Surface & Tire Type Selection Guide**. ZBOTIC. 
 **What is The Role of Tire Size in Speed, Grip, and Stability?**. Brewminate. Disponível em: https://brewminate.com/what-is-the-role-of-tire-size-in-speed-grip-and-stability. Acesso em 4 maio 2026.
 
 **De que são feitas as peças LEGO®?**. LEGO. Disponível em: https://www.lego.com/pt-br/service/help-topics/article/what-lego-bricks-are-made-of. Acesso em 4 maio 2026.
+
+<br>
+
+## 8. Tabela de Versionamento
+
+| Versão | Data | Autor | Descrição | Revisor |
+| :-: | :-: | :-: | :-: | :-: |
+| 1.0 | 05/05/2026 | [Eduardo de Pina](https://github.com/eduardodpms) | Criação do documento | [Caio Venâncio](https://github.com/caio-venancio) |
