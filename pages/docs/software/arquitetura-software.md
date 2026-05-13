@@ -215,7 +215,7 @@ O fluxo utiliza **Raias (swimlanes)** para delimitar as responsabilidades entre 
 
 1.  **Início e Decisão de Sessão:** O processo inicia no Sistema Web com a seleção do tipo de labirinto. Um **nó de decisão** garante que a sessão só avance se o labirinto for selecionado e a sessão iniciada corretamente.
 
-2.  **Paralelismo no Micromouse:** Após o sinal de início, o robô utiliza uma **barra de bifurcação (fork)** para executar simultaneamente a coleta de dados e o processamento de movimentação.
+2.  **Paralelismo no Micromouse:** Após iniciar a navegação (fronteiras e, quando aplicável, Floodfill), o robô usa uma **barra de bifurcacao (fork)** para executar em paralelo o **processamento do controle do sistema** e o **envio de pacotes de telemetria ao sistema web**.
 
 3.  **Ciclo de Telemetria (Insumos e Resultados):**
     *   **Entrada:** Pacotes de telemetria transmitidos via Bluetooth/Wi-Fi.
@@ -232,9 +232,9 @@ O fluxo utiliza **Raias (swimlanes)** para delimitar as responsabilidades entre 
   <em>Figura 3: Diagrama de Atividades UML</em>
 </p>
 
-![Diagrama de Atividades UML](../../../docs/assets/software/diagrama_de_atividades_uml.png)
+![Diagrama de Atividades UML](../../../docs/assets/software/diagrama_atividades.png)
 
-<div style="text-align: center;">Autor: <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
+<div style="text-align: center;">Autores: <a href="https://github.com/MM4k">Marcelo Makoto</a> <a href="https://github.com/dudaa28">Maria Eduarda</a></div>
 
 ---
 

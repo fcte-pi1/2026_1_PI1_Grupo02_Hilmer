@@ -2,7 +2,9 @@
 - [**Cronograma Geral**](pages/docs/cronograma.md)
 - [**EAP Geral**](pages/docs/eap_geral.md)
 - **Núcleos**
-  - [*1. Eletrônica*](pages/docs/nucleos/eletronica.md)
+  - *1. Eletrônica*
+    - [PCB](/pages/docs/software/pcb.md)
+    - [Backlog do Produto](/pages/docs/eletronica/embarcado.md)
   - [*2. Energia*](pages/docs/nucleos/energia.md)
   - *3. Estrutura*
     - [Métodos de Transmissão](mec/estudo_metodos_transmissao.md)
