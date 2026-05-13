@@ -2,91 +2,159 @@
 
 ## 1. Visão Geral
 
-O Sistema Web do Micromouse tem como objetivo apoiar o monitoramento, armazenamento e análise dos dados gerados durante as corridas do robô. A solução de software será responsável por receber os dados de telemetria enviados pelo Micromouse, exibir as informações em tempo real, persistir os resultados das execuções e permitir consultas posteriores por labirinto ou de forma geral.
+O Sistema Web do Micromouse tem como objetivo apoiar o monitoramento, armazenamento e análise dos dados gerados durante as corridas do robô. A solução é responsável por receber dados de telemetria enviados pelo Micromouse, exibir informações em tempo real, persistir resultados das execuções e permitir consultas posteriores.
 
-A arquitetura proposta utiliza uma estrutura simples e adequada ao escopo do projeto, separando as responsabilidades entre interface web, backend, comunicação em tempo real e banco de dados relacional.
+A arquitetura proposta utiliza uma estrutura monolítica em camadas, adequada ao escopo acadêmico do projeto, separando responsabilidades entre interface web, backend, persistência de dados, comunicação em tempo real e integração com o sistema embarcado.
 
 ---
 
 ## 2. Propósito do Software
 
-O software tem o papel de atuar como camada de apoio ao sistema físico do Micromouse, permitindo que os dados da corrida sejam visualizados, registrados e analisados.
+O software atua como camada de apoio ao sistema físico do Micromouse, permitindo que os dados da corrida sejam visualizados, registrados e analisados.
 
 As principais responsabilidades do sistema são:
 
 - receber dados de telemetria do Micromouse;
 - validar os dados recebidos;
 - exibir informações da corrida em tempo real;
-- mostrar indicadores como trajeto, bateria, velocidade média, tempo e status do desafio;
+- mostrar indicadores como trajeto, bateria, velocidade média, tempo e status da corrida;
 - persistir os dados finais da execução;
-- permitir consulta por labirinto;
-- permitir consulta geral dos resultados.
+- permitir consultas históricas por labirinto;
+- permitir consultas gerais das execuções.
 
 ---
 
 ## 3. Padrão Arquitetural Adotado
 
-A solução adota uma arquitetura **monolítica em camadas**, separando as responsabilidades de interface, aplicação/API, comunicação em tempo real e persistência de dados. Essa estrutura está dividida em:
+A solução adota uma arquitetura monolítica em camadas, composta por:
 
-- **Camada de Apresentação:** interface web desenvolvida em React;
-- **Camada de Aplicação/API:** backend desenvolvido em FastAPI;
-- **Camada de Persistência:** banco de dados relacional PostgreSQL;
-- **Camada de Comunicação em Tempo Real:** uso de WebSocket para atualização da telemetria.
-
-Essa escolha foi feita por ser mais simples, adequada ao escopo acadêmico do projeto e compatível com o prazo da disciplina. Além disso, uma arquitetura monolítica em camadas é suficiente para atender aos requisitos de telemetria, monitoramento, armazenamento e consulta de resultados.
-
-Não foram adotadas alternativas mais complexas, como microsserviços, pois destacamos que elas aumentariam a complexidade de implantação, comunicação e manutenção sem necessidade para o tamanho atual da solução.
+- Camada de Apresentação;
+- Camada de Aplicação;
+- Camada de Persistência;
+- Mecanismo de Comunicação em Tempo Real.
 
 ---
 
-## 4. Tecnologias Escolhidas
+### 3.1 Camada de Apresentação
 
-### 4.1 Linguagens de Programação
+Responsável pela interface web desenvolvida em React.
+
+### Funções principais
+
+- exibição da telemetria em tempo real;
+- visualização do mapa do labirinto;
+- apresentação de indicadores da corrida;
+- consulta de resultados históricos.
+
+---
+
+### 3.2 Camada de Aplicação
+
+Responsável pelo backend desenvolvido em FastAPI.
+
+### Funções principais
+
+- recebimento da telemetria;
+- validação dos dados;
+- gerenciamento das sessões de corrida;
+- disponibilização de APIs REST;
+- distribuição de eventos em tempo real para o frontend.
+
+---
+
+### 3.3 Camada de Persistência
+
+Responsável pelo armazenamento dos dados no PostgreSQL.
+
+### Funções principais
+
+- persistência das corridas;
+- armazenamento de telemetria histórica;
+- armazenamento dos labirintos;
+- consulta de execuções anteriores.
+
+---
+
+### 3.4 Comunicação em Tempo Real
+
+A atualização em tempo real ocorre utilizando WebSocket entre backend e frontend.
+
+O Micromouse envia os dados de telemetria ao backend via HTTP/REST através da rede Wi-Fi. Após validação, o backend redistribui os dados ao frontend utilizando WebSocket.
+
+A atualização visual ocorre em tempo real, enquanto a persistência no banco pode ocorrer em lote para reduzir overhead de escrita.
+
+---
+
+### 3.5 Justificativa Arquitetural
+
+A arquitetura foi escolhida por apresentar:
+
+- menor complexidade de implantação;
+- facilidade de desenvolvimento em equipe;
+- adequação ao escopo acadêmico;
+- suporte adequado à telemetria em tempo real;
+- facilidade de manutenção.
+
+Não foram adotadas arquiteturas baseadas em microsserviços devido ao aumento desnecessário da complexidade operacional para o tamanho atual da solução.
+
+---
+
+## 4. Tecnologias Utilizadas
+
+### 4.1 Linguagens
 
 | Camada | Linguagem |
 |---|---|
 | Frontend | JavaScript |
 | Backend | Python |
 | Banco de Dados | SQL |
+| Firmware | C/C++ |
 
 ---
 
-### 4.2 Frameworks e Bibliotecas
+### 4.2 Frameworks e Tecnologias
 
-| Tecnologia | Uso no Projeto |
+| Tecnologia | Uso |
 |---|---|
-| React | Construção da interface web do sistema |
-| FastAPI | Construção da API backend |
-| WebSocket | Comunicação em tempo real entre backend e frontend |
-| PostgreSQL | Persistência dos dados das corridas |
+| React | Interface web |
+| FastAPI | API backend |
+| WebSocket | Comunicação em tempo real |
+| PostgreSQL | Persistência de dados |
 | Uvicorn/ASGI | Execução da aplicação FastAPI |
+| ESP-IDF | Desenvolvimento do firmware |
+| FreeRTOS | Gerenciamento de tarefas embarcadas |
 
 ---
 
 ## 5. Organização Geral da Solução
 
-A solução é composta pelos seguintes elementos principais:
+A solução é composta pelos seguintes elementos:
 
-- **Micromouse:** fonte dos dados de telemetria;
-- **Frontend Web:** interface de monitoramento e consulta;
-- **Backend:** responsável por receber, validar, processar e disponibilizar os dados;
-- **WebSocket:** canal de comunicação para atualização em tempo real;
-- **Banco de Dados:** armazenamento das informações das corridas.
+- Micromouse;
+- Frontend Web;
+- Backend FastAPI;
+- Banco PostgreSQL.
 
-O fluxo principal do sistema ocorre da seguinte forma:
+---
 
-1. O Micromouse envia dados de telemetria ao backend.
-2. O backend valida e processa os dados recebidos.
-3. Os dados são enviados em tempo real para o frontend por meio de WebSocket.
-4. A interface web exibe os dados da corrida ao usuário.
-5. Ao final da corrida, os dados são persistidos no banco.
-6. O usuário pode consultar resultados históricos por labirinto ou de forma geral.
+## Fluxo Principal
+
+1. O Micromouse coleta informações dos sensores.
+2. O firmware organiza os dados de telemetria.
+3. O Micromouse envia os dados ao backend via HTTP/REST utilizando Wi-Fi.
+4. O backend valida os pacotes recebidos.
+5. O backend redistribui os dados ao frontend utilizando WebSocket.
+6. O frontend atualiza a interface em tempo real.
+7. O backend persiste os dados históricos no PostgreSQL.
+8. O usuário pode consultar execuções anteriores.
 
 ---
 
 ## 6. Visões Arquiteturais
 
-A arquitetura do sistema será documentada considerando as visões do modelo **4+1**, adaptado para o contexto do projeto. Neste trabalho, a visão de casos de uso será substituída pela **visão de dados**, conforme orientação da disciplina.
+A arquitetura do sistema é documentada utilizando uma adaptação do modelo 4+1.
+
+Neste projeto, a visão de casos de uso foi substituída por uma visão de dados, conforme orientação da disciplina.
 
 ---
 
@@ -170,21 +238,151 @@ O fluxo utiliza **Raias (swimlanes)** para delimitar as responsabilidades entre 
 
 ---
 
+### 6.1.1 Componentes Web
+
+### Interface Web
+
+Responsável por:
+
+- monitoramento em tempo real;
+- visualização do mapa;
+- exibição dos indicadores da corrida;
+- consulta histórica.
+
+---
+
+### Backend FastAPI
+
+Responsável por:
+
+- recebimento da telemetria;
+- validação dos pacotes;
+- gerenciamento das sessões;
+- persistência dos dados;
+- distribuição das atualizações via WebSocket.
+
+---
+
+### 6.1.2 Componentes Embarcados
+
+### Subsistema de Energia
+
+Responsável por:
+
+- alimentação do sistema;
+- monitoramento energético;
+- regulação de tensão;
+- cálculo de carga da bateria.
+
+#### Componentes principais
+
+- bateria Li-Po;
+- INA226;
+- regulador buck MP1584EN.
+
+---
+
+### Subsistema de Sensoriamento
+
+Responsável por:
+
+- aquisição de dados inerciais;
+- medição de distância;
+- detecção de obstáculos;
+- apoio à navegação.
+
+#### Componentes principais
+
+- MPU-9250;
+- 3 sensores VL53L0X.
+
+---
+
+### Subsistema de Atuação e Odometria
+
+Responsável por:
+
+- movimentação do robô;
+- controle de velocidade;
+- medição de deslocamento;
+- controle direcional.
+
+#### Componentes principais
+
+- motores N20;
+- encoders;
+- TB6612FNG.
+
+---
+
+### Subsistema de Armazenamento
+
+Responsável por:
+
+- armazenamento local de telemetria;
+- logging de execução;
+- persistência de dados para análise pós-corrida.
+
+#### Componentes principais
+
+- módulo SD Card via SPI.
+
+---
+
+### Subsistema de Comunicação
+
+Responsável por:
+
+- envio de telemetria;
+- comunicação com o backend;
+- sincronização em tempo real.
+
+#### Tecnologias utilizadas
+
+- Wi-Fi nativa do ESP32;
+- HTTP/REST;
+- WebSocket.
+
+---
+
+### Firmware de Navegação
+
+Responsável por:
+
+- exploração do labirinto;
+- mapeamento;
+- cálculo da rota otimizada;
+- controle de estados da navegação.
+
+#### Algoritmos utilizados
+
+- Frontier-based Exploration;
+- Flood Fill;
+- Path Planning.
+
+---
 
 ### 6.2 Visão de Processos
 
-A visão de processos descreve o comportamento dinâmico do sistema durante uma corrida. O foco aqui é a comunicação, a sincronização e o fluxo de dados entre os componentes em tempo real.
+A visão de processos descreve o comportamento dinâmico do sistema durante uma corrida.
 
-O sistema inicia aguardando a configuração da sessão. Após a seleção do labirinto e início da corrida, passa a receber telemetria, atualizar a interface em tempo real e acompanhar o estado da execução. Ao final da corrida, o sistema salva os dados e encerra a sessão. Também são considerados estados de exceção, como perda de conexão, alerta crítico, desafio não cumprido e falha na execução.
+---
 
-#### 6.2.1 Diagrama de Sequência: Ciclo de Vida da Corrida e Telemetria
+### 6.2.1 Fluxo Operacional
 
-<p style="text-align: center;">
-  <em>Figura 1: Fluxo de comunicação entre Micromouse, Backend FastAPI e Frontend React.</em>
-</p>
+1. O sistema aguarda a configuração da sessão.
+2. O usuário seleciona o labirinto.
+3. O Micromouse inicializa sensores e motores.
+4. O algoritmo de navegação inicia a exploração.
+5. O firmware coleta dados dos sensores.
+6. A telemetria é enviada ao backend via HTTP/REST.
+7. O backend valida os pacotes recebidos.
+8. O frontend recebe atualizações em tempo real via WebSocket.
+9. O backend persiste os dados históricos.
+10. O Micromouse executa a rota otimizada.
+11. A sessão é encerrada.
 
 ![Diagrama de Sequência - Ciclo de Vida da Corrida](../../../docs/assets/software/diagrama_sequencia.png)
-
 
 <div style="text-align: center;">
   Autores:
@@ -192,25 +390,69 @@ O sistema inicia aguardando a configuração da sessão. Após a seleção do la
   <a href="https://github.com/dudaa28">Maria Eduarda</a>
 </div>
 
+### 6.2.2 Processos Embarcados
 
-#### 6.2.2 Descrição dos Componentes e Fluxos
+O firmware embarcado executa processos concorrentes utilizando FreeRTOS.
 
-*   **Sincronização via WebSockets:** O uso de WebSockets entre o **Frontend React** e o **Backend FastAPI** permite a atualização reativa do mapa e dos indicadores de desempenho (bateria e velocidade) com baixa latência, eliminando a necessidade de *polling* constante.
-*   **Validação e Resiliência (HU-09 e HU-10):** O backend atua como um filtro de integridade. Pacotes com campos ausentes ou formatos inválidos são descartados para evitar a poluição do banco de dados **PostgreSQL**. O monitoramento de *timeout* (3 segundos) garante que o avaliador seja notificado imediatamente sobre instabilidades na conexão Wi-Fi.
-*   **Persistência Automática (HU-16):** Independente do sucesso no labirinto, o sistema garante a persistência do trajeto percorrido e dos eventos críticos, permitindo que a equipe realize a análise pós-corrida mesmo em casos de falha do robô.
+
+### Tasks principais
+
+| Task | Intervalo | Responsabilidade |
+|---|---|---|
+| `battery_task` | 500 ms | Monitoramento energético |
+| `imu_task` | 100 ms | Leitura da IMU |
+| `tof_task` | 200 ms | Leitura dos sensores ToF |
+| `motor_task` | 250 ms | Leitura de encoders |
+| `data_aggregation_task` | 500 ms | Agregação de telemetria |
+
+---
+
+### 6.2.3 Fluxo de Telemetria
+
+1. Sensores são lidos em tasks independentes.
+2. Os dados são agregados em uma estrutura compartilhada.
+3. A task de agregação monta a estrutura `RobotData`.
+4. Em paralelo, a telemetria é enviada ao backend.
+5. O backend valida, processa e persiste os dados.
+
+---
+
+### 6.2.4 Máquina de Estados da Navegação
+
+O sistema embarcado utiliza uma máquina de estados responsável pelas transições de navegação.
+
+### Estados principais
+
+- IDLE;
+- FRONTIER;
+- FLOODFILL;
+- OPTIMAL;
+- DONE.
+
+### Fluxo de estados
+
+```text
+IDLE → FRONTIER → FLOODFILL → OPTIMAL → DONE
+```
+
+---
+
+### 6.2.5 Tratamento de Exceções
+
+O sistema considera:
+
+- perda de conexão;
+- falha de validação;
+- perda de sensores;
+- baixa tensão da bateria;
+- encerramento manual;
+- falha da corrida.
 
 ---
 
 ### 6.3 Visão de Implementação
 
-A visão de implementação descreve como o software será organizado em termos de tecnologias e componentes.
-
-A implementação será dividida em:
-
-- **Frontend React:** responsável pela interface do usuário;
-- **Backend FastAPI:** responsável pela API, regras de processamento, validação e comunicação em tempo real;
-- **Banco PostgreSQL:** responsável pela persistência dos dados estruturados;
-- **WebSocket:** responsável pela atualização em tempo real dos dados da corrida.
+A visão de implementação descreve como os componentes são organizados tecnologicamente.
 
 ### 6.3.1 Estrutura de Camadas e Pacotes (Diagrama de Pacotes)
 
@@ -224,11 +466,9 @@ O diagrama a seguir apresenta a organização do sistema em camadas (Apresentaç
 
 <div style="text-align: center;">Autor: <a href="https://github.com/GabrielCastelo-31">Gabriel Castelo</a></div>
 
-### 6.4 Visão de Implantação
+### 6.3.1 Frontend
 
-A visão de implantação apresenta os nós de execução da solução e a comunicação entre eles.
-
-Os principais nós são:
+O frontend React é organizado em:
 
 - **Computador do Usuário:** executa o navegador;
 - **Servidor Frontend:** disponibiliza a aplicação React;
@@ -256,9 +496,15 @@ A arquitetura proposta considera que o usuário acessa o sistema por meio de um 
 
 ---
 
-### 6.5 Visão de Dados
+### 6.3.2 Backend
 
-A visão de dados descreve como as informações do sistema serão persistidas.
+O backend FastAPI é organizado em:
+
+- API REST;
+- gerenciamento de WebSocket;
+- serviços de telemetria;
+- serviços de persistência;
+- modelos de dados.
 
 Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo Entidade-Relacionamento (MER)** e seu respectivo **Diagrama Entidade-Relacionamento (DER)**, além do diagrama lógico de dados(DLD).
 
@@ -292,49 +538,260 @@ Como a solução utiliza um banco de dados relacional, foi utilizado um **Modelo
 
 ---
 
-## 7. Justificativa da Stack
+### 6.3.3 Organização do Firmware
 
-A stack foi escolhida considerando a familiaridade da equipe, a simplicidade de implementação e a adequação aos requisitos do projeto.
+O firmware embarcado é desenvolvido utilizando:
 
-### React
-
-O React foi escolhido para o frontend por permitir a construção de interfaces web interativas e componentizadas. Ele atende bem à necessidade de exibir dados de telemetria em tempo real e organizar telas de consulta.
-
-### FastAPI
-
-O FastAPI foi escolhido para o backend por ser um framework Python simples, eficiente e adequado para criação de APIs. Além disso, permite trabalhar com WebSocket, recurso importante para o monitoramento em tempo real.
-
-### PostgreSQL
-
-O PostgreSQL foi escolhido por ser um banco de dados relacional robusto e adequado para armazenar informações estruturadas, como labirintos, sessões de corrida e registros de telemetria.
-
-### WebSocket
-
-O WebSocket foi escolhido para permitir comunicação em tempo real entre backend e frontend. Dessa forma, os dados recebidos do Micromouse podem ser enviados imediatamente para a interface de monitoramento.
+- ESP32;
+- ESP-IDF;
+- FreeRTOS;
+- linguagem C/C++.
 
 ---
 
-## 8. Relação com os Requisitos do Sistema
+### Estrutura de Arquivos
 
-A arquitetura proposta atende aos principais requisitos da frente de software:
-
-| Requisito                       | Atendimento na Arquitetura |
-| ------------------------------- | -------------------------- |
-| Receber dados do Micromouse     | Backend FastAPI            |
-| Exibir telemetria em tempo real | React + WebSocket          |
-| Exibir indicadores da corrida   | Interface Web              |
-| Salvar dados finais             | FastAPI + PostgreSQL       |
-| Consultar por labirinto         | API + Banco de Dados       |
-| Consultar resultados gerais     | API + Banco de Dados       |
-| Validar telemetria recebida     | Backend FastAPI            |
+```text
+main/
+├── app/main.cpp
+├── i2c_manager.{cpp,hpp}
+├── pins.hpp
+├── battery/
+├── imu/
+├── motor/
+├── vl53l0x/
+└── sd_card/
+```
 
 ---
 
-## 9. Considerações Finais
+### Módulos principais
 
-A arquitetura proposta busca equilibrar simplicidade, clareza e capacidade de atender aos requisitos do projeto. A separação entre frontend, backend e banco de dados facilita o desenvolvimento em equipe, enquanto o uso de WebSocket permite o monitoramento em tempo real necessário para acompanhar a corrida do Micromouse.
+| Módulo | Responsabilidade |
+|---|---|
+| `battery` | Monitoramento energético |
+| `imu` | Interface da IMU |
+| `motor` | Controle dos motores |
+| `vl53l0x` | Sensoriamento ToF |
+| `sd_card` | Persistência local |
+| `i2c_manager` | Gerenciamento I2C |
 
-Essa estrutura também permite evolução futura, como melhorias na interface, novos filtros de consulta, exportação de dados e integração mais robusta com o sistema embarcado.
+---
+
+### 6.3.4 Hardware Integrado
+
+| Componente | Responsabilidade |
+|---|---|
+| ESP32 | Processamento principal |
+| INA226 | Monitoramento energético |
+| MP1584EN | Regulação de tensão |
+| VL53L0X | Sensoriamento de distância |
+| MPU-9250 | Medição inercial |
+| TB6612FNG | Controle dos motores |
+| Encoders | Odometria |
+| SD Card | Armazenamento local |
+
+---
+
+### 6.3.5 Barramento I2C Compartilhado
+
+### Configuração
+
+| Sinal | GPIO |
+|---|---|
+| SDA | GPIO_NUM_21 |
+| SCL | GPIO_NUM_22 |
+
+### Dispositivos conectados
+
+- INA226;
+- MPU-9250;
+- sensores VL53L0X.
+
+### Características
+
+- clock de 100 kHz;
+- gerenciamento centralizado via `i2c_manager`;
+- compartilhamento de barramento entre sensores.
+
+
+
+# 6.4 Visão de Implantação
+
+A visão de implantação apresenta os nós físicos da solução.
+
+
+## 6.4.1 Nós de Execução
+
+| Nó | Responsabilidade |
+|---|---|
+| Micromouse | Execução do firmware |
+| Navegador do Usuário | Interface web |
+| Servidor Backend | API FastAPI |
+| Servidor PostgreSQL | Persistência dos dados |
+
+---
+
+## 6.4.2 Comunicação
+
+| Origem | Destino | Protocolo |
+|---|---|---|
+| Micromouse | Backend | HTTP/REST via Wi-Fi |
+| Backend | Frontend | WebSocket (WSS) |
+| Frontend | Backend | HTTPS |
+| Backend | PostgreSQL | TCP/IP |
+
+---
+
+## 6.4.3 Implantação do Sistema Embarcado
+
+O firmware é executado diretamente no ESP32 embarcado no Micromouse.
+
+### Interfaces utilizadas
+
+- I2C;
+- SPI;
+- GPIO;
+- PWM;
+- UART.
+
+---
+
+## 6.4.4 Implantação Física dos Sensores
+
+| Subsistema | Interface |
+|---|---|
+| MPU-9250 | I2C |
+| INA226 | I2C |
+| VL53L0X | I2C |
+| SD Card | SPI |
+| Motores | PWM/GPIO |
+| Encoders | GPIO/PCNT |
+
+---
+
+## 6.4.5 Ambiente de Implantação
+
+Durante o desenvolvimento acadêmico, os serviços podem ser executados em rede local.
+
+A solução também permite futura implantação utilizando containers Docker ou infraestrutura em nuvem.
+
+---
+
+# 6.5 Visão de Dados
+
+A visão de dados descreve como as informações são persistidas.
+
+O modelo utiliza PostgreSQL e segue uma estrutura relacional.
+
+---
+
+## 6.5.1 Entidades Principais
+
+### LABIRINTO
+
+- id_labirinto
+- dimensao
+
+---
+
+### CELULA
+
+- id_celula
+- coordenada_x
+- coordenada_y
+- parede_norte
+- parede_sul
+- parede_leste
+- parede_oeste
+- id_labirinto
+
+---
+
+### CORRIDA
+
+- id_corrida
+- data_inicio
+- data_fim
+- desafio_cumprido
+- finalizada
+- id_labirinto
+
+---
+
+### TELEMETRIA
+
+- id_telemetria
+- timestamp
+- velocidade_media
+- velocidade_maxima
+- tensao
+- corrente
+- posicao_x
+- posicao_y
+- temperatura
+- id_corrida
+
+---
+
+### EVENTO
+
+- id_evento
+- timestamp
+- tipo_evento
+- descricao
+- id_corrida
+
+---
+
+## 6.5.2 Relacionamentos
+
+- um labirinto possui várias células;
+- um labirinto pode possuir várias corridas;
+- uma corrida possui vários registros de telemetria;
+- uma corrida possui vários eventos.
+
+---
+
+# 7. Segurança
+
+Mesmo sendo um projeto acadêmico, a arquitetura considera mecanismos básicos de segurança.
+
+## Medidas previstas
+
+- utilização de HTTPS/WSS;
+- validação dos pacotes recebidos;
+- descarte de mensagens inválidas;
+- controle de sessão;
+- separação entre frontend e backend.
+
+---
+
+# 8. Relação com os Requisitos
+
+| Requisito | Atendimento |
+|---|---|
+| Receber dados do Micromouse | Backend FastAPI |
+| Exibir telemetria em tempo real | WebSocket + React |
+| Persistir dados históricos | PostgreSQL |
+| Validar telemetria | Backend FastAPI |
+| Consultar corridas | API REST |
+| Exibir indicadores da corrida | Frontend React |
+| Monitorar bateria | INA226 + Backend |
+| Registrar logs locais | SD Card |
+| Executar navegação autônoma | Firmware ESP32 |
+
+---
+
+# 9. Considerações Finais
+
+A arquitetura proposta busca equilibrar simplicidade, organização e capacidade de expansão.
+
+A separação entre frontend, backend, persistência e firmware facilita o desenvolvimento em equipe e permite evolução futura da solução.
+
+O uso de WebSocket atende aos requisitos de monitoramento em tempo real, enquanto o PostgreSQL fornece armazenamento estruturado para consultas históricas.
+
+No sistema embarcado, a utilização de FreeRTOS, ESP-IDF e organização modular do firmware permite concorrência entre sensores, controle e comunicação, facilitando manutenção e expansibilidade.
 
 ---
 
@@ -346,7 +803,12 @@ Essa estrutura também permite evolução futura, como melhorias na interface, n
 |1.1|04/05/2026|[Euller](https://github.com/Potatoyz908)|Atualização dos diagramas e adição de mais informações|[Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 |1.2 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Revisão do documento e adição do histórico de versão| [Maria Eduarda](https://github.com/dudaa28)
 |1.3 | 04/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do MER e DER|[Maria Eduarda](https://github.com/dudaa28)
-|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
-|1.4.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
+|1.4 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| - |
+|1.4.1 | 04/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do diagrama de atividades UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
+|1.4.2 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Gabriel Castelo](https://github.com/GabrielCastelo-31)|
 |1.5 | 05/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama lógico de dados| [Euller Júlio](https://github.com/Potatoyz908)|
+|1.5.1 | 05/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Correção no diagrama de implantação UML| [Maria Eduarda](https://github.com/dudaa28) |
 |1.6 | 08/05/2026|[Gabriel Castelo](https://github.com/GabrielCastelo-31) | Adição do diagrama de pacotes| [Euller Júlio](https://github.com/Potatoyz908)
+|1.7 | 09/05/2026|[Maria Eduarda](https://github.com/dudaa28) | Adição do Diagrama  de Sequências e Atualização da página| [Euller Júlio](https://github.com/Potatoyz908) |
+|1.8 | 09/05/2026|[Euller Júlio](https://github.com/Potatoyz908) | Adição de diagramas de sequência e explicação da arquitetura adotada| [Victor Pontual](https://github.com/VictorPontual)|
+|2.0 | 10/05/2026 | [Victor Pontual](https://github.com/VictorPontual) | Revisão estrutural da arquitetura e integração completa das visões de hardware e software embarcado | - |
