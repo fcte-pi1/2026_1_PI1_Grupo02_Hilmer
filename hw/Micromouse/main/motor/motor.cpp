@@ -11,7 +11,7 @@ Motor::Motor(int pwm, int ain1, int ain2, int stby, int enc_a, int enc_b, ledc_c
       pcnt_unit(NULL) {}
 
 void Motor::begin() {
-    // 1. Configura os Pinos Digitais (Direcao e Standby)
+    // 1) Pinos digitais (direcao e standby)
     gpio_config_t io_conf = {};
     io_conf.pin_bit_mask = (1ULL << ain1_pin) | (1ULL << ain2_pin) | (1ULL << stby_pin);
     io_conf.mode = GPIO_MODE_OUTPUT;
@@ -20,10 +20,10 @@ void Motor::begin() {
     io_conf.intr_type = GPIO_INTR_DISABLE;
     gpio_config(&io_conf);
 
-    // Tira o driver do modo de economia de energia
+    // Sai do modo de economia do driver
     gpio_set_level(stby_pin, 1);
 
-    // 2. Configura o Canal do PWM
+    // 2) Canal PWM
     ledc_channel_config_t ledc_channel_cfg = {};
     ledc_channel_cfg.speed_mode = LEDC_LOW_SPEED_MODE;
     ledc_channel_cfg.channel = pwm_channel;
@@ -34,7 +34,7 @@ void Motor::begin() {
     ledc_channel_cfg.hpoint = 0;
     ledc_channel_config(&ledc_channel_cfg);
 
-    // 3. Configura o Hardware do Encoder (PCNT)
+    // 3) Hardware do encoder (PCNT)
     pcnt_unit_config_t unit_config = {};
     unit_config.high_limit = 30000;
     unit_config.low_limit = -30000;
@@ -90,9 +90,9 @@ void Motor::setSpeed(int speed) {
     } else if (speed < 0) {
         gpio_set_level(ain1_pin, 0);
         gpio_set_level(ain2_pin, 1);
-        speed = -speed; // Transforma em positivo
+        speed = -speed; // Converte para positivo
     } else {
-        // Freio (Brake)
+        // Freio (brake)
         gpio_set_level(ain1_pin, 1);
         gpio_set_level(ain2_pin, 1);
     }

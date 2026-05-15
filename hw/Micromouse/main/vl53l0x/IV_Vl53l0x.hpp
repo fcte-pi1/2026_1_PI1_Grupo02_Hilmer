@@ -10,7 +10,7 @@
 #include "i2c.hpp"
 #include "logger.hpp"
 #include "vl53l.hpp"
-#include "../pins.hpp"
+#include "i2c_manager.hpp"
 
 class IV_Vl53l0x {
 public:
@@ -26,13 +26,13 @@ public:
     float readDistanceMm();
 
 private:
-    // Configuracao fixa do barramento (compartilhado com a bateria)
+    // Parametros fixos do barramento (compartilhado com a bateria)
     static constexpr i2c_port_t kI2cPort = I2C_NUM_0;
-    static constexpr gpio_num_t kSdaPin = (gpio_num_t)I2C_SDA_PIN;
-    static constexpr gpio_num_t kSclPin = (gpio_num_t)I2C_SCL_PIN;
-    static constexpr uint32_t kI2cClockHz = 100000;
+    static constexpr gpio_num_t kSdaPin = I2C_MANAGER_SDA_PIN;
+    static constexpr gpio_num_t kSclPin = I2C_MANAGER_SCL_PIN;
+    static constexpr uint32_t kI2cClockHz = I2C_MANAGER_DEFAULT_SPEED_HZ;
 
-    static constexpr uint8_t kAddress = espp::Vl53l::DEFAULT_ADDRESS;
+    static constexpr uint8_t kAddress = I2C_ADDR_VL53L0X_DEFAULT;
 
     espp::Logger logger_;
     std::unique_ptr<espp::Vl53l> sensor_;

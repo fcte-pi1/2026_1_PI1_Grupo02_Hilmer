@@ -17,27 +17,17 @@ bool IV_Vl53l0x::init() {
         return false;
     }
 
-    auto bus = i2c_manager_get_bus();
-    if (!bus) {
-        logger_.error("Shared I2C bus is null");
-        return false;
-    }
-
-    i2c_device_config_t dev_cfg = {};
-    dev_cfg.dev_addr_length = I2C_ADDR_BIT_LEN_7;
-    dev_cfg.device_address = kAddress;
-    dev_cfg.scl_speed_hz = kI2cClockHz;
-    if (i2c_master_bus_add_device(bus, &dev_cfg, &dev_handle_) != ESP_OK) {
-        logger_.error("Failed to add VL53L0X device to I2C bus");
+    if (!i2c_manager_register_device(kAddress, kI2cClockHz, &dev_handle_)) {
+        logger_.error("Failed to register VL53L0X device on I2C bus");
         return false;
     }
 
     auto write_cb = [this](uint8_t /*dev_addr*/, const uint8_t *data, size_t len) -> bool {
-        return dev_handle_ && i2c_master_transmit(dev_handle_, data, len, 50) == ESP_OK;
+        return dev_handle_ && i2c_manager_write(kAddress, data, len, 50);
     };
 
     auto read_cb = [this](uint8_t /*dev_addr*/, uint8_t *data, size_t len) -> bool {
-        return dev_handle_ && i2c_master_receive(dev_handle_, data, len, 50) == ESP_OK;
+        return dev_handle_ && i2c_manager_read(kAddress, data, len, 50);
     };
 
     sensor_ = std::make_unique<espp::Vl53l>(espp::Vl53l::Config{

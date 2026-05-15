@@ -1,50 +1,40 @@
 // =============================================================================
-//  imu.h — Módulo de IMU para o Micromouse (ESP32 + MPU-9250)
+//  imu.h - Interface do modulo de IMU (ESP32 + MPU-9250)
 // =============================================================================
-//
-//  VISÃO GERAL
-//  -----------
-//  Interface pública do módulo IMU. Atua como o contrato de comunicação entre
-//  o hardware (sensor) e a lógica de controle do Micromouse.
-//
-//  SENSOR UTILIZADO
-//  ----------------
-//  MPU-9250 (InvenSense): Acelerômetro, Giroscópio e Magnetômetro num único chip.
-//  Comunicação operando via I2C nativo do ESP-IDF v6.
-//  Biblioteca: https://components.espressif.com/components/truita/mpu9250[cite: 6]
-//
-//  Adaptado por Vítor Gonçalves de Andrade - 261025182
-//  Data: Abril/2026
+// Interface publica do IMU: leitura, calibracao e dados do sensor.
+// MPU-9250 via I2C (ESP-IDF v6). Biblioteca:
+// https://components.espressif.com/components/truita/mpu9250[cite: 6]
 // =============================================================================
 
 #ifndef IMU_H
 #define IMU_H
 
-// Endereço I2C do MPU-9250. Padrão 0x68 (AD0 em GND)[cite: 6].
-#define IMU_ENDERECO_I2C  0x68
+// Endereco I2C do MPU-9250 (padrao 0x68).[cite: 6]
+#include "i2c_manager.hpp"
+#define IMU_ENDERECO_I2C  I2C_ADDR_MPU9250_PRIMARY
 
 // -----------------------------------------------------------------------------
-//  Parâmetros de Operação do Sensor
+//  Parametros de operacao
 // -----------------------------------------------------------------------------
 #define IMU_FAIXA_ACCEL   MPU9250::ACCEL_RANGE_4G
 #define IMU_FAIXA_GYRO    MPU9250::GYRO_RANGE_500DPS
 #define IMU_FILTRO_DLPF   MPU9250::DLPF_BANDWIDTH_41HZ
-#define IMU_SRD  9   // Taxa de amostragem definida para 100 Hz[cite: 6]
+#define IMU_SRD  9   // Taxa de amostragem para 100 Hz.[cite: 6]
 
 // -----------------------------------------------------------------------------
-//  Estruturas de Dados
+//  Estruturas de dados
 // -----------------------------------------------------------------------------
 
-// Armazena o estado momentâneo do robô no espaço
+// Estado instantaneo do sensor.
 struct DadosIMU {
-    float accel_x, accel_y, accel_z;   // Aceleração linear (m/s²)[cite: 6]
-    float gyro_x, gyro_y, gyro_z;      // Velocidade angular (rad/s)[cite: 6]
-    float mag_x, mag_y, mag_z;         // Campo magnético (µT)[cite: 6]
-    float temperatura;                 // Temperatura do silício (°C)[cite: 6]
-    unsigned long timestamp_ms;        // Referência temporal da leitura[cite: 6]
+    float accel_x, accel_y, accel_z;   // Aceleracao linear (m/s^2).[cite: 6]
+    float gyro_x, gyro_y, gyro_z;      // Velocidade angular (rad/s).[cite: 6]
+    float mag_x, mag_y, mag_z;         // Campo magnetico (uT).[cite: 6]
+    float temperatura;                 // Temperatura do silicio (C).[cite: 6]
+    unsigned long timestamp_ms;        // Timestamp da leitura.[cite: 6]
 };
 
-// Armazena as correções de erro (bias) estático dos sensores
+// Bias e escalas de calibracao.
 struct CalibracaoIMU {
     float gyro_bias_x, gyro_bias_y, gyro_bias_z;
     float accel_bias_x, accel_bias_y, accel_bias_z;
@@ -55,7 +45,7 @@ struct CalibracaoIMU {
 };
 
 // -----------------------------------------------------------------------------
-//  Assinaturas Públicas
+//  Assinaturas publicas
 // -----------------------------------------------------------------------------
 bool imu_init();
 bool imu_update();

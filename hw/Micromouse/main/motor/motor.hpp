@@ -4,7 +4,7 @@
 #include "driver/ledc.h"
 #include "driver/pulse_cnt.h"
 
-// Classe do Motor (ponte H + encoder)
+// Controle de motor DC com ponte H e encoder.
 class Motor {
 private:
     gpio_num_t pwm_pin;

@@ -1,16 +1,11 @@
 #include "battery/battery.hpp"
-#include "driver/i2c_master.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include <system_error>
 #include <cmath>
 #include <cstring>
 
-
-#define I2C_MASTER_PORT     I2C_NUM_0
-#include "pins.hpp"
 #include "i2c_manager.hpp"
-#define I2C_SPEED_HZ        100000
 #define I2C_TIMEOUT_MS      50
 
 
@@ -22,21 +17,14 @@
 #define VOLTAGE_CORRECTION_ALPHA 0.01f
 
 
-static i2c_master_bus_handle_t s_bus_handle = nullptr;
-static i2c_master_dev_handle_t s_dev_handle = nullptr;
-
-
 static bool i2c_write_cb(uint8_t /*dev_addr*/, const uint8_t *data, size_t len) {
-    if (!s_dev_handle) return false;
-    return i2c_master_transmit(s_dev_handle, data, len, I2C_TIMEOUT_MS) == ESP_OK;
+    return i2c_manager_write(I2C_ADDR_INA226_DEFAULT, data, len, I2C_TIMEOUT_MS);
 }
 
 static bool i2c_read_register_cb(uint8_t /*dev_addr*/, uint8_t reg_addr,
                                   uint8_t *data, size_t len) {
-    if (!s_dev_handle) return false;
-    return i2c_master_transmit_receive(
-        s_dev_handle, &reg_addr, 1, data, len, I2C_TIMEOUT_MS
-    ) == ESP_OK;
+    return i2c_manager_read_register(I2C_ADDR_INA226_DEFAULT, reg_addr,
+                                     data, len, I2C_TIMEOUT_MS);
 }
 
 
@@ -50,25 +38,20 @@ Battery::Battery()
 }
 
 bool Battery::init() {
-    // Configuração do barramento I2C
-    // Use shared I2C manager to avoid double initialization
-    extern bool i2c_manager_init();
-    extern i2c_master_bus_handle_t i2c_manager_get_bus();
+    // Inicializa o barramento I2C compartilhado via manager.
     if (!i2c_manager_init()) {
         ESP_LOGE("Battery", "Failed to init shared I2C bus");
         return false;
     }
-    s_bus_handle = i2c_manager_get_bus();
 
-    i2c_device_config_t dev_cfg = {};
-    dev_cfg.dev_addr_length = I2C_ADDR_BIT_LEN_7;
-    dev_cfg.device_address  = espp::Ina226::DEFAULT_ADDRESS;
-    dev_cfg.scl_speed_hz    = I2C_SPEED_HZ;
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(s_bus_handle, &dev_cfg, &s_dev_handle));
+    if (!i2c_manager_register_device(I2C_ADDR_INA226_DEFAULT)) {
+        ESP_LOGE("Battery", "Failed to register INA226 on I2C bus");
+        return false;
+    }
 
-    // Configuração do sensor INA226
+    // Configura o INA226 com callbacks de I2C e parametros do shunt.
     espp::Ina226::Config config{};
-    config.device_address        = espp::Ina226::DEFAULT_ADDRESS;
+    config.device_address        = I2C_ADDR_INA226_DEFAULT;
     config.write                 = i2c_write_cb;
     config.read_register         = i2c_read_register_cb;
     config.current_lsb           = 0.0001f;
@@ -102,8 +85,7 @@ void Battery::update() {
 
     soc_ += (current * delta_s / capacity_as_) * 100.0f;
 
-    // Filtro Complementar: usa a tensão para corrigir o SOC apenas se a bateria
-    // estiver em repouso, contornando falsas quedas de tensão.
+    // Filtro complementar: corrige SOC pela tensao quando a bateria esta em repouso.
     if (fabsf(current) < BATTERY_REST_CURRENT_A)
         soc_ += VOLTAGE_CORRECTION_ALPHA * (voltageToSOC(voltage) - soc_);
 
