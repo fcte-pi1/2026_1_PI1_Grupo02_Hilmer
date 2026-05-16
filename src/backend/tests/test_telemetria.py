@@ -292,7 +292,8 @@ class TestCriarEstadoInicial:
 
     def test_campos_zerados(self):
         estado = criar_estado_inicial()
-        assert estado.id_corrida is None
+        assert estado.id_corrida_banco is None
+        assert estado.sessao_hardware_id is None
         assert estado.bateria_atual is None
         assert estado.velocidade_media is None
         assert estado.tempo_decorrido_ms == 0
@@ -315,10 +316,10 @@ class TestAtualizarIndicadores:
         assert novo.bateria_atual == 95
         assert novo.status_corrida == StatusCorridaTelemetria.EM_ANDAMENTO
 
-    def test_pacote_inicial_seta_id_corrida(self):
+    def test_pacote_inicial_seta_sessao_hardware_id(self):
         estado = criar_estado_inicial()
         novo = atualizar_indicadores(estado, PACOTE_INICIAL_NORMAL)
-        assert novo.id_corrida == 1
+        assert novo.sessao_hardware_id == 1
 
     def test_pacote_movimentacao_atualiza_tempo(self):
         estado = criar_estado_inicial()

@@ -302,7 +302,8 @@ def _processar_pacote_inicial(
     estado: IndicadoresDesempenho, pacote: dict
 ) -> None:
     """Atualiza indicadores com dados do pacote inicial."""
-    estado.id_corrida = pacote["id_corrida"]
+    estado.sessao_hardware_id = pacote["id_corrida"]
+    estado.bateria_inicial = pacote["bateria"]
     estado.bateria_atual = pacote["bateria"]
     estado.alerta_bateria_critica = pacote["bateria"] < BATERIA_CRITICA_THRESHOLD
     estado.status_corrida = StatusCorridaTelemetria.EM_ANDAMENTO
@@ -376,6 +377,7 @@ def _processar_pacote_final(
 
     # Bateria final
     estado.bateria_atual = pacote["bateria"]
+    estado.bateria_final = pacote["bateria"]
     estado.alerta_bateria_critica = pacote["bateria"] < BATERIA_CRITICA_THRESHOLD
 
     # Status e sucesso
