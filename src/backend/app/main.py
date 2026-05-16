@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 
 from .database import engine
-from .routers import corridas, rankings
+from .routers import corridas, rankings, telemetria, telemetria_mock
 
 # Importar modelos para que o SQLModel.metadata os registre
 from . import models  # noqa: F401
@@ -39,6 +39,9 @@ app.add_middleware(
 # Registrar routers
 app.include_router(corridas.router)
 app.include_router(rankings.router)
+app.include_router(telemetria.router)
+#Rota de mock para usar sem o micromouse
+app.include_router(telemetria_mock.router)
 
 
 @app.get("/", tags=["health"])
