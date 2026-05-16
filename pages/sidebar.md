@@ -3,15 +3,16 @@
 - [**EAP Geral**](pages/docs/eap_geral.md)
 - **Núcleos**
   - *1. Eletrônica*
-    - [PCB](/pages/docs/software/pcb.md)
-    - [Backlog do Produto](/pages/docs/eletronica/embarcado.md)
+    - [PCB](pages/docs/nucleos/eletronica/pcb.md)
+    - [Backlog do Produto](pages/docs/nucleos/eletronica/embarcado.md)
   - [*2. Energia*](pages/docs/nucleos/energia.md)
   - *3. Estrutura*
-    - [Métodos de Transmissão](mec/estudo_metodos_transmissao.md)
+    - [Atributos de Componentes Eletrônicos](pages/docs/nucleos/estrutura/lista_atributos_componentes.md)
+    - [Métodos de Transmissão](pages/docs/nucleos/estrutura/estudo_metodos_transmissao.md)
     - Rodas
-      - [Características da Roda](mec/caracteristicas_roda.md)
-      - [Esboço de Características Desejáveis](mec/esboco_caracteristicas_desejaveis_rodas.md)
+      - [Características da Roda](pages/docs/nucleos/estrutura/caracteristicas_roda.md)
+      - [Esboço de Características Desejáveis](pages/docs/nucleos/estrutura/esboco_caracteristicas_desejaveis_rodas.md)
   - *4. Software*
-    - [Arquitetura de Software](/pages/docs/software/arquitetura-software.md)
-    - [Backlog do Produto](/pages/docs/software/backlog-produto.md)
-    - [Roteiro de Testes Funcionais](/pages/docs/software/roteiro-testes-funcionais.md)
+    - [Arquitetura de Software](pages/docs/nucleos/software/arquitetura-software.md)
+    - [Backlog do Produto](pages/docs/nucleos/software/backlog-produto.md)
+    - [Roteiro de Testes Funcionais](pages/docs/nucleos/software/roteiro-testes-funcionais.md)
