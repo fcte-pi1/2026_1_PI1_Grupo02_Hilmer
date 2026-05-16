@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 
 from .database import engine
-from .routers import corridas, rankings, telemetria
+from .routers import corridas, rankings
 
 # Importar modelos para que o SQLModel.metadata os registre
 from . import models  # noqa: F401
@@ -39,7 +39,6 @@ app.add_middleware(
 # Registrar routers
 app.include_router(corridas.router)
 app.include_router(rankings.router)
-app.include_router(telemetria.router)
 
 
 @app.get("/", tags=["health"])
