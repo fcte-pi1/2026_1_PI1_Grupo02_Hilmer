@@ -8,7 +8,6 @@ from ..models.enums import StatusCorrida, TipoLabirinto
 from ..models.labirinto import Labirinto
 from ..schemas.telemetria import PacoteConfiguracao
 from ..services.websocket_manager import manager
-
 router = APIRouter(tags=["telemetria-mock"])
 
 
@@ -51,7 +50,7 @@ async def mock_pacote_configuracao(
         "data": {
             "id_corrida_banco": corrida.id_corrida,
             "sessao_hardware_id": corrida.sessao_hardware_id,
-            "dimensao": payload.dimensao,
+            "dimensao": corrida.labirinto.tipo_labirinto.value,
             "tentativa": corrida.tentativa,
             "bateria_inicial": corrida.bateria_inicial,
             "status": corrida.status_corrida

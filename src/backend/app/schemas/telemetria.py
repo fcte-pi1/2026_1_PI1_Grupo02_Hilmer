@@ -9,4 +9,5 @@ class PacoteConfiguracao(BaseModel):
     timestamp_ms: int = Field(..., description="Timestamp relativo ao início da corrida em milissegundos")
     dimensao: int = Field(..., description="Tamanho do labirinto (4, 8 ou 16)")
     tentativa: int = Field(..., description="Número da tentativa (1, 2 ou 3)")
-    bateria: int = Field(..., description="Porcentagem de bateria inicial (0 a 100)")
+    bateria_inicial: int = Field(..., description="Porcentagem de bateria inicial (0 a 100)")
+    
