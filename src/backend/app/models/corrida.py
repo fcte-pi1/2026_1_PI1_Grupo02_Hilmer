@@ -17,6 +17,23 @@ if TYPE_CHECKING:
 
 
 class Corrida(SQLModel, table=True):
+    """ fields:
+    id_corrida:int,
+    tempo_total:int,
+    tensao_media:float,
+    corrente_media:float,
+    velocidade_maxima_percurso:float,
+    velocidade_media:float,
+    status_corrida:StatusCorrida,
+    data_hora_inicio:datetime,
+    data_hora_fim:datetime,
+    id_labirinto:int,
+    desafio_cumprido:bool,
+    sessao_hardware_id:int,
+    tentativa:int,
+    bateria_inicial:int,
+    bateria_final:int,
+    """
     id_corrida: Optional[int] = Field(
         default=None,
         sa_column=Column(
@@ -57,6 +74,11 @@ class Corrida(SQLModel, table=True):
     desafio_cumprido: Optional[bool] = Field(
         default=False
     )
+    sessao_hardware_id: Optional[int] = None
+    tentativa: Optional[int] = None
+    bateria_inicial: Optional[int] = None
+    bateria_final: Optional[int] = None
+
 
     # --- relationships ---
     #utilizado para atualizar os objetos em tempo real, sem precisar explicitar consultas ao banco de dados
