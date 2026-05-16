@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
+
 def test_websocket_connection(client:TestClient):
-    # Passamos o subprotocolo que o cliente deseja usar
     with client.websocket_connect("/api/ws/dashboard") as websocket:
         message = websocket.receive_json()
         assert message == {"message": "connected"}
