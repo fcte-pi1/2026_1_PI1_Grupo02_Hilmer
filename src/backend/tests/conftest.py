@@ -1,0 +1,1 @@
+"""Fixtures compartilhadas para testes."""
