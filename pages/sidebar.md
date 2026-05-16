@@ -7,6 +7,7 @@
     - [Backlog do Produto](pages/docs/nucleos/eletronica/embarcado.md)
   - [*2. Energia*](pages/docs/nucleos/energia.md)
   - *3. Estrutura*
+    - [Atributos de Componentes Eletrônicos](pages/docs/nucleos/estrutura/lista_atributos_componentes.md)
     - [Métodos de Transmissão](pages/docs/nucleos/estrutura/estudo_metodos_transmissao.md)
     - Rodas
       - [Características da Roda](pages/docs/nucleos/estrutura/caracteristicas_roda.md)

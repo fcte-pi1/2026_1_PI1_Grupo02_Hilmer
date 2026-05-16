@@ -53,5 +53,4 @@ Abaixo, estão apresentados os desenhos técnicos da roda interna e do pneu.
 
 | Versão | Data | Autor | Descrição | Revisor |
 | :-: | :-: | :-: | :-: | :-: |
-| 1.0 | 12/05/2026 | [Eduardo de Pina](https://github.com/eduardodpms) | Criação do documento | [Giovanni Mateus](https://github.com/GiovanniMateus
-) |
+| 1.0 | 12/05/2026 | [Eduardo de Pina](https://github.com/eduardodpms) | Criação do documento | [Giovanni Mateus](https://github.com/GiovanniMateus) |
