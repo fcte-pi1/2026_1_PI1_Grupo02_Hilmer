@@ -57,6 +57,11 @@ class Corrida(SQLModel, table=True):
     desafio_cumprido: Optional[bool] = Field(
         default=False
     )
+    sessao_hardware_id: Optional[int] = None
+    tentativa: Optional[int] = None
+    bateria_inicial: Optional[int] = None
+    bateria_final: Optional[int] = None
+
 
     # --- relationships ---
     #utilizado para atualizar os objetos em tempo real, sem precisar explicitar consultas ao banco de dados
