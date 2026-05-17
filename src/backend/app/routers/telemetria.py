@@ -136,7 +136,8 @@ async def receber_pacote_telemetria(
         }
 
     await manager.send_json_to_all_clients(evento)
-
+    if tipo == TipoPacote.FINAL:
+        del estados_ativos[sessao_hardware_id]
     return {"message": "Pacote processado com sucesso", "estado": estado_dict}
 
 
