@@ -11,7 +11,7 @@ from ..services.websocket_manager import manager
 from ..models.corrida import Corrida
 from ..models.labirinto import Labirinto
 from ..models.enums import StatusCorrida, TipoLabirinto
-
+from ..schemas.telemetria import PacoteInicial, PacoteMovimentacao, PacoteFinal
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/telemetria", tags=["telemetria"])
@@ -40,14 +40,17 @@ async def websocket_telemetria(websocket: WebSocket):
 
 @router.post("/pacote", status_code=201)
 async def receber_pacote_telemetria(
-    pacote: dict,
+    payload: PacoteInicial | PacoteMovimentacao | PacoteFinal,
     session: Session = Depends(get_session)
 ):
     """
     Endpoint HTTP para o Micromouse enviar pacotes de telemetria.
     Recebe o pacote, atualiza o estado em memória e notifica o Dashboard.
     """
+    pacote = payload.model_dump()
     tipo = identificar_tipo_pacote(pacote)
+    # print(f"Tipo de pacote: {tipo}")
+    # print(f"Payload: {pacote}")
     if tipo == TipoPacote.INVALIDO:
         raise HTTPException(
             status_code=400, detail="Pacote inválido ou não reconhecido")

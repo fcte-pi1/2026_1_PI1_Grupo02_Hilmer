@@ -49,7 +49,7 @@ class PacoteInicial(BaseModel):
 
     id_corrida: int
     timestamp_ms: int = Field(ge=0)
-    dimensao: str
+    dimensao: int | str
     tentativa: int
     bateria: float = Field(ge=0, le=100)
 
