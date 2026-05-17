@@ -69,9 +69,10 @@ export function useTelemetria(): UseTelemetriaReturn {
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data) as IndicadoresDesempenho;
-        // console.log("[useTelemetria] Dados recebidos:", data);
-        setIndicadores(data);
+        const parsed = JSON.parse(event.data);
+        if (parsed.type === "ATUALIZACAO_TELEMETRIA" && parsed.data) {
+          setIndicadores(parsed.data as IndicadoresDesempenho);
+        }
       } catch {
         console.error("[useTelemetria] Erro ao parsear mensagem:", event.data);
       }
