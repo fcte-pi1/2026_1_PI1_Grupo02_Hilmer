@@ -69,10 +69,10 @@ async def receber_pacote_telemetria(
     # Processa os indicadores puros
     novo_estado = atualizar_indicadores(estado_atual, pacote)
 
-    # Se for pacote inicial, criar no banco de dados
+    # Se for pacote inicial, resolver a dimensão e criar no banco se necessário
+    tipo_lab = None
     if tipo == TipoPacote.INICIAL and novo_estado.id_corrida_banco is None:
         dimensao = pacote.get("dimensao")
-        tipo_lab: TipoLabirinto = None
         if int(dimensao) == 8:
             tipo_lab = TipoLabirinto.OITO
         elif int(dimensao) == 16:
@@ -102,7 +102,6 @@ async def receber_pacote_telemetria(
         # Atualiza o estado com o ID real do banco
         novo_estado.id_corrida_banco = corrida.id_corrida
         novo_estado.sessao_hardware_id = corrida.sessao_hardware_id
-
     # Se for pacote final, atualizar o banco de dados
     if tipo == TipoPacote.FINAL and novo_estado.id_corrida_banco is not None:
         corrida = session.get(Corrida, novo_estado.id_corrida_banco)
@@ -121,10 +120,20 @@ async def receber_pacote_telemetria(
     # Faz o broadcast para o Dashboard via WebSocket
     estado_dict = _estado_to_dict(novo_estado)
 
-    evento = {
-        "type": "ATUALIZACAO_TELEMETRIA",
-        "data": estado_dict
-    }
+    if tipo == TipoPacote.INICIAL:
+        evento = {
+            "type": "SESSAO_INICIADA",
+            "data": {
+                **estado_dict,
+                "dimensao": tipo_lab.value,
+                "tentativa": pacote.get("tentativa", 1),
+            }
+        }
+    else:
+        evento = {
+            "type": "ATUALIZACAO_TELEMETRIA",
+            "data": estado_dict
+        }
 
     await manager.send_json_to_all_clients(evento)
 

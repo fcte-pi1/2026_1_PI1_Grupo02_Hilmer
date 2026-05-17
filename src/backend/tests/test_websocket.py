@@ -36,6 +36,7 @@ def test_websocket_message_delivery(client:TestClient):
         message = websocket.receive_json()
         
         # Valida os dados reais transmitidos
-        assert message["type"] == "ATUALIZACAO_TELEMETRIA"
+        assert message["type"] == "SESSAO_INICIADA"
         assert message["data"]["id_corrida_banco"] is not None
         assert message["data"]["bateria_inicial"] == 100.0
+        assert message["data"]["dimensao"] == "4X4"
