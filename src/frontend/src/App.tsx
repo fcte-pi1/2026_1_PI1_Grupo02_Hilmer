@@ -1,7 +1,13 @@
 import { TelemetriaPage } from './pages/TelemetriaPage';
+import MazeViewer from './components/maze/MazeViewer';
 
 function App() {
-  return <TelemetriaPage />;
+  return (
+    <main className="app">
+      <TelemetriaPage />
+      <MazeViewer />
+    </main>
+  );
 }
 
 export default App;
