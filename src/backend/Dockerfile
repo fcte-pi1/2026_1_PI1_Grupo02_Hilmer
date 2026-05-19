@@ -13,7 +13,7 @@ COPY . .
 RUN chmod +x entrypoint.sh
 
 # Definir o entrypoint
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
 
 # Comando padrão para iniciar o servidor
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
