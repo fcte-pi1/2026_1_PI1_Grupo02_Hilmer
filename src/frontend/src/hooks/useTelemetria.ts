@@ -55,16 +55,29 @@ export interface UseTelemetriaReturn {
 }
 
 export function useTelemetria(): UseTelemetriaReturn {
-  const [indicadores, setIndicadores] =
-    useState<IndicadoresDesempenho>(ESTADO_INICIAL);
-  const [configSessao, setConfigSessao] = useState<ConfigSessao>(
-    CONFIG_SESSAO_INICIAL,
-  );
+  const [indicadores, setIndicadores] = useState<IndicadoresDesempenho>(() => {
+    const indicadoresSalvos = localStorage.getItem("indicadores");
+    return indicadoresSalvos ? JSON.parse(indicadoresSalvos) : ESTADO_INICIAL;
+  });
+
+  const [configSessao, setConfigSessao] = useState<ConfigSessao>(() => {
+    const configSessaoSalva = localStorage.getItem("configSessao");
+    return configSessaoSalva
+      ? JSON.parse(configSessaoSalva)
+      : CONFIG_SESSAO_INICIAL;
+  });
+
   const [conectado, setConectado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  //Persistir estado no localStorage para manter dados entre recarregamentos
+  useEffect(() => {
+    localStorage.setItem("indicadores", JSON.stringify(indicadores));
+    localStorage.setItem("configSessao", JSON.stringify(configSessao));
+  }, [indicadores, configSessao]);
 
   const conectar = useCallback(() => {
     // Evitar conexões duplicadas
