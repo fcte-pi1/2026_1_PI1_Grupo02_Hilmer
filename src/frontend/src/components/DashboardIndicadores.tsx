@@ -105,9 +105,18 @@ const CardIndicador: React.FC<CardIndicadorProps> = ({
 };
 
 export const DashboardIndicadores: React.FC = () => {
-  const { indicadores, conectado } = useTelemetria() as {
+  const {
+    indicadores,
+    conectado,
+    alertaDadoInvalido,
+    errosValidacao,
+    limparErroValidacao,
+  } = useTelemetria() as {
     indicadores?: IndicadoresTelemetria | null;
     conectado: boolean;
+    alertaDadoInvalido: boolean;
+    errosValidacao: string[];
+    limparErroValidacao: () => void;
   };
 
   const [alertaSemSinal, setAlertaSemSinal] = useState(false);
@@ -232,6 +241,30 @@ export const DashboardIndicadores: React.FC = () => {
         </header>
 
         <div className="mb-5 space-y-3">
+          {alertaDadoInvalido && errosValidacao.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-semibold">
+                    Pacote descartado por falha na validacao.
+                  </p>
+                  <ul className="mt-2 space-y-1 text-xs text-amber-900/90">
+                    {errosValidacao.map((erro, index) => (
+                      <li key={`${erro}-${index}`}>- {erro}</li>
+                    ))}
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={limparErroValidacao}
+                  className="rounded-md border border-amber-200 bg-white px-2 py-1 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          )}
+
           {bateriaCritica && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
               ⚠️ Bateria crítica: nível em {LIMITE_BATERIA_CRITICA}% ou menos.
