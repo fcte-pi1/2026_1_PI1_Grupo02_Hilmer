@@ -5,14 +5,19 @@ from sqlmodel import Session
 import logging
 
 from ..database import get_session
-from ..services.telemetria import atualizar_indicadores, criar_estado_inicial, identificar_tipo_pacote
+from ..services.telemetria import (
+    atualizar_indicadores,
+    criar_estado_inicial,
+    identificar_tipo_pacote,
+    validar_pacote,
+)
 from ..schemas.telemetria import IndicadoresDesempenho, TipoPacote
 from ..services.websocket_manager import manager
 from ..models.corrida import Corrida
 from ..models.evento import Evento
 from ..models.labirinto import Labirinto
 from ..models.enums import StatusCorrida, TipoLabirinto
-from ..schemas.telemetria import PacoteInicial, PacoteMovimentacao, PacoteFinal
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/telemetria", tags=["telemetria"])
@@ -41,33 +46,49 @@ async def websocket_telemetria(websocket: WebSocket):
 
 @router.post("/pacote", status_code=201)
 async def receber_pacote_telemetria(
-    payload: PacoteInicial | PacoteMovimentacao | PacoteFinal,
+    payload: Dict[str, Any],
     session: Session = Depends(get_session)
 ):
     """
     Endpoint HTTP para o Micromouse enviar pacotes de telemetria.
     Recebe o pacote, atualiza o estado em memória e notifica o Dashboard.
     """
-    pacote = payload.model_dump()
+    pacote = payload
     tipo = identificar_tipo_pacote(pacote)
-    # print(f"Tipo de pacote: {tipo}")
-    # print(f"Payload: {pacote}")
-    if tipo == TipoPacote.INVALIDO:
-        raise HTTPException(
-            status_code=400, detail="Pacote inválido ou não reconhecido")
 
+    # 1. Recupera o ID da corrida para verificar o estado em memória
     sessao_hardware_id = pacote.get("id_corrida")
-    if sessao_hardware_id is None:
-        raise HTTPException(
-            status_code=400, detail="id_corrida ausente no pacote")
+    
+    # 2. Obtém o último timestamp se a sessão já existir (para validar regressão)
+    ultimo_ts = None
+    if isinstance(sessao_hardware_id, int) and sessao_hardware_id in estados_ativos:
+        ultimo_ts = estados_ativos[sessao_hardware_id].ultimo_timestamp_ms
 
-    # Recupera ou inicializa o estado em memória
+    # 3. BARREIRA DE VALIDAÇÃO RIGOROSA
+    # Executa as regras de negócio antes de QUALQUER processamento ou persistência
+    resultado = validar_pacote(pacote, tipo, ultimo_ts)
+    if not resultado.valido:
+        logger.warning(
+            "Pacote REJEITADO por falha na validação (ID: %s): %s",
+            sessao_hardware_id,
+            resultado.erros,
+        )
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "mensagem": "Pacote descartado por falha na validação",
+                "erros": resultado.erros,
+            },
+        )
+
+    # 4. Inicializa estado se for o primeiro pacote válido desta sessão
+    # (Garantido pelo validar_pacote que sessao_hardware_id é int aqui)
     if sessao_hardware_id not in estados_ativos:
         estados_ativos[sessao_hardware_id] = criar_estado_inicial()
 
     estado_atual = estados_ativos[sessao_hardware_id]
 
-    # Processa os indicadores puros
+    # 5. Processa os indicadores puros (Cálculos de velocidade, etc)
     novo_estado = atualizar_indicadores(estado_atual, pacote)
 
     commit_realizado = False
@@ -82,10 +103,7 @@ async def receber_pacote_telemetria(
             tipo_lab = TipoLabirinto.DEZESSEIS
         elif int(dimensao) == 4:
             tipo_lab = TipoLabirinto.QUATRO
-        else:
-            raise HTTPException(
-                status_code=400, detail="Dimensão inválida do labirinto")
-
+        
         labirinto = Labirinto(tipo_labirinto=tipo_lab)
         session.add(labirinto)
         session.flush()
@@ -108,6 +126,7 @@ async def receber_pacote_telemetria(
         session.commit()
         session.refresh(corrida)
         commit_realizado = True
+
     # Se for pacote final, atualizar o banco de dados
     if tipo == TipoPacote.FINAL and novo_estado.id_corrida_banco is not None:
         corrida = session.get(Corrida, novo_estado.id_corrida_banco)

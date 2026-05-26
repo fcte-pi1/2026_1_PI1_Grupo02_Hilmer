@@ -111,16 +111,19 @@ def validar_pacote(
         return ResultadoValidacao(valido=False, erros=erros)
 
     # --- Campos obrigatórios gerais ---
-    if "id_corrida" not in packet:
+    id_corrida = packet.get("id_corrida")
+    if id_corrida is None:
         erros.append("Campo 'id_corrida' ausente.")
+    elif not isinstance(id_corrida, int):
+        erros.append(f"Campo 'id_corrida' deve ser um número inteiro (recebido: {id_corrida}).")
 
     ts = packet.get("timestamp_ms")
     if ts is None:
         erros.append("Campo 'timestamp_ms' ausente.")
-    elif not isinstance(ts, (int, float)):
-        erros.append("Campo 'timestamp_ms' deve ser numérico.")
+    elif not isinstance(ts, int):
+        erros.append(f"Campo 'timestamp_ms' deve ser um número inteiro (recebido: {ts}).")
     elif ts < 0:
-        erros.append("Campo 'timestamp_ms' não pode ser negativo.")
+        erros.append(f"Campo 'timestamp_ms' não pode ser negativo (recebido: {ts}).")
 
     # --- Validação por tipo ---
     if tipo == TipoPacote.INICIAL:
@@ -134,18 +137,25 @@ def validar_pacote(
 
 
 def _validar_pacote_inicial(packet: dict, erros: list[str]) -> None:
-    if "dimensao" not in packet:
+    dimensao = packet.get("dimensao")
+    if dimensao is None:
         erros.append("Campo 'dimensao' ausente no pacote inicial.")
-    if "tentativa" not in packet:
+    elif dimensao not in (4, 8, 16):
+        erros.append(f"Dimensão inválida: deve ser 4, 8 ou 16 (recebido: {dimensao}).")
+
+    tentativa = packet.get("tentativa")
+    if tentativa is None:
         erros.append("Campo 'tentativa' ausente no pacote inicial.")
+    elif tentativa not in (1, 2, 3):
+        erros.append(f"Tentativa fora do limite: deve ser 1, 2 ou 3 (recebido: {tentativa}).")
 
     bateria = packet.get("bateria")
     if bateria is None:
         erros.append("Campo 'bateria' ausente no pacote inicial.")
     elif not isinstance(bateria, (int, float)):
-        erros.append("Campo 'bateria' deve ser numérico.")
+        erros.append(f"Campo 'bateria' deve ser numérico (recebido: {bateria}).")
     elif not (0 <= bateria <= 100):
-        erros.append("Campo 'bateria' deve estar entre 0 e 100.")
+        erros.append(f"Bateria fora do range [0, 100] (recebido: {bateria}).")
 
 
 def _validar_pacote_movimentacao(
@@ -158,12 +168,12 @@ def _validar_pacote_movimentacao(
         if valor is None:
             erros.append(f"Campo '{campo}' ausente no pacote de movimentação.")
         elif not isinstance(valor, (int, float)):
-            erros.append(f"Campo '{campo}' deve ser numérico.")
+            erros.append(f"Campo '{campo}' deve ser numérico (recebido: {valor}).")
 
     # Timestamp não-regressivo
     ts = packet.get("timestamp_ms")
     if (
-        isinstance(ts, (int, float))
+        isinstance(ts, int)
         and ultimo_timestamp_ms is not None
         and ts < ultimo_timestamp_ms
     ):
@@ -175,9 +185,9 @@ def _validar_pacote_movimentacao(
     bateria = packet.get("bateria")
     if bateria is not None:
         if not isinstance(bateria, (int, float)):
-            erros.append("Campo 'bateria' deve ser numérico.")
+            erros.append(f"Campo 'bateria' deve ser numérico (recebido: {bateria}).")
         elif not (0 <= bateria <= 100):
-            erros.append("Campo 'bateria' deve estar entre 0 e 100.")
+            erros.append(f"Bateria fora do range [0, 100] (recebido: {bateria}).")
 
 
 def _validar_pacote_final(packet: dict, erros: list[str]) -> None:
@@ -185,23 +195,24 @@ def _validar_pacote_final(packet: dict, erros: list[str]) -> None:
     if sucesso is None:
         erros.append("Campo 'sucesso' ausente no pacote final.")
     elif not isinstance(sucesso, bool):
-        erros.append("Campo 'sucesso' deve ser booleano.")
+        erros.append(f"Campo 'sucesso' deve ser booleano (recebido: {sucesso}).")
 
     v_med = packet.get("v_med")
     if v_med is None:
         erros.append("Campo 'v_med' ausente no pacote final.")
     elif not isinstance(v_med, (int, float)):
-        erros.append("Campo 'v_med' deve ser numérico.")
+        erros.append(f"Campo 'v_med' deve ser numérico (recebido: {v_med}).")
     elif v_med < 0:
-        erros.append("Campo 'v_med' não pode ser negativo.")
+        erros.append(f"Campo 'v_med' não pode ser negativo (recebido: {v_med}).")
 
     bateria = packet.get("bateria")
     if bateria is None:
         erros.append("Campo 'bateria' ausente no pacote final.")
     elif not isinstance(bateria, (int, float)):
-        erros.append("Campo 'bateria' deve ser numérico.")
+        erros.append(f"Campo 'bateria' deve ser numérico (recebido: {bateria}).")
     elif not (0 <= bateria <= 100):
-        erros.append("Campo 'bateria' deve estar entre 0 e 100.")
+        erros.append(f"Bateria fora do range [0, 100] (recebido: {bateria}).")
+
 
 
 # ---------------------------------------------------------------------------
