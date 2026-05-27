@@ -83,7 +83,7 @@ def test_falhas_validacao_barreira(client: TestClient, session: Session, nome_ca
     
     assert response.status_code == 422
     data = response.json()
-    assert data["detail"]["mensagem"] == "Pacote descartado por falha na validação"
+    assert data["detail"]["mensagem"] == "Pacote descartado"
     assert any(erro_esperado in e for e in data["detail"]["erros"])
     
     # Garante que não foi criada nenhuma corrida no banco (para IDs novos)

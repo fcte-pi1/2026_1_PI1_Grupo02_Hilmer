@@ -38,7 +38,7 @@ from app.services.telemetria import (
 PACOTE_INICIAL_NORMAL = {
     "id_corrida": 1,
     "timestamp_ms": 0,
-    "dimensao": "4x4",
+    "dimensao": 4,
     "tentativa": 1,
     "bateria": 95,
 }
@@ -63,7 +63,7 @@ PACOTE_FINAL_SUCESSO = {
 PACOTE_INICIAL_BATERIA_CRITICA = {
     "id_corrida": 2,
     "timestamp_ms": 0,
-    "dimensao": "4x4",
+    "dimensao": 4,
     "tentativa": 1,
     "bateria": 10,
 }
@@ -79,7 +79,7 @@ PACOTE_FINAL_BATERIA_CRITICA = {
 # Cenário 3 — Pacotes inválidos
 PACOTE_SEM_TIMESTAMP = {
     "id_corrida": 1,
-    "dimensao": "4x4",
+    "dimensao": 4,
     "tentativa": 1,
     "bateria": 90,
 }
@@ -215,7 +215,7 @@ class TestValidarPacote:
         pacote = {**PACOTE_INICIAL_NORMAL, "bateria": 150}
         result = validar_pacote(pacote, TipoPacote.INICIAL)
         assert result.valido is False
-        assert any("bateria" in e for e in result.erros)
+        assert any("Bateria" in e for e in result.erros)
 
     def test_bateria_negativa_final(self):
         pacote = {**PACOTE_FINAL_SUCESSO, "bateria": -5}
@@ -485,7 +485,7 @@ class TestAtualizarIndicadores:
             {
                 "id_corrida": 3,
                 "timestamp_ms": 0,
-                "dimensao": "4x4",
+                "dimensao": 4,
                 "tentativa": 1,
                 "bateria": 85,
             },
@@ -508,7 +508,7 @@ class TestAtualizarIndicadores:
             {
                 "id_corrida": 3,
                 "timestamp_ms": 0,
-                "dimensao": "4x4",
+                "dimensao": 4,
                 "tentativa": 1,
                 "bateria": 85,
             },
@@ -544,7 +544,7 @@ class TestAtualizarIndicadores:
             {
                 "id_corrida": 3,
                 "timestamp_ms": 0,
-                "dimensao": "4x4",
+                "dimensao": 4,
                 "tentativa": 1,
                 "bateria": 85,
             },
@@ -610,7 +610,7 @@ class TestCenariosSimulados:
             {
                 "id_corrida": 3,
                 "timestamp_ms": 0,
-                "dimensao": "4x4",
+                "dimensao": 4,
                 "tentativa": 1,
                 "bateria": 85,
             },

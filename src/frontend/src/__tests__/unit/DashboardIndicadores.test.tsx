@@ -44,6 +44,8 @@ function configurarHook(
 ) {
   mockUseTelemetria.mockReturnValue({
     indicadores: indicadores ?? undefined,
+    statusConexao: conectado ? "online" : "waiting",
+    mensagemStatusConexao: null,
     conectado,
     configSessao: { dimensao: null, tentativa: null },
     enviarPacote: vi.fn(),

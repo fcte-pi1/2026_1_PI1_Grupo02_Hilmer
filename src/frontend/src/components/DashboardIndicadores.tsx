@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import { useTelemetria } from "../hooks/useTelemetria";
+import { useTelemetria, type UseTelemetriaReturn } from "../hooks/useTelemetria";
 import {
   CriticalAlertModal,
   type CriticalAlertType,
@@ -104,20 +104,21 @@ const CardIndicador: React.FC<CardIndicadorProps> = ({
   );
 };
 
-export const DashboardIndicadores: React.FC = () => {
+type DashboardIndicadoresProps = {
+  telemetria?: Partial<UseTelemetriaReturn>;
+};
+
+export const DashboardIndicadores: React.FC<DashboardIndicadoresProps> = ({
+  telemetria,
+}) => {
+  const telemetriaHook = useTelemetria();
   const {
     indicadores,
     conectado,
     alertaDadoInvalido,
     errosValidacao,
     limparErroValidacao,
-  } = useTelemetria() as {
-    indicadores?: IndicadoresTelemetria | null;
-    conectado: boolean;
-    alertaDadoInvalido: boolean;
-    errosValidacao: string[];
-    limparErroValidacao: () => void;
-  };
+  } = (telemetria ?? telemetriaHook) as UseTelemetriaReturn;
 
   const [alertaSemSinal, setAlertaSemSinal] = useState(false);
   const [alertaCritico, setAlertaCritico] = useState<{

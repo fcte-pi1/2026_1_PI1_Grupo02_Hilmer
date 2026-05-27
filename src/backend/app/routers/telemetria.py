@@ -13,6 +13,7 @@ from ..services.telemetria import (
 )
 from ..schemas.telemetria import IndicadoresDesempenho, TipoPacote
 from ..services.websocket_manager import manager
+from ..services.connection_monitor import connection_monitor
 from ..models.corrida import Corrida
 from ..models.evento import Evento
 from ..models.labirinto import Labirinto
@@ -33,10 +34,15 @@ async def websocket_telemetria(websocket: WebSocket):
     O front-end se conecta aqui para ouvir eventos em tempo real.
     """
     await manager.connect(websocket)
-    confirmation_message = {
-        "message": "connected"
+    handshake = {
+        "type": "HANDSHAKE",
+        "data": {
+            "status": "connected",
+            "server_time": datetime.now(UTC).isoformat(),
+            "version": "0.1.0",
+        }
     }
-    await manager.send_json_to_client(confirmation_message, websocket)
+    await manager.send_json_to_client(handshake, websocket)
     try:
         while True:
             await websocket.receive_json()
@@ -56,8 +62,11 @@ async def receber_pacote_telemetria(
     pacote = payload
     tipo = identificar_tipo_pacote(pacote)
 
-    # 1. Recupera o ID da corrida para verificar o estado em memória
+    # --- Registrar pacote no monitor de conexão e validar ---
+    await connection_monitor.registrar_pacote(pacote.get("id_corrida", 0))
+    
     sessao_hardware_id = pacote.get("id_corrida")
+    tipo = identificar_tipo_pacote(pacote)
     
     # 2. Obtém o último timestamp se a sessão já existir (para validar regressão)
     ultimo_ts = None
@@ -65,24 +74,19 @@ async def receber_pacote_telemetria(
         ultimo_ts = estados_ativos[sessao_hardware_id].ultimo_timestamp_ms
 
     # 3. BARREIRA DE VALIDAÇÃO RIGOROSA
-    # Executa as regras de negócio antes de QUALQUER processamento ou persistência
     resultado = validar_pacote(pacote, tipo, ultimo_ts)
     if not resultado.valido:
-        logger.warning(
-            "Pacote REJEITADO por falha na validação (ID: %s): %s",
-            sessao_hardware_id,
-            resultado.erros,
-        )
+        logger.warning("Pacote REJEITADO por falha na validação: %s", resultado.erros)
         raise HTTPException(
             status_code=422,
-            detail={
-                "mensagem": "Pacote descartado por falha na validação",
-                "erros": resultado.erros,
-            },
+            detail={"mensagem": "Pacote descartado", "erros": resultado.erros},
         )
 
-    # 4. Inicializa estado se for o primeiro pacote válido desta sessão
-    # (Garantido pelo validar_pacote que sessao_hardware_id é int aqui)
+    # 4. Gerenciamento de Sessão: Encerrar anteriores se for um novo pacote inicial
+    if tipo == TipoPacote.INICIAL and sessao_hardware_id not in estados_ativos:
+        await _abortar_corridas_ativas(session, sessao_hardware_id)
+
+    # 5. Inicializa ou recupera estado
     if sessao_hardware_id not in estados_ativos:
         estados_ativos[sessao_hardware_id] = criar_estado_inicial()
 
@@ -168,7 +172,53 @@ async def receber_pacote_telemetria(
     await manager.send_json_to_all_clients(evento)
     if tipo == TipoPacote.FINAL:
         del estados_ativos[sessao_hardware_id]
+        connection_monitor.remover_corrida(sessao_hardware_id)
     return {"message": "Pacote processado com sucesso", "estado": estado_dict}
+
+
+async def _abortar_corridas_ativas(
+    session: Session,
+    novo_sessao_id: int,
+) -> None:
+    """Aborta corridas ativas quando uma nova sessão é iniciada.
+
+    Garante que apenas uma corrida esteja ativa por vez,
+    abortando as anteriores com status ABORTADA no banco de dados.
+    """
+    ids_para_remover = [
+        sid for sid in estados_ativos
+        if sid != novo_sessao_id
+    ]
+
+    if not ids_para_remover:
+        return
+
+    for sid in ids_para_remover:
+        estado = estados_ativos.pop(sid)
+
+        # Atualizar registro no banco se existir
+        if estado.id_corrida_banco is not None:
+            corrida = session.get(Corrida, estado.id_corrida_banco)
+            if corrida and corrida.status_corrida == StatusCorrida.EM_ANDAMENTO:
+                corrida.status_corrida = StatusCorrida.ABORTADA
+                corrida.data_hora_fim = datetime.now(UTC)
+                session.add(corrida)
+
+        connection_monitor.remover_corrida(sid)
+
+    session.commit()
+
+    await manager.send_json_to_all_clients({
+        "type": "SESSAO_ENCERRADA",
+        "data": {
+            "sessoes_encerradas": ids_para_remover,
+            "motivo": "Nova sessão iniciada pelo Micromouse",
+        }
+    })
+
+    logger.info(
+        "Corridas encerradas automaticamente: %s", ids_para_remover
+    )
 
 
 def _estado_to_dict(estado: IndicadoresDesempenho) -> dict:

@@ -5,6 +5,8 @@ type MonitoringLayoutProps = {
   eyebrow: string;
   title: string;
   description: string;
+  statusConexao: "online" | "offline" | "waiting";
+  mensagemStatusConexao?: string | null;
   children: React.ReactNode;
 };
 
@@ -15,9 +17,29 @@ export function MonitoringLayout({
   eyebrow,
   title,
   description,
+  statusConexao,
+  mensagemStatusConexao,
   children,
 }: MonitoringLayoutProps) {
   const exibindoLabirinto = activeView === "labirinto";
+  const statusLabel =
+    statusConexao === "online"
+      ? "Online"
+      : statusConexao === "offline"
+        ? "Offline"
+        : "Aguardando conexao";
+  const statusClasses =
+    statusConexao === "online"
+      ? "border-blue-600 bg-blue-600 text-white"
+      : statusConexao === "offline"
+        ? "border-red-200 bg-red-50 text-red-700"
+        : "border-amber-200 bg-amber-50 text-amber-700";
+  const statusDotClass =
+    statusConexao === "online"
+      ? "bg-white"
+      : statusConexao === "offline"
+        ? "bg-red-500"
+        : "bg-amber-500";
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-zinc-900">
@@ -111,9 +133,18 @@ export function MonitoringLayout({
                 />
               </div>
 
-              <div className="flex h-9 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700">
-                <span className="h-2 w-2 rounded-full bg-green-500" />
-                Online
+              <div
+                role="status"
+                aria-live="polite"
+                title={`Status da conexao: ${statusLabel}`}
+                className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium ${statusClasses}`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${statusDotClass} ${
+                    statusConexao === "offline" ? "" : "animate-pulse"
+                  }`}
+                />
+                {statusLabel}
               </div>
 
               <button
