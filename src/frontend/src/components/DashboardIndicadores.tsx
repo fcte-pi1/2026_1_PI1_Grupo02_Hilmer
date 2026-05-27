@@ -1,7 +1,16 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useTelemetria } from "../hooks/useTelemetria";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-type StatusCorrida = "aguardando" | "em_andamento" | "concluida" | "abortada";
+import { useTelemetria, type UseTelemetriaReturn } from "../hooks/useTelemetria";
+import {
+  CriticalAlertModal,
+  type CriticalAlertType,
+} from "./CriticalAlertModal";
+
+type StatusCorrida =
+  | "aguardando"
+  | "em_andamento"
+  | "concluida"
+  | "abortada";
 
 type IndicadoresTelemetria = {
   bateria_atual?: number | null;
@@ -10,9 +19,10 @@ type IndicadoresTelemetria = {
   tempo_final_ms?: number | null;
   status_corrida?: StatusCorrida | string | null;
   ultimo_timestamp_ms?: number | null;
+  alerta_possivel_parada_inesperada?: boolean | null;
 };
 
-const LIMITE_BATERIA_CRITICA = 15;
+const LIMITE_BATERIA_CRITICA = 10;
 const LIMITE_SEM_TELEMETRIA_MS = 3000;
 
 const formatarTempo = (ms?: number | null): string => {
@@ -33,8 +43,16 @@ const formatarTempo = (ms?: number | null): string => {
 const normalizarStatus = (status?: string | null): StatusCorrida => {
   const valor = status?.toLowerCase();
 
-  if (valor === "em_andamento" || valor === "concluida" || valor === "abortada") {
+  if (
+    valor === "em_andamento" ||
+    valor === "concluida" ||
+    valor === "abortada"
+  ) {
     return valor;
+  }
+
+  if (valor === "falha") {
+    return "abortada";
   }
 
   return "aguardando";
@@ -86,13 +104,26 @@ const CardIndicador: React.FC<CardIndicadorProps> = ({
   );
 };
 
-export const DashboardIndicadores: React.FC = () => {
-  const { indicadores, conectado } = useTelemetria() as {
+type DashboardIndicadoresProps = {
+  telemetria?: Pick<UseTelemetriaReturn, "indicadores" | "conectado">;
+};
+
+export const DashboardIndicadores: React.FC<DashboardIndicadoresProps> = ({
+  telemetria,
+}) => {
+  const { indicadores, conectado } = (telemetria ?? useTelemetria()) as {
     indicadores?: IndicadoresTelemetria | null;
     conectado: boolean;
   };
 
   const [alertaSemSinal, setAlertaSemSinal] = useState(false);
+  const [alertaCritico, setAlertaCritico] = useState<{
+    type: CriticalAlertType;
+    key: string;
+  } | null>(null);
+
+  const bateriaCriticaAbertaRef = useRef(false);
+  const paradaInesperadaAbertaRef = useRef(false);
 
   const statusCorrida = normalizarStatus(indicadores?.status_corrida);
   const corridaAguardando = !indicadores || statusCorrida === "aguardando";
@@ -105,7 +136,9 @@ export const DashboardIndicadores: React.FC = () => {
   const tempoFinalMs = obterNumeroValido(indicadores?.tempo_final_ms);
   const ultimoTimestampMs = obterNumeroValido(indicadores?.ultimo_timestamp_ms);
 
-  const bateriaCritica = bateriaAtual !== null && bateriaAtual < LIMITE_BATERIA_CRITICA;
+  const bateriaCritica = bateriaAtual !== null && bateriaAtual <= LIMITE_BATERIA_CRITICA;
+  const paradaInesperada =
+    indicadores?.alerta_possivel_parada_inesperada === true;
 
   const tempoExibido = useMemo(() => {
     if (corridaConcluida && tempoFinalMs !== null) {
@@ -130,99 +163,143 @@ export const DashboardIndicadores: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [indicadores, statusCorrida, ultimoTimestampMs]);
 
+  useEffect(() => {
+    if (!bateriaCritica) {
+      bateriaCriticaAbertaRef.current = false;
+      return;
+    }
+
+    if (bateriaCriticaAbertaRef.current) {
+      return;
+    }
+
+    bateriaCriticaAbertaRef.current = true;
+    setAlertaCritico({
+      type: "battery",
+      key: `battery-${ultimoTimestampMs ?? Date.now()}`,
+    });
+  }, [bateriaCritica, ultimoTimestampMs]);
+
+  useEffect(() => {
+    if (!paradaInesperada) {
+      paradaInesperadaAbertaRef.current = false;
+      return;
+    }
+
+    if (paradaInesperadaAbertaRef.current) {
+      return;
+    }
+
+    paradaInesperadaAbertaRef.current = true;
+    setAlertaCritico({
+      type: "stopped",
+      key: `stopped-${ultimoTimestampMs ?? Date.now()}`,
+    });
+  }, [paradaInesperada, ultimoTimestampMs]);
+
   return (
-    <div className="w-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-      <header className="mb-6 flex flex-col gap-3 border-b border-neutral-100 pb-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-            Telemetria
-          </p>
-          <h2 className="text-2xl font-semibold text-neutral-950">
-            Indicadores de Desempenho
-          </h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            Métricas em tempo real da corrida do Micromouse.
-          </p>
+    <>
+      <CriticalAlertModal
+        open={alertaCritico !== null}
+        type={alertaCritico?.type}
+        soundKey={alertaCritico?.key ?? null}
+        onDismiss={() => setAlertaCritico(null)}
+        onConfirm={() => setAlertaCritico(null)}
+      />
+
+      <div className="w-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <header className="mb-6 flex flex-col gap-3 border-b border-neutral-100 pb-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              Telemetria
+            </p>
+            <h2 className="text-2xl font-semibold text-neutral-950">
+              Indicadores de Desempenho
+            </h2>
+            <p className="mt-1 text-sm text-neutral-500">
+              Métricas em tempo real da corrida do Micromouse.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span
+              className={`rounded-full px-3 py-1 font-medium ${
+                conectado
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              WebSocket: {conectado ? "Conectado" : "Desconectado"}
+            </span>
+            <span className="rounded-full bg-neutral-100 px-3 py-1 font-medium text-neutral-700">
+              Corrida: {rotuloStatus[statusCorrida]}
+            </span>
+          </div>
+        </header>
+
+        <div className="mb-5 space-y-3">
+          {bateriaCritica && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+              ⚠️ Bateria crítica: nível em {LIMITE_BATERIA_CRITICA}% ou menos.
+            </div>
+          )}
+
+          {alertaSemSinal && (
+            <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm font-medium text-yellow-800">
+              ⚠️ Ausência de telemetria recente: sem novos pacotes há mais de 3 segundos.
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-wrap gap-2 text-xs">
-          <span
-            className={`rounded-full px-3 py-1 font-medium ${
-              conectado
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            WebSocket: {conectado ? "Conectado" : "Desconectado"}
-          </span>
-          <span className="rounded-full bg-neutral-100 px-3 py-1 font-medium text-neutral-700">
-            Corrida: {rotuloStatus[statusCorrida]}
-          </span>
-        </div>
-      </header>
-
-      <div className="mb-5 space-y-3">
-        {bateriaCritica && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-            ⚠️ Bateria crítica: nível abaixo de {LIMITE_BATERIA_CRITICA}%.
-          </div>
-        )}
-
-        {alertaSemSinal && (
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm font-medium text-yellow-800">
-            ⚠️ Ausência de telemetria recente: sem novos pacotes há mais de 3 segundos.
-          </div>
-        )}
-      </div>
-
-      <main className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <CardIndicador
-          titulo="Bateria"
-          valor={corridaAguardando || bateriaAtual === null ? "--%" : `${bateriaAtual.toFixed(1)}%`}
-          descricao={
-            bateriaCritica
-              ? "Bateria crítica"
-              : corridaAguardando
-                ? "Aguardando telemetria"
-                : "Última bateria conhecida"
-          }
-          estado={corridaAguardando ? "vazio" : bateriaCritica ? "critico" : "normal"}
-        />
-
-        <CardIndicador
-          titulo="Velocidade média"
-          valor={
-            corridaAguardando || velocidadeMedia === null || velocidadeMedia < 0
-              ? "-- cm/s"
-              : `${velocidadeMedia.toFixed(2)} cm/s`
-          }
-          descricao={corridaAguardando ? "Aguardando deslocamento" : "Calculada pela telemetria"}
-          estado={corridaAguardando ? "vazio" : "normal"}
-        />
-
-        <CardIndicador
-          titulo={corridaConcluida || corridaAbortada ? "Tempo final" : "Tempo decorrido"}
-          valor={corridaAguardando ? "00:00.000" : formatarTempo(tempoExibido)}
-          descricao={
-            corridaConcluida
-              ? "Tempo fixado após conclusão"
-              : corridaAbortada
-                ? "Tempo fixado após encerramento"
+        <main className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <CardIndicador
+            titulo="Bateria"
+            valor={corridaAguardando || bateriaAtual === null ? "--%" : `${bateriaAtual.toFixed(1)}%`}
+            descricao={
+              bateriaCritica
+                ? "Bateria crítica"
                 : corridaAguardando
-                  ? "Aguardando largada"
-                  : "Atualizado durante a corrida"
-          }
-          estado={
-            corridaAguardando
-              ? "vazio"
-              : corridaConcluida
-                ? "sucesso"
+                  ? "Aguardando telemetria"
+                  : "Última bateria conhecida"
+            }
+            estado={corridaAguardando ? "vazio" : bateriaCritica ? "critico" : "normal"}
+          />
+
+          <CardIndicador
+            titulo="Velocidade média"
+            valor={
+              corridaAguardando || velocidadeMedia === null || velocidadeMedia < 0
+                ? "-- cm/s"
+                : `${velocidadeMedia.toFixed(2)} cm/s`
+            }
+            descricao={corridaAguardando ? "Aguardando deslocamento" : "Calculada pela telemetria"}
+            estado={corridaAguardando ? "vazio" : "normal"}
+          />
+
+          <CardIndicador
+            titulo={corridaConcluida || corridaAbortada ? "Tempo final" : "Tempo decorrido"}
+            valor={corridaAguardando ? "00:00.000" : formatarTempo(tempoExibido)}
+            descricao={
+              corridaConcluida
+                ? "Tempo fixado após conclusão"
                 : corridaAbortada
-                  ? "critico"
-                  : "normal"
-          }
-        />
-      </main>
-    </div>
+                  ? "Tempo fixado após encerramento"
+                  : corridaAguardando
+                    ? "Aguardando largada"
+                    : "Atualizado durante a corrida"
+            }
+            estado={
+              corridaAguardando
+                ? "vazio"
+                : corridaConcluida
+                  ? "sucesso"
+                  : corridaAbortada
+                    ? "critico"
+                    : "normal"
+            }
+          />
+        </main>
+      </div>
+    </>
   );
 };

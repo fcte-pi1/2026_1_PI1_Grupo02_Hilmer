@@ -8,6 +8,7 @@ from sqlmodel import SQLModel
 
 from .database import engine
 from .routers import corridas, labirinto, rankings, telemetria
+from .services.connection_monitor import connection_monitor
 
 # Importar modelos para que o SQLModel.metadata os registre
 from . import models  # noqa: F401
@@ -17,7 +18,9 @@ from . import models  # noqa: F401
 async def lifespan(app: FastAPI):
     """Cria as tabelas no banco na inicialização (se não existirem)."""
     SQLModel.metadata.create_all(engine)
+    connection_monitor.start()
     yield
+    connection_monitor.stop()
 
 
 app = FastAPI(

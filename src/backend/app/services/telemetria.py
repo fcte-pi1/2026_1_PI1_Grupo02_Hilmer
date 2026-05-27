@@ -17,9 +17,11 @@ import logging
 import math
 
 from ..schemas.telemetria import (
+    AlertaTelemetria,
     IndicadoresDesempenho,
     ResultadoValidacao,
     StatusCorridaTelemetria,
+    TipoAlertaTelemetria,
     TipoPacote,
 )
 
@@ -32,8 +34,11 @@ logger = logging.getLogger(__name__)
 CELL_SIZE_CM: float = 18.0
 """Tamanho de cada célula do labirinto em centímetros (padrão Micromouse)."""
 
-BATERIA_CRITICA_THRESHOLD: float = 15.0
-"""Limiar percentual abaixo do qual a bateria é considerada crítica."""
+BATERIA_CRITICA_THRESHOLD: float = 10.0
+"""Limiar percentual em que a bateria é considerada crítica."""
+
+PARADA_INESPERADA_THRESHOLD_MS: int = 3000
+"""Tempo mínimo em ms para considerar uma parada inesperada."""
 
 
 # ---------------------------------------------------------------------------
@@ -259,7 +264,7 @@ def atualizar_indicadores(
         Novo IndicadoresDesempenho com os valores atualizados.
     """
     # Cópia do estado (para não mutar o original)
-    novo_estado = estado_atual.model_copy()
+    novo_estado = estado_atual.model_copy(deep=True)
 
     # Limpar alerta de dado inválido do ciclo anterior
     novo_estado.alerta_dado_invalido = False
@@ -305,7 +310,6 @@ def _processar_pacote_inicial(
     estado.sessao_hardware_id = pacote["id_corrida"]
     estado.bateria_inicial = pacote["bateria"]
     estado.bateria_atual = pacote["bateria"]
-    estado.alerta_bateria_critica = pacote["bateria"] < BATERIA_CRITICA_THRESHOLD
     estado.status_corrida = StatusCorridaTelemetria.EM_ANDAMENTO
     estado.tempo_decorrido_ms = 0
     estado.tempo_final_ms = None
@@ -318,6 +322,12 @@ def _processar_pacote_inicial(
     estado._tempo_total_movimento_s = 0.0
     estado._ultima_posicao_x = None
     estado._ultima_posicao_y = None
+    _resetar_alerta_parada_inesperada(estado)
+    _atualizar_alerta_bateria_critica(
+        estado,
+        bateria=estado.bateria_atual,
+        timestamp_ms=pacote["timestamp_ms"],
+    )
 
 
 def _processar_pacote_movimentacao(
@@ -327,6 +337,7 @@ def _processar_pacote_movimentacao(
     ts_atual = pacote["timestamp_ms"]
     x_atual = float(pacote["x"])
     y_atual = float(pacote["y"])
+    velocidade_segmento: float | None = None
 
     # Calcular deslocamento e velocidade ANTES de atualizar posição/timestamp
     if (
@@ -341,6 +352,7 @@ def _processar_pacote_movimentacao(
                 + (y_atual - estado._ultima_posicao_y) ** 2
             )
             distancia_cm = distancia_celulas * CELL_SIZE_CM
+            velocidade_segmento = max(distancia_cm / delta_t_s, 0.0)
 
             estado._distancia_total_cm += distancia_cm
             estado._tempo_total_movimento_s += delta_t_s
@@ -350,6 +362,12 @@ def _processar_pacote_movimentacao(
                 estado.velocidade_media = (
                     estado._distancia_total_cm / estado._tempo_total_movimento_s
                 )
+
+    _atualizar_alerta_parada_inesperada(
+        estado,
+        velocidade_segmento=velocidade_segmento,
+        timestamp_ms=ts_atual,
+    )
 
     # Atualizar posição e timestamp
     estado._ultima_posicao_x = x_atual
@@ -361,7 +379,11 @@ def _processar_pacote_movimentacao(
     bateria = pacote.get("bateria")
     if bateria is not None and isinstance(bateria, (int, float)) and 0 <= bateria <= 100:
         estado.bateria_atual = bateria
-        estado.alerta_bateria_critica = bateria < BATERIA_CRITICA_THRESHOLD
+        _atualizar_alerta_bateria_critica(
+            estado,
+            bateria=bateria,
+            timestamp_ms=ts_atual,
+        )
 
 
 def _processar_pacote_final(
@@ -378,7 +400,11 @@ def _processar_pacote_final(
     # Bateria final
     estado.bateria_atual = pacote["bateria"]
     estado.bateria_final = pacote["bateria"]
-    estado.alerta_bateria_critica = pacote["bateria"] < BATERIA_CRITICA_THRESHOLD
+    _atualizar_alerta_bateria_critica(
+        estado,
+        bateria=pacote["bateria"],
+        timestamp_ms=pacote["timestamp_ms"],
+    )
 
     # Status e sucesso
     estado.sucesso = pacote["sucesso"]
@@ -387,3 +413,97 @@ def _processar_pacote_final(
         if pacote["sucesso"]
         else StatusCorridaTelemetria.FALHA
     )
+    _resetar_alerta_parada_inesperada(estado)
+
+
+def _corrida_aceita_alerta_de_parada(estado: IndicadoresDesempenho) -> bool:
+    """Indica se o estado atual representa uma sessão ativa."""
+    return estado.status_corrida == StatusCorridaTelemetria.EM_ANDAMENTO
+
+
+def _registrar_alerta(
+    estado: IndicadoresDesempenho,
+    tipo: TipoAlertaTelemetria,
+    mensagem: str,
+    timestamp_ms: int,
+) -> None:
+    """Adiciona um registro técnico de alerta ao histórico da sessão."""
+    estado.log_alertas.append(
+        AlertaTelemetria(
+            tipo=tipo,
+            mensagem=mensagem,
+            timestamp_ms=timestamp_ms,
+        )
+    )
+
+
+def _atualizar_alerta_bateria_critica(
+    estado: IndicadoresDesempenho,
+    bateria: float | None,
+    timestamp_ms: int,
+) -> None:
+    """Liga ou desliga o alerta de bateria crítica e registra a transição."""
+    if bateria is None:
+        return
+
+    bateria_critica = bateria <= BATERIA_CRITICA_THRESHOLD
+    estado.alerta_bateria_critica = bateria_critica
+
+    if bateria_critica and not estado._alerta_bateria_critica_emitido:
+        _registrar_alerta(
+            estado,
+            tipo=TipoAlertaTelemetria.BATERIA_CRITICA,
+            mensagem="Bateria crítica detectada.",
+            timestamp_ms=timestamp_ms,
+        )
+        estado._alerta_bateria_critica_emitido = True
+    elif not bateria_critica:
+        estado._alerta_bateria_critica_emitido = False
+
+
+def _resetar_alerta_parada_inesperada(estado: IndicadoresDesempenho) -> None:
+    """Limpa o rastreamento da parada inesperada."""
+    estado.alerta_possivel_parada_inesperada = False
+    estado._timestamp_inicio_parada_ms = None
+    estado._alerta_parada_emitido = False
+
+
+def _atualizar_alerta_parada_inesperada(
+    estado: IndicadoresDesempenho,
+    velocidade_segmento: float | None,
+    timestamp_ms: int,
+) -> None:
+    """Detecta velocidade zerada sustentada enquanto a sessão está ativa."""
+    if not _corrida_aceita_alerta_de_parada(estado):
+        _resetar_alerta_parada_inesperada(estado)
+        return
+
+    if velocidade_segmento is None:
+        return
+
+    if velocidade_segmento > 0:
+        _resetar_alerta_parada_inesperada(estado)
+        return
+
+    if estado._timestamp_inicio_parada_ms is None:
+        estado._timestamp_inicio_parada_ms = estado.ultimo_timestamp_ms
+
+    if estado._timestamp_inicio_parada_ms is None:
+        estado._timestamp_inicio_parada_ms = timestamp_ms
+
+    tempo_parado_ms = timestamp_ms - estado._timestamp_inicio_parada_ms
+    estado.alerta_possivel_parada_inesperada = (
+        tempo_parado_ms > PARADA_INESPERADA_THRESHOLD_MS
+    )
+
+    if (
+        estado.alerta_possivel_parada_inesperada
+        and not estado._alerta_parada_emitido
+    ):
+        _registrar_alerta(
+            estado,
+            tipo=TipoAlertaTelemetria.POSSIVEL_PARADA_INESPERADA,
+            mensagem="Possível parada inesperada detectada.",
+            timestamp_ms=timestamp_ms,
+        )
+        estado._alerta_parada_emitido = True

@@ -15,11 +15,13 @@ import pytest
 from app.schemas.telemetria import (
     IndicadoresDesempenho,
     StatusCorridaTelemetria,
+    TipoAlertaTelemetria,
     TipoPacote,
 )
 from app.services.telemetria import (
     BATERIA_CRITICA_THRESHOLD,
     CELL_SIZE_CM,
+    PARADA_INESPERADA_THRESHOLD_MS,
     atualizar_indicadores,
     calcular_velocidade_segmento,
     criar_estado_inicial,
@@ -111,6 +113,12 @@ PACOTE_TIMESTAMP_REGRESSIVO = {
     "y": 3,
     "w": 180,
 }
+
+PACOTES_MOVIMENTACAO_PARADA = [
+    {"id_corrida": 3, "timestamp_ms": 1000, "x": 0, "y": 0, "w": 0},
+    {"id_corrida": 3, "timestamp_ms": 2500, "x": 0, "y": 0, "w": 0},
+    {"id_corrida": 3, "timestamp_ms": 4501, "x": 0, "y": 0, "w": 0},
+]
 
 
 # ===================================================================
@@ -299,7 +307,9 @@ class TestCriarEstadoInicial:
         assert estado.tempo_decorrido_ms == 0
         assert estado.tempo_final_ms is None
         assert estado.alerta_bateria_critica is False
+        assert estado.alerta_possivel_parada_inesperada is False
         assert estado.alerta_dado_invalido is False
+        assert estado.log_alertas == []
 
 
 # ===================================================================
@@ -406,11 +416,42 @@ class TestAtualizarIndicadores:
         estado = atualizar_indicadores(estado, PACOTE_INICIAL_BATERIA_CRITICA)
         assert estado.alerta_bateria_critica is True
         assert estado.bateria_atual == 10
+        assert estado.log_alertas[-1].tipo == TipoAlertaTelemetria.BATERIA_CRITICA
 
     def test_bateria_normal_nao_ativa_alerta(self):
         estado = criar_estado_inicial()
         estado = atualizar_indicadores(estado, PACOTE_INICIAL_NORMAL)
         assert estado.alerta_bateria_critica is False
+
+    def test_bateria_critica_exige_threshold_inclusivo(self):
+        assert BATERIA_CRITICA_THRESHOLD == 10.0
+        estado = criar_estado_inicial()
+        estado = atualizar_indicadores(estado, PACOTE_INICIAL_BATERIA_CRITICA)
+        assert estado.alerta_bateria_critica is True
+
+    def test_alertas_nao_mutam_estado_original(self):
+        estado = criar_estado_inicial()
+        novo_estado = atualizar_indicadores(estado, PACOTE_INICIAL_BATERIA_CRITICA)
+        assert estado.log_alertas == []
+        assert len(novo_estado.log_alertas) == 1
+
+    def test_bateria_critica_nao_duplica_log_enquanto_persistir(self):
+        estado = criar_estado_inicial()
+        estado = atualizar_indicadores(estado, PACOTE_INICIAL_BATERIA_CRITICA)
+        total_alertas = len(estado.log_alertas)
+
+        estado = atualizar_indicadores(
+            estado,
+            {
+                "id_corrida": 2,
+                "timestamp_ms": 1000,
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "bateria": 9,
+            },
+        )
+        assert len(estado.log_alertas) == total_alertas
 
     def test_bateria_critica_no_pacote_final(self):
         estado = criar_estado_inicial()
@@ -436,6 +477,84 @@ class TestAtualizarIndicadores:
         # Movimentação sem campo bateria
         estado = atualizar_indicadores(estado, PACOTES_MOVIMENTACAO_NORMAL[0])
         assert estado.bateria_atual == 95  # mantém do pacote inicial
+
+    def test_parada_inesperada_dispara_apos_mais_de_tres_segundos(self):
+        estado = criar_estado_inicial()
+        estado = atualizar_indicadores(
+            estado,
+            {
+                "id_corrida": 3,
+                "timestamp_ms": 0,
+                "dimensao": "4x4",
+                "tentativa": 1,
+                "bateria": 85,
+            },
+        )
+
+        for pacote in PACOTES_MOVIMENTACAO_PARADA:
+            estado = atualizar_indicadores(estado, pacote)
+
+        assert PARADA_INESPERADA_THRESHOLD_MS == 3000
+        assert estado.alerta_possivel_parada_inesperada is True
+        assert estado.log_alertas[-1].tipo == (
+            TipoAlertaTelemetria.POSSIVEL_PARADA_INESPERADA
+        )
+        assert estado.log_alertas[-1].timestamp_ms == 4501
+
+    def test_parada_inesperada_nao_dispara_com_tres_segundos_exatos(self):
+        estado = criar_estado_inicial()
+        estado = atualizar_indicadores(
+            estado,
+            {
+                "id_corrida": 3,
+                "timestamp_ms": 0,
+                "dimensao": "4x4",
+                "tentativa": 1,
+                "bateria": 85,
+            },
+        )
+        estado = atualizar_indicadores(estado, PACOTES_MOVIMENTACAO_PARADA[0])
+        estado = atualizar_indicadores(
+            estado,
+            {"id_corrida": 3, "timestamp_ms": 4000, "x": 0, "y": 0, "w": 0},
+        )
+        assert estado.alerta_possivel_parada_inesperada is False
+
+    def test_parada_inesperada_nao_dispara_quando_corrida_nao_esta_ativa(self):
+        estado = criar_estado_inicial()
+        estado = atualizar_indicadores(estado, PACOTE_INICIAL_NORMAL)
+        estado.status_corrida = StatusCorridaTelemetria.CONCLUIDA
+
+        for pacote in (
+            PACOTES_MOVIMENTACAO_PARADA[0],
+            {"id_corrida": 1, "timestamp_ms": 5000, "x": 0, "y": 0, "w": 0},
+        ):
+            estado = atualizar_indicadores(estado, pacote)
+
+        assert estado.alerta_possivel_parada_inesperada is False
+        assert not any(
+            alerta.tipo == TipoAlertaTelemetria.POSSIVEL_PARADA_INESPERADA
+            for alerta in estado.log_alertas
+        )
+
+    def test_parada_inesperada_e_limpa_ao_encerrar_corrida(self):
+        estado = criar_estado_inicial()
+        estado = atualizar_indicadores(
+            estado,
+            {
+                "id_corrida": 3,
+                "timestamp_ms": 0,
+                "dimensao": "4x4",
+                "tentativa": 1,
+                "bateria": 85,
+            },
+        )
+        for pacote in PACOTES_MOVIMENTACAO_PARADA:
+            estado = atualizar_indicadores(estado, pacote)
+
+        assert estado.alerta_possivel_parada_inesperada is True
+        estado = atualizar_indicadores(estado, PACOTE_FINAL_SUCESSO)
+        assert estado.alerta_possivel_parada_inesperada is False
 
 
 # ===================================================================
@@ -483,6 +602,27 @@ class TestCenariosSimulados:
         assert estado.alerta_bateria_critica is True
         assert estado.bateria_atual == 3
         assert estado.status_corrida == StatusCorridaTelemetria.FALHA
+
+    def test_corrida_com_parada_inesperada_registra_log(self):
+        estado = criar_estado_inicial()
+        estado = atualizar_indicadores(
+            estado,
+            {
+                "id_corrida": 3,
+                "timestamp_ms": 0,
+                "dimensao": "4x4",
+                "tentativa": 1,
+                "bateria": 85,
+            },
+        )
+
+        for pacote in PACOTES_MOVIMENTACAO_PARADA:
+            estado = atualizar_indicadores(estado, pacote)
+
+        assert estado.alerta_possivel_parada_inesperada is True
+        assert estado.log_alertas[-1].tipo == (
+            TipoAlertaTelemetria.POSSIVEL_PARADA_INESPERADA
+        )
 
     def test_corrida_com_pacotes_invalidos(self):
         """Cenário 3: pacotes inválidos intercalados não afetam o estado."""

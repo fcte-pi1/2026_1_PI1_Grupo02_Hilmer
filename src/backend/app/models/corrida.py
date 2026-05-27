@@ -12,6 +12,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from .enums import StatusCorrida
 
 if TYPE_CHECKING:
+    from .evento import Evento
     from .labirinto import Labirinto
     from .percurso import Percurso
 
@@ -86,5 +87,8 @@ class Corrida(SQLModel, table=True):
         back_populates="corridas"
     )
     percursos: list["Percurso"] = Relationship(
+        back_populates="corrida"
+    )
+    eventos: list["Evento"] = Relationship(
         back_populates="corrida"
     )

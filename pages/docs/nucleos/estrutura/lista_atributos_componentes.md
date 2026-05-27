@@ -1,7 +1,11 @@
 # Lista de atributos de componentes
 
+## Introdução
+
 Este documento foi criado pela equipe de estrutura para ter uma referência mais precisa para os componentes a serem
 utilizados no robô, com intermédio da equipe de eletrônica.
+
+<br>
 
 ## Tabela de atributos dos Componentes
 
@@ -16,7 +20,9 @@ utilizados no robô, com intermédio da equipe de eletrônica.
 | Regulador (MP1584EN)      | 1    | 5g       | 22 x 17 x 4mm  | 
 | Bateria                   | 1    | 100g     | 65 x 35 x 20mm | 
 
-Referências:
+<br>
+
+## Referências:
 - [Referência da ESP32*](https://www.eletrogate.com/modulo-wifi-esp32s-bluetooth-38-pinos?srsltid=AfmBOopyGJ3nwGXZRahs2H5VF0Ur1nGGex64eXnssLeQTyQKqBAv6oVc)
 - [Referência do sensor VL53L0X](https://blog.eletrogate.com/sensor-de-distancia-laser-gy-vl53l0xv2/)
 - [Referência do motor N20 6V 750 RPM com encoder](https://www.robocore.net/motor-caixas-de-reducao/micro-motor-caixa-de-reducao-6v-750rpm-com-encoder?srsltid=AfmBOor8mz44l9DxjfQnQ3JpSp8G-IpTIbVukIFN0s3fkG1_8ENQ6SXi)
@@ -25,6 +31,8 @@ Referências:
 - [Referência do SD Reader](https://www.huinfinito.com.br/modulos/1432-modulo-cartao-micro-sd.html)
 - [Referência do Regulador](https://www.saravati.com.br/modulo-mini-conversor-de-tensao-dc-dc-mp1584en-step-down.html?srsltid=AfmBOoocrsjrH_pjCwVyNkEC7YieClfVTYvXfCCQ5yOXWMQZ2zF1jQQy)
 - [Referência da bateria](https://www.robocore.net/baterias-fontes/pack-bateria-li-ion-7_4v-2500mah-com-bms?srsltid=AfmBOor3H3ldPhWH_Yp_2gVdpid0qleK5-dM-lhbusvmbkz49z4cOjeb)
+
+<br>
 
 ## Tabela de tipos de encaixes dos componentes
 
@@ -38,3 +46,13 @@ Referências:
 | SD Reader                 | 1    | Espaçador de Latão (PCB) | - | 
 | Regulador (MP1584EN)      | 1    | Espaçador de Latão (PCB) | - | 
 | Bateria                   | 1    | Berço no meio com velcro | - | 
+
+<br>
+
+## Tabela de Versionamento
+
+| Versão | Data | Autor | Descrição | Revisor |
+| :-: | :-: | :-: | :-: | :-: |
+| 1.0 | 05/05/2026 | [Caio Venâncio](https://github.com/caio-venancio) | Criação do documento | [Eduardo de Pina](https://github.com/eduardodpms) |
+| 1.1 | 07/05/2026 | [Caio Venâncio](https://github.com/caio-venancio) | Adição da bateria na lista | [Eduardo de Pina](https://github.com/eduardodpms) |
+| 1.2 | 16/05/2026 | [Eduardo de Pina](https://github.com/eduardodpms) | Migração pro GitHub Pages | [Caio Venâncio](https://github.com/caio-venancio) |

@@ -1,0 +1,9 @@
+# Justificativa do uso de rolamento no eixo da roda do micromouse
+
+A utilização de rolamento no eixo da roda do micromouse é a solução considerada adequada para o projeto, pois esse componente reduz o atrito no sistema, melhora o alinhamento do eixo e contribui para um movimento mais estável e preciso. Como o micromouse precisa realizar acelerações, frenagens e curvas em certa velocidade, é importante que as rodas girem com a menor resistência possível, evitando perdas mecânicas e melhorando o aproveitamento do torque do motor.
+
+Além disso, o projeto utilizará engrenagens retas na transmissão. Nesse tipo de engrenagem, os dentes são paralelos ao eixo e o bom funcionamento depende de alinhamento correto entre os eixos, contato adequado entre os dentes e controle de folgas durante a rotação. Por isso, a engrenagem maior acoplada à roda precisa de um suporte firme e preciso, capaz de manter sua posição e evitar desalinhamentos que possam gerar vibração, ruído, desgaste prematuro e perda de eficiência na transmissão .
+
+Nesse contexto, o rolamento exerce papel importante porque fornece apoio adequado ao eixo da roda e à engrenagem maior, mantendo o conjunto mais estável durante o funcionamento. Esse suporte ajuda a preservar o engrenamento correto entre pinhão e engrenagem, reduzindo oscilações no eixo e melhorando a repetibilidade do movimento, algo essencial para o desempenho do micromouse em trajetórias curtas e manobras rápidas .
+
+Dessa forma, a escolha do rolamento se justifica tanto pela redução de atrito quanto pela necessidade de oferecer suporte adequado ao eixo e à engrenagem maior da roda, assegurando melhor funcionamento da transmissão por engrenagens retas e maior precisão no deslocamento do robô.

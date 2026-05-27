@@ -39,6 +39,13 @@ class TipoPacote(str, enum.Enum):
     INVALIDO = "invalido"
 
 
+class TipoAlertaTelemetria(str, enum.Enum):
+    """Tipos de alertas críticos emitidos pelo monitoramento."""
+
+    BATERIA_CRITICA = "bateria_critica"
+    POSSIVEL_PARADA_INESPERADA = "possivel_parada_inesperada"
+
+
 # ---------------------------------------------------------------------------
 # Schemas de pacotes (validação de entrada)
 # ---------------------------------------------------------------------------
@@ -75,6 +82,14 @@ class PacoteFinal(BaseModel):
     bateria: float = Field(ge=0, le=100)
 
 
+class AlertaTelemetria(BaseModel):
+    """Registro técnico de um alerta crítico detectado."""
+
+    tipo: TipoAlertaTelemetria
+    mensagem: str
+    timestamp_ms: int = Field(ge=0)
+
+
 # ---------------------------------------------------------------------------
 # Estado dos indicadores
 # ---------------------------------------------------------------------------
@@ -95,13 +110,18 @@ class IndicadoresDesempenho(BaseModel):
     sucesso: bool | None = None
     ultimo_timestamp_ms: int | None = None
     alerta_bateria_critica: bool = False
+    alerta_possivel_parada_inesperada: bool = False
     alerta_dado_invalido: bool = False
+    log_alertas: list[AlertaTelemetria] = Field(default_factory=list)
 
     # --- Campos internos para cálculo acumulado de velocidade ---
     _distancia_total_cm: float = 0.0
     _tempo_total_movimento_s: float = 0.0
     _ultima_posicao_x: float | None = None
     _ultima_posicao_y: float | None = None
+    _timestamp_inicio_parada_ms: int | None = None
+    _alerta_bateria_critica_emitido: bool = False
+    _alerta_parada_emitido: bool = False
 
     model_config = {"arbitrary_types_allowed": True}
 

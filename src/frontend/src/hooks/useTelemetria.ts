@@ -16,6 +16,8 @@ import type {
 } from "../types/telemetria";
 import { WS_TELEMETRIA_URL } from "../services/telemetria";
 
+type StatusConexaoMicromouse = "online" | "offline" | "waiting";
+
 /** Estado inicial dos indicadores (espelha criar_estado_inicial do backend). */
 const ESTADO_INICIAL: IndicadoresDesempenho = {
   id_corrida_banco: null,
@@ -46,6 +48,10 @@ export interface UseTelemetriaReturn {
   indicadores: IndicadoresDesempenho;
   /** Dados de configuração da sessão (recebidos uma única vez). */
   configSessao: ConfigSessao;
+  /** Estado atual da conexão com o Micromouse. */
+  statusConexao: StatusConexaoMicromouse;
+  /** Última mensagem enviada pelo backend sobre a conexão. */
+  mensagemStatusConexao: string | null;
   /** Envia um pacote de telemetria via WebSocket. */
   enviarPacote: (pacote: PacoteTelemetria) => void;
   /** Indica se o WebSocket está conectado. */
@@ -55,16 +61,32 @@ export interface UseTelemetriaReturn {
 }
 
 export function useTelemetria(): UseTelemetriaReturn {
-  const [indicadores, setIndicadores] =
-    useState<IndicadoresDesempenho>(ESTADO_INICIAL);
-  const [configSessao, setConfigSessao] = useState<ConfigSessao>(
-    CONFIG_SESSAO_INICIAL,
-  );
+  const [indicadores, setIndicadores] = useState<IndicadoresDesempenho>(() => {
+    const indicadoresSalvos = localStorage.getItem("indicadores");
+    return indicadoresSalvos ? JSON.parse(indicadoresSalvos) : ESTADO_INICIAL;
+  });
+
+  const [configSessao, setConfigSessao] = useState<ConfigSessao>(() => {
+    const configSessaoSalva = localStorage.getItem("configSessao");
+    return configSessaoSalva
+      ? JSON.parse(configSessaoSalva)
+      : CONFIG_SESSAO_INICIAL;
+  });
+
   const [conectado, setConectado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [statusConexao, setStatusConexao] =
+    useState<StatusConexaoMicromouse>("waiting");
+  const [mensagemStatusConexao, setMensagemStatusConexao] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  //Persistir estado no localStorage para manter dados entre recarregamentos
+  useEffect(() => {
+    localStorage.setItem("indicadores", JSON.stringify(indicadores));
+    localStorage.setItem("configSessao", JSON.stringify(configSessao));
+  }, [indicadores, configSessao]);
 
   const conectar = useCallback(() => {
     // Evitar conexões duplicadas
@@ -86,12 +108,32 @@ export function useTelemetria(): UseTelemetriaReturn {
     ws.onmessage = (event) => {
       try {
         const parsed = JSON.parse(event.data);
+
+        if (parsed.type === "CONNECTION_STATUS") {
+          setStatusConexao(parsed.data?.status === "offline" ? "offline" : "online");
+          setMensagemStatusConexao(parsed.data?.message ?? null);
+          return;
+        }
+
+        if (parsed.type === "SESSAO_ENCERRADA") {
+          console.log("[useTelemetria] Sessão anterior encerrada:", parsed.data);
+          setIndicadores(ESTADO_INICIAL);
+          setConfigSessao(CONFIG_SESSAO_INICIAL);
+          setStatusConexao("waiting");
+          setMensagemStatusConexao(null);
+          return;
+        }
+
         if (parsed.type === "SESSAO_INICIADA" && parsed.data) {
           const { dimensao, tentativa, ...indicadoresData } = parsed.data;
           setIndicadores(indicadoresData as IndicadoresDesempenho);
           setConfigSessao({ dimensao, tentativa });
+          setStatusConexao("online");
+          setMensagemStatusConexao(null);
         } else if (parsed.type === "ATUALIZACAO_TELEMETRIA" && parsed.data) {
           setIndicadores(parsed.data as IndicadoresDesempenho);
+          setStatusConexao("online");
+          setMensagemStatusConexao(null);
         }
       } catch {
         console.error("[useTelemetria] Erro ao parsear mensagem:", event.data);
@@ -137,5 +179,13 @@ export function useTelemetria(): UseTelemetriaReturn {
     }
   }, []);
 
-  return { indicadores, configSessao, enviarPacote, conectado, erro };
+  return {
+    indicadores,
+    configSessao,
+    statusConexao,
+    mensagemStatusConexao,
+    enviarPacote,
+    conectado,
+    erro,
+  };
 }
