@@ -30,7 +30,7 @@ export function MonitoringLayout({
         : "Aguardando conexao";
   const statusClasses =
     statusConexao === "online"
-      ? "border-blue-600 bg-blue-600 text-white"
+      ? "border-emerald-600 bg-emerald-600 text-white"
       : statusConexao === "offline"
         ? "border-red-200 bg-red-50 text-red-700"
         : "border-amber-200 bg-amber-50 text-amber-700";

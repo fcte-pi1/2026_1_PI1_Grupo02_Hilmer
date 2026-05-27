@@ -12,16 +12,6 @@ type StatusCorrida =
   | "concluida"
   | "abortada";
 
-type IndicadoresTelemetria = {
-  bateria_atual?: number | null;
-  velocidade_media?: number | null;
-  tempo_decorrido_ms?: number | null;
-  tempo_final_ms?: number | null;
-  status_corrida?: StatusCorrida | string | null;
-  ultimo_timestamp_ms?: number | null;
-  alerta_possivel_parada_inesperada?: boolean | null;
-};
-
 const LIMITE_BATERIA_CRITICA = 10;
 const LIMITE_SEM_TELEMETRIA_MS = 3000;
 
@@ -115,9 +105,6 @@ export const DashboardIndicadores: React.FC<DashboardIndicadoresProps> = ({
   const {
     indicadores,
     conectado,
-    alertaDadoInvalido,
-    errosValidacao,
-    limparErroValidacao,
   } = (telemetria ?? telemetriaHook) as UseTelemetriaReturn;
 
   const [alertaSemSinal, setAlertaSemSinal] = useState(false);
@@ -153,18 +140,20 @@ export const DashboardIndicadores: React.FC<DashboardIndicadoresProps> = ({
   }, [corridaConcluida, tempoDecorridoMs, tempoFinalMs]);
 
   useEffect(() => {
-    if (!indicadores || statusCorrida !== "em_andamento") {
+    let timer: number | undefined;
+
+    if (indicadores && statusCorrida === "em_andamento") {
       setAlertaSemSinal(false);
-      return;
+      timer = window.setTimeout(() => {
+        setAlertaSemSinal(true);
+      }, LIMITE_SEM_TELEMETRIA_MS);
+    } else {
+      setAlertaSemSinal(false);
     }
 
-    setAlertaSemSinal(false);
-
-    const timer = window.setTimeout(() => {
-      setAlertaSemSinal(true);
-    }, LIMITE_SEM_TELEMETRIA_MS);
-
-    return () => window.clearTimeout(timer);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
   }, [indicadores, statusCorrida, ultimoTimestampMs]);
 
   useEffect(() => {
@@ -242,33 +231,9 @@ export const DashboardIndicadores: React.FC<DashboardIndicadoresProps> = ({
         </header>
 
         <div className="mb-5 space-y-3">
-          {alertaDadoInvalido && errosValidacao.length > 0 && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-semibold">
-                    Pacote descartado por falha na validacao.
-                  </p>
-                  <ul className="mt-2 space-y-1 text-xs text-amber-900/90">
-                    {errosValidacao.map((erro, index) => (
-                      <li key={`${erro}-${index}`}>- {erro}</li>
-                    ))}
-                  </ul>
-                </div>
-                <button
-                  type="button"
-                  onClick={limparErroValidacao}
-                  className="rounded-md border border-amber-200 bg-white px-2 py-1 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
-                >
-                  Fechar
-                </button>
-              </div>
-            </div>
-          )}
-
           {bateriaCritica && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-              ⚠️ Bateria crítica: nível em {LIMITE_BATERIA_CRITICA}% ou menos.
+              ⚠️ Bateria crítica: nível em {bateriaAtual?.toFixed(1)}% ou menos.
             </div>
           )}
 

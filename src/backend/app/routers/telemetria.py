@@ -43,6 +43,19 @@ async def websocket_telemetria(websocket: WebSocket):
         }
     }
     await manager.send_json_to_client(handshake, websocket)
+    
+    # Enviar status atual de todas as corridas ativas para o novo cliente
+    for sid in estados_ativos:
+        status = connection_monitor.get_status(sid) or "online"
+        await manager.send_json_to_client({
+            "type": "CONNECTION_STATUS",
+            "data": {
+                "id_corrida": sid,
+                "status": status,
+                "message": "Status recuperado ao conectar"
+            }
+        }, websocket)
+
     try:
         while True:
             await websocket.receive_json()
@@ -76,7 +89,15 @@ async def receber_pacote_telemetria(
     # 3. BARREIRA DE VALIDAÇÃO RIGOROSA
     resultado = validar_pacote(pacote, tipo, ultimo_ts)
     if not resultado.valido:
-        logger.warning("Pacote REJEITADO por falha na validação: %s", resultado.erros)
+        erros_str = ", ".join(resultado.erros)
+        logger.warning("Pacote REJEITADO por falha na validação: %s", erros_str)
+        
+        # Notificar o dashboard sobre o erro de validação
+        await manager.send_json_to_all_clients({
+            "type": "ERROR",
+            "message": f"Dados inválidos do robô: {erros_str}"
+        })
+
         raise HTTPException(
             status_code=422,
             detail={"mensagem": "Pacote descartado", "erros": resultado.erros},
@@ -86,6 +107,18 @@ async def receber_pacote_telemetria(
     if tipo == TipoPacote.INICIAL and sessao_hardware_id not in estados_ativos:
         await _abortar_corridas_ativas(session, sessao_hardware_id)
 
+    elif tipo == TipoPacote.INICIAL and sessao_hardware_id in estados_ativos:
+        # Recebimento de pacote INICIAL com um `sessao_hardware_id` já em uso.
+        # Enviar notificação de erro ao dashboard e retornar uma exceção
+        logger.error("Pacote INICIAL rejeitado: id de sessão repetido %s", sessao_hardware_id)
+        await manager.send_json_to_all_clients({
+            "type": "ERROR",
+            "message": f"ID de sessão repetido recebido: {sessao_hardware_id}. Pacote INICIAL rejeitado."
+        })
+        raise HTTPException(
+            status_code=404,
+            detail={"mensagem": "ID de sessão repetido", "id_corrida": sessao_hardware_id},
+        )
     # 5. Inicializa ou recupera estado
     if sessao_hardware_id not in estados_ativos:
         estados_ativos[sessao_hardware_id] = criar_estado_inicial()
