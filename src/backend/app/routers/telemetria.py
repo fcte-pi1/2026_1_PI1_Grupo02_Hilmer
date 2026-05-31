@@ -167,7 +167,7 @@ async def receber_pacote_telemetria(
         session.refresh(corrida)
         commit_realizado = True
 
-    # Se for pacote de movimentação, persistir step no percurso
+    # Se for pacote de movimentação, persistir step no percurso exploratório
     if tipo == TipoPacote.MOVIMENTACAO and novo_estado.id_corrida_banco is not None:
         x = pacote.get("x")
         y = pacote.get("y")
@@ -177,7 +177,26 @@ async def receber_pacote_telemetria(
                 id_corrida=novo_estado.id_corrida_banco,
                 x=float(x),
                 y=float(y),
+                tipo_percurso="exploratorio",
             )
+            if not commit_realizado:
+                _persistir_novos_alertas(session, estado_atual, novo_estado)
+                session.commit()
+                commit_realizado = True
+
+    # Se for pacote de rota otimizada, persistir toda a rota
+    if tipo == TipoPacote.ROTA and novo_estado.id_corrida_banco is not None:
+        rota = pacote.get("rota")
+        if rota is not None and isinstance(rota, list):
+            for pt in rota:
+                if isinstance(pt, list) and len(pt) == 2:
+                    _persistir_passo_percurso(
+                        session,
+                        id_corrida=novo_estado.id_corrida_banco,
+                        x=float(pt[0]),
+                        y=float(pt[1]),
+                        tipo_percurso="otimizado",
+                    )
             if not commit_realizado:
                 _persistir_novos_alertas(session, estado_atual, novo_estado)
                 session.commit()
@@ -330,6 +349,7 @@ def _persistir_passo_percurso(
     id_corrida: int,
     x: float,
     y: float,
+    tipo_percurso: str = "exploratorio",
 ) -> None:
     """Persiste um passo do percurso para a posição (x, y) do Micromouse.
 
@@ -364,5 +384,6 @@ def _persistir_passo_percurso(
         id_celula=celula.id_celula,
         id_corrida=id_corrida,
         data_hora_passagem=datetime.now(UTC),
+        tipo_percurso=tipo_percurso,
     )
     session.add(passo)

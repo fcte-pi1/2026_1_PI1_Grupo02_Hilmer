@@ -61,6 +61,12 @@ PACOTE_MOV_2 = {
     "w": 0,
 }
 
+PACOTE_ROTA = {
+    "id_corrida": 42,
+    "timestamp_ms": 3000,
+    "rota": [[0,0], [1,0], [2,0]],
+}
+
 PACOTE_FINAL = {
     "id_corrida": 42,
     "timestamp_ms": 5000,
@@ -254,6 +260,28 @@ class TestPersistenciaFluxoTelemetria:
             select(Percurso).where(Percurso.id_corrida == id_corrida_banco)
         ).all()
         assert len(passos) == 2
+
+    def test_pacote_rota_registra_percurso_otimizado(
+        self, client: TestClient, session: Session
+    ):
+        """CA: Sistema registra trajeto da rota otimizada."""
+        resp_ini = client.post("/api/telemetria/pacote", json=PACOTE_INICIAL)
+        id_corrida_banco = resp_ini.json()["estado"]["id_corrida_banco"]
+
+        resp_rota = client.post("/api/telemetria/pacote", json=PACOTE_ROTA)
+        assert resp_rota.status_code == 201
+
+        passos = session.exec(
+            select(Percurso)
+            .where(Percurso.id_corrida == id_corrida_banco)
+            .order_by(Percurso.id_percurso)
+        ).all()
+
+        assert len(passos) == 3
+        for i, pt in enumerate(PACOTE_ROTA["rota"]):
+            assert passos[i].celula.coordenada_x == pt[0]
+            assert passos[i].celula.coordenada_y == pt[1]
+            assert passos[i].tipo_percurso == "otimizado"
 
     def test_percurso_reutiliza_celula_existente(
         self, client: TestClient, session: Session

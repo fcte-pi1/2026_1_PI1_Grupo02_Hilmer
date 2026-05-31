@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Column, DateTime, ForeignKey, Identity, Integer
+import sqlmodel
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -35,6 +36,10 @@ class Percurso(SQLModel, table=True):
     data_hora_passagem: Optional[datetime] = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True)),
+    )
+    tipo_percurso: str = Field(
+        default="exploratorio",
+        sa_column=Column(sqlmodel.sql.sqltypes.AutoString(20), nullable=False, server_default="exploratorio")
     )
 
     # --- relationships ---

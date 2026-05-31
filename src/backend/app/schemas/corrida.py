@@ -108,5 +108,6 @@ class PercursoResponse(BaseModel):
     id_percurso: int
     id_celula: int | None
     data_hora_passagem: datetime | None
+    tipo_percurso: str
 
     model_config = {"from_attributes": True}

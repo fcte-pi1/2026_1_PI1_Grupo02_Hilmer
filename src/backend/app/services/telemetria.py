@@ -81,6 +81,10 @@ def identificar_tipo_pacote(packet: dict | None) -> TipoPacote:
     if "x" in packet and "y" in packet and "w" in packet:
         return TipoPacote.MOVIMENTACAO
 
+    # Pacote de rota: rota (lista)
+    if "rota" in packet and isinstance(packet["rota"], list):
+        return TipoPacote.ROTA
+
     return TipoPacote.INVALIDO
 
 
@@ -130,6 +134,8 @@ def validar_pacote(
         _validar_pacote_inicial(packet, erros)
     elif tipo == TipoPacote.MOVIMENTACAO:
         _validar_pacote_movimentacao(packet, erros, ultimo_timestamp_ms)
+    elif tipo == TipoPacote.ROTA:
+        _validar_pacote_rota(packet, erros)
     elif tipo == TipoPacote.FINAL:
         _validar_pacote_final(packet, erros)
 
@@ -189,6 +195,23 @@ def _validar_pacote_movimentacao(
         elif not (0 <= bateria <= 100):
             erros.append(f"Bateria fora do range [0, 100] (recebido: {bateria}).")
 
+def _validar_pacote_rota(packet: dict, erros: list[str]) -> None:
+    """Valida as regras específicas do pacote de rota otimizada."""
+    rota = packet.get("rota")
+    if rota is None:
+        erros.append("Campo 'rota' ausente.")
+        return
+        
+    if not isinstance(rota, list):
+        erros.append(f"Campo 'rota' deve ser uma lista (recebido: {type(rota)}).")
+        return
+        
+    for i, pt in enumerate(rota):
+        if not isinstance(pt, list) or len(pt) != 2:
+            erros.append(f"Ponto {i} da rota inválido: deve ser [x, y] (recebido: {pt}).")
+            continue
+        if not isinstance(pt[0], (int, float)) or not isinstance(pt[1], (int, float)):
+            erros.append(f"Coordenadas do ponto {i} devem ser numéricas (recebido: {pt}).")
 
 def _validar_pacote_final(packet: dict, erros: list[str]) -> None:
     sucesso = packet.get("sucesso")

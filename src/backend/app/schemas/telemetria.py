@@ -35,6 +35,7 @@ class TipoPacote(str, enum.Enum):
 
     INICIAL = "inicial"
     MOVIMENTACAO = "movimentacao"
+    ROTA = "rota"
     FINAL = "final"
     INVALIDO = "invalido"
 
@@ -71,6 +72,13 @@ class PacoteMovimentacao(BaseModel):
     w: int | float
     bateria: float | None = Field(default=None, ge=0, le=100)
 
+
+class PacoteRota(BaseModel):
+    """Pacote contendo a rota otimizada calculada."""
+
+    id_corrida: int
+    timestamp_ms: int = Field(ge=0)
+    rota: list[list[int | float]]
 
 class PacoteFinal(BaseModel):
     """Pacote consolidado ao fim da corrida."""
