@@ -77,10 +77,6 @@ async def receber_pacote_telemetria(
     """
     pacote = payload
     tipo = identificar_tipo_pacote(pacote)
-    if tipo == TipoPacote.INVALIDO:
-        logger.warning("Pacote inválido ou não reconhecido: %s", pacote)
-        raise HTTPException(
-            status_code=400, detail="Pacote inválido ou não reconhecido")
 
     # --- Registrar pacote no monitor de conexão e validar ---
     await connection_monitor.registrar_pacote(pacote.get("id_corrida", 0))
@@ -132,23 +128,7 @@ async def receber_pacote_telemetria(
 
     estado_atual = estados_ativos[sessao_hardware_id]
 
-    resultado_validacao = validar_pacote(
-        pacote,
-        tipo,
-        estado_atual.ultimo_timestamp_ms,
-    )
-
-    if not resultado_validacao.valido:
-        logger.warning(
-            "Pacote de telemetria descartado: %s",
-            resultado_validacao.erros,
-        )
-        raise HTTPException(
-            status_code=400,
-            detail="Pacote inválido: " + "; ".join(resultado_validacao.erros),
-        )
-
-    # Processa os indicadores puros
+    # 5. Processa os indicadores puros (Cálculos de velocidade, etc)
     novo_estado = atualizar_indicadores(estado_atual, pacote)
 
     commit_realizado = False

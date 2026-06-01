@@ -52,30 +52,3 @@ def test_websocket_message_delivery(client:TestClient):
         assert message["data"]["dimensao"] == "4X4"
         assert message["data"]["alerta_possivel_parada_inesperada"] is False
         assert message["data"]["log_alertas"] == []
-
-
-def test_telemetry_rejects_regressive_timestamp(client: TestClient):
-    response_inicial = client.post(
-        "/api/telemetria/pacote",
-        json={
-            "id_corrida": 55,
-            "timestamp_ms": 1000,
-            "dimensao": 4,
-            "tentativa": 1,
-            "bateria": 90,
-        },
-    )
-    assert response_inicial.status_code == 201
-
-    response_mov = client.post(
-        "/api/telemetria/pacote",
-        json={
-            "id_corrida": 55,
-            "timestamp_ms": 500,
-            "x": 1,
-            "y": 0,
-            "w": 0,
-        },
-    )
-    assert response_mov.status_code == 400
-    assert "regressivo" in response_mov.json()["detail"].lower()

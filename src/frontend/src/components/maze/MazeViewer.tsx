@@ -1,15 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { createMaze, isInsideMaze, markVisited, markWall } from "./mazeUtils";
+import { createMockTelemetry } from "./mockTelemetry";
+import { createMaze, markVisited, markWall } from "./mazeUtils";
 import type { Cell, Direction, Position } from "./types";
-import { WS_TELEMETRIA_URL } from "../../services/telemetria";
-import { MOCK_TELEMETRY_BY_SIZE, createMockTelemetry } from "./mockTelemetry";
 
 const DEFAULT_GRID_SIZE = 8;
-const USE_MOCK_TELEMETRY = import.meta.env.VITE_USE_MAZE_MOCK === "true";
-const MOCK_MAZE_SIZE = (() => {
-  const value = Number(import.meta.env.VITE_MAZE_MOCK_SIZE ?? 8);
-  return value === 4 || value === 8 || value === 16 ? value : 8;
-})();
+const GRID_SIZES = [16, 8, 4] as const;
+const MAX_STEPS = 512;
 
 const positionsEqual = (a: Position, b: Position) =>
   a.row === b.row && a.col === b.col;
@@ -42,7 +38,9 @@ export default function MazeViewer() {
   const mazeRef = useRef<Cell[][]>(maze);
   const pathRef = useRef<Position[]>(path);
   const directionRef = useRef<Direction>(direction);
-  const gridSizeRef = useRef(gridSize);
+  const telemetryRef = useRef<ReturnType<typeof createMockTelemetry> | null>(
+    null,
+  );
   const snapshot = viewMode === "history" ? history[historyIndex] : undefined;
   const displayMaze = snapshot ? snapshot.maze : maze;
   const displayPath = snapshot ? snapshot.path : path;
@@ -55,7 +53,7 @@ export default function MazeViewer() {
         ? "min(70vmin, 520px)"
         : "min(60vmin, 360px)";
   const wallShadowColor = "rgb(9 9 11)";
-  const origin = displayPath[0] ?? displayPosition;
+  const origin = { row: 0, col: 0 };
   const pathPoints = [origin, ...displayPath];
   if (!positionsEqual(pathPoints[pathPoints.length - 1], displayPosition)) {
     pathPoints.push(displayPosition);
@@ -70,11 +68,11 @@ export default function MazeViewer() {
     );
 
   const resetRunState = (size: number) => {
+    telemetryRef.current?.stop();
     stepRef.current = 0;
     setSessionStatus("idle");
-    const startPosition = { row: size - 1, col: 0 };
-    setPosition(startPosition);
-    positionRef.current = startPosition;
+    setPosition({ row: 0, col: 0 });
+    positionRef.current = { row: 0, col: 0 };
     setDirection("east");
     setPath([]);
     setMaze(createMaze(size));
@@ -82,11 +80,30 @@ export default function MazeViewer() {
     setIsHistoryOpen(false);
   };
 
+  const updateGridSize = (size: number) => {
+    if (size === gridSize) {
+      return;
+    }
+
+    resetRunState(size);
+    setGridSize(size);
+  };
+
+  // Inicia a telemetria mock (CA-12-01).
+  const startSession = () => {
+    if (sessionStatus === "running") {
+      return;
+    }
+    resetRunState(gridSize);
+    setSessionStatus("running");
+  };
+
   const openHistory = () => {
     if (history.length === 0) {
       return;
     }
 
+    telemetryRef.current?.stop();
     setSessionStatus("finished");
     setViewMode("history");
     setHistoryIndex(0);
@@ -111,142 +128,60 @@ export default function MazeViewer() {
     directionRef.current = direction;
   }, [direction]);
 
+  // Ciclo principal da telemetria e atualizacao do grid.
   useEffect(() => {
-    gridSizeRef.current = gridSize;
-  }, [gridSize]);
+    if (sessionStatus !== "running") {
+      return;
+    }
 
-  const toGridPosition = (x: number, y: number, size: number): Position => {
-    return { row: size - 1 - y, col: x };
-  };
+    const telemetry = createMockTelemetry({
+      size: gridSize,
+      intervalMs: 450,
+      maxSteps: MAX_STEPS,
+      onTelemetry: (update) => {
+        if (update.hitWall && update.wallDir) {
+          setMaze((prev) =>
+            markWall(prev, positionRef.current, update.wallDir!),
+          );
+          setDirection(update.direction);
+          return;
+        }
 
-  const decodeWalls = (mask: number): Direction[] => {
-    const walls: Direction[] = [];
-    if (mask & 1) {
-      walls.push("north");
-    }
-    if (mask & 2) {
-      walls.push("south");
-    }
-    if (mask & 4) {
-      walls.push("east");
-    }
-    if (mask & 8) {
-      walls.push("west");
-    }
-    return walls;
-  };
-
-  const finishSession = () => {
-    setHistory((prev) => [
-      {
-        maze: cloneMaze(mazeRef.current),
-        path: [...pathRef.current],
-        endPosition: positionRef.current,
-        endDirection: directionRef.current,
-        gridSize: gridSizeRef.current,
+        if (update.moved) {
+          stepRef.current += 1;
+          setMaze((prev) =>
+            markVisited(prev, update.position, stepRef.current),
+          );
+          setPath((prev) => [...prev, update.position]);
+          setPosition(update.position);
+          positionRef.current = update.position;
+          setDirection(update.direction);
+        }
       },
-      ...prev,
-    ]);
-    setHistoryIndex(0);
-    setSessionStatus("finished");
-  };
+      onFinish: () => {
+        setHistory((prev) => [
+          {
+            maze: cloneMaze(mazeRef.current),
+            path: [...pathRef.current],
+            endPosition: positionRef.current,
+            endDirection: directionRef.current,
+            gridSize,
+          },
+          ...prev,
+        ]);
+        setHistoryIndex(0);
+        setSessionStatus("finished");
+        telemetry.stop();
+      },
+    });
 
-  const applyTelemetryPacket = (data: Record<string, unknown>) => {
-    if ("dimensao" in data && "tentativa" in data) {
-      const size = Number(data.dimensao);
-      if (!Number.isFinite(size)) {
-        return;
-      }
-
-      resetRunState(size);
-      setGridSize(size);
-      setSessionStatus("running");
-      return;
-    }
-
-    if ("rota" in data) {
-      return;
-    }
-
-    if ("sucesso" in data && "v_med" in data) {
-      finishSession();
-      return;
-    }
-
-    if ("x" in data && "y" in data && "w" in data) {
-      const size = gridSizeRef.current;
-      const x = Number(data.x);
-      const y = Number(data.y);
-      const w = Number(data.w);
-      if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w)) {
-        return;
-      }
-
-      const nextPosition = toGridPosition(x, y, size);
-      if (!isInsideMaze(nextPosition, size)) {
-        return;
-      }
-
-      stepRef.current += 1;
-      setMaze((prev) => {
-        const walls = decodeWalls(w);
-        let nextMaze = prev;
-        walls.forEach((wallDirection) => {
-          nextMaze = markWall(nextMaze, nextPosition, wallDirection);
-        });
-        return markVisited(nextMaze, nextPosition, stepRef.current);
-      });
-      setPath((prev) => [...prev, nextPosition]);
-      setPosition(nextPosition);
-      positionRef.current = nextPosition;
-    }
-  };
-
-  // Conexao com a telemetria externa (ESP32 -> backend -> WebSocket).
-  useEffect(() => {
-    if (USE_MOCK_TELEMETRY) {
-      const mockTelemetry = createMockTelemetry({
-        size: MOCK_MAZE_SIZE,
-        intervalMs: 450,
-        maxSteps: 64,
-        onTelemetry: () => {},
-        onPacket: (packet) => {
-          applyTelemetryPacket(packet.payload);
-        },
-        onFinish: () => {
-          finishSession();
-        },
-      });
-
-      mockTelemetry.start();
-
-      return () => {
-        mockTelemetry.stop();
-      };
-    }
-
-    const ws = new WebSocket(WS_TELEMETRIA_URL);
-
-    ws.onmessage = (event) => {
-      let payload: unknown;
-
-      try {
-        payload = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-
-      if (!payload || typeof payload !== "object") {
-        return;
-      }
-
-      applyTelemetryPacket(payload as Record<string, unknown>);
-    };
+    telemetryRef.current = telemetry;
+    telemetry.start();
 
     return () => {
-      ws.close();
+      telemetry.stop();
     };
-  }, []);
+  }, [sessionStatus, gridSize]);
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -266,11 +201,28 @@ export default function MazeViewer() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
+            className="rounded-lg bg-zinc-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-zinc-800"
+            onClick={startSession}
+          >
+            Simular corrida
+          </button>
+          <button
+            type="button"
             className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
             onClick={openHistory}
           >
             Historico
           </button>
+          {GRID_SIZES.map((size) => (
+            <button
+              key={size}
+              type="button"
+              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
+              onClick={() => updateGridSize(size)}
+            >
+              {size}x{size}
+            </button>
+          ))}
         </div>
       </header>
 
@@ -373,11 +325,6 @@ export default function MazeViewer() {
                 <span className="font-semibold text-zinc-900">
                   {sessionStatus}
                 </span>
-              </p>
-              <p className="text-xs text-zinc-500">
-                {sessionStatus === "idle"
-                  ? "Aguardando pacote inicial da ESP32."
-                  : "Telemetria recebida do embarcado."}
               </p>
               <p className="flex items-center justify-between">
                 <span>Posicao</span>
