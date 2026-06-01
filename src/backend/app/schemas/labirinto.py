@@ -1,5 +1,7 @@
 """Schemas Pydantic para Labirinto e Célula."""
 
+from datetime import datetime
+
 from pydantic import BaseModel
 
 from ..models.enums import TipoLabirinto
@@ -30,3 +32,24 @@ class LabirintoResumoResponse(BaseModel):
 
     id_labirinto: int
     tipo_labirinto: TipoLabirinto
+
+
+class RecordeLabirintoResponse(BaseModel):
+    """Dados do recorde (melhor resultado) de um labirinto."""
+
+    id_corrida: int
+    tempo_total: int
+    data_hora_fim: datetime
+    tipo_labirinto: TipoLabirinto
+
+    model_config = {"from_attributes": True}
+
+
+class MelhorResultadoResponse(BaseModel):
+    """Wrapper da resposta de melhor resultado.
+
+    Retorna ``melhor_resultado: null`` quando nenhuma corrida
+    atende aos filtros.
+    """
+
+    melhor_resultado: RecordeLabirintoResponse | None = None

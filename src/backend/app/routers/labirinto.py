@@ -5,12 +5,15 @@ from sqlmodel import Session, select
 
 from ..database import get_session
 from ..models.celula import Celula
-from ..models.enums import TipoLabirinto
+from ..models.corrida import Corrida
+from ..models.enums import StatusCorrida, TipoLabirinto
 from ..models.labirinto import Labirinto
 from ..schemas.labirinto import (
     CelulaResponse,
     LabirintoResponse,
     LabirintoResumoResponse,
+    MelhorResultadoResponse,
+    RecordeLabirintoResponse,
 )
 
 router = APIRouter(prefix="/api/labirintos", tags=["labirintos"])
@@ -47,6 +50,48 @@ def listar_labirintos(
         )
         for lab in labirintos
     ]
+
+
+
+@router.get(
+    "/melhor-resultado",
+    response_model=MelhorResultadoResponse,
+    summary="Melhor resultado (recorde) por tipo de labirinto",
+)
+def obter_melhor_resultado(
+    tipo: TipoLabirinto = Query(
+        description="Tipo de labirinto (4X4, 8X8, 16X16).",
+    ),
+    session: Session = Depends(get_session),
+) -> MelhorResultadoResponse:
+    """Retorna a corrida com o menor tempo de conclusão dentre todos
+    os labirintos do tipo informado, filtrando apenas sessões concluídas
+    com desafio cumprido.
+    """
+    # Buscar melhor resultado entre todos os labirintos do tipo
+    statement = (
+        select(Corrida)
+        .join(Labirinto, Corrida.id_labirinto == Labirinto.id_labirinto)
+        .where(Labirinto.tipo_labirinto == tipo)
+        .where(Corrida.status_corrida == StatusCorrida.CONCLUIDA)
+        .where(Corrida.desafio_cumprido == True)  # noqa: E712
+        .where(Corrida.tempo_total.isnot(None))  # type: ignore[union-attr]
+        .order_by(Corrida.tempo_total.asc())  # type: ignore[union-attr]
+        .limit(1)
+    )
+    corrida = session.exec(statement).first()
+
+    if corrida is None:
+        return MelhorResultadoResponse(melhor_resultado=None)
+
+    return MelhorResultadoResponse(
+        melhor_resultado=RecordeLabirintoResponse(
+            id_corrida=corrida.id_corrida,  # type: ignore[arg-type]
+            tempo_total=corrida.tempo_total,  # type: ignore[arg-type]
+            data_hora_fim=corrida.data_hora_fim,  # type: ignore[arg-type]
+            tipo_labirinto=tipo,
+        )
+    )
 
 
 @router.get(
