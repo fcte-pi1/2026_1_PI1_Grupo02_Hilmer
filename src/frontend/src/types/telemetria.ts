@@ -67,6 +67,7 @@ export interface IndicadoresDesempenho {
   sucesso: boolean | null;
   ultimo_timestamp_ms: number | null;
   alerta_bateria_critica: boolean;
+  alerta_possivel_parada_inesperada: boolean;
   alerta_dado_invalido: boolean;
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createMaze, isInsideMaze, markVisited, markWall } from "./mazeUtils";
 import type { Cell, Direction, Position } from "./types";
 import { WS_TELEMETRIA_URL } from "../../services/telemetria";
-import { MOCK_TELEMETRY_BY_SIZE, createMockTelemetry } from "./mockTelemetry";
+import { createMockTelemetry } from "./mockTelemetry";
 
 const DEFAULT_GRID_SIZE = 8;
 const USE_MOCK_TELEMETRY = import.meta.env.VITE_USE_MAZE_MOCK === "true";

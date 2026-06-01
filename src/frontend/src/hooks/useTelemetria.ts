@@ -33,6 +33,7 @@ const ESTADO_INICIAL: IndicadoresDesempenho = {
   sucesso: null,
   ultimo_timestamp_ms: null,
   alerta_bateria_critica: false,
+  alerta_possivel_parada_inesperada: false,
   alerta_dado_invalido: false,
 };
 

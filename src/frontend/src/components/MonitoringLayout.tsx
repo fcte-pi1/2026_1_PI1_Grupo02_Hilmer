@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 type MonitoringLayoutProps = {
   activeView: "telemetria" | "labirinto" | "estados"; 
   onNavigateTelemetria: () => void;
@@ -8,7 +10,7 @@ type MonitoringLayoutProps = {
   description: string;
   statusConexao: "online" | "offline" | "waiting";
   mensagemStatusConexao?: string | null;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export function MonitoringLayout({
@@ -93,8 +95,18 @@ export function MonitoringLayout({
             </div>
             <div className="flex items-center gap-3">
               <div className="flex h-9 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700">
-                <span className="h-2 w-2 rounded-full bg-green-500" /> Online
+                <span className={`h-2 w-2 rounded-full ${
+                  statusConexao === 'online' ? 'bg-green-500' : 
+                  statusConexao === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+                }`} /> 
+                {statusConexao === 'online' ? 'Online' : 
+                 statusConexao === 'offline' ? 'Offline' : 'Aguardando'}
               </div>
+              {mensagemStatusConexao && (
+                <span className="text-xs text-zinc-500 hidden md:block">
+                  {mensagemStatusConexao}
+                </span>
+              )}
             </div>
           </header>
 

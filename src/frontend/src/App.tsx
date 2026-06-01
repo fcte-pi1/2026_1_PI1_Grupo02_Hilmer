@@ -24,9 +24,10 @@ function App() {
       ) : (
         <LabirintoPage
           
-          activeView={currentView as any}
+          activeView={currentView}
           onNavigateTelemetria={() => setCurrentView('telemetria')}
           onNavigateLabirinto={() => setCurrentView('labirinto')}
+          onNavigateEstados={() => setCurrentView('estados')}
         />
       )}
     </main>

@@ -3,15 +3,17 @@ import { MonitoringLayout } from "../components/MonitoringLayout";
 import { useTelemetria } from "../hooks/useTelemetria";
 
 type LabirintoPageProps = {
-  activeView: "telemetria" | "labirinto";
+  activeView: "telemetria" | "labirinto" | "estados";
   onNavigateTelemetria: () => void;
   onNavigateLabirinto: () => void;
+  onNavigateEstados: () => void;
 };
 
 export function LabirintoPage({
   activeView,
   onNavigateTelemetria,
   onNavigateLabirinto,
+  onNavigateEstados,
 }: LabirintoPageProps) {
   const { statusConexao, mensagemStatusConexao } = useTelemetria();
 
@@ -20,6 +22,7 @@ export function LabirintoPage({
       activeView={activeView}
       onNavigateTelemetria={onNavigateTelemetria}
       onNavigateLabirinto={onNavigateLabirinto}
+      onNavigateEstados={onNavigateEstados}
       eyebrow="Labirinto"
       title="Mapa do labirinto em tempo real"
       description="Visualize paredes detectadas, percurso e posicao atual do Micromouse."
