@@ -1,21 +1,21 @@
-import MazeViewer from "../components/maze/MazeViewer";
 import { MonitoringLayout } from "../components/MonitoringLayout";
-import { useTelemetria } from "../hooks/useTelemetria";
+import { CorridasDashboard } from ".././components/CorridaDashboard";
+import { useCorridas } from "../hooks/useCorrida";
 
-type LabirintoPageProps = {
+type CorridasPageProps = {
   activeView: "telemetria" | "labirinto" | "corridas";
   onNavigateTelemetria: () => void;
   onNavigateLabirinto: () => void;
   onNavigateCorridas: () => void;
 };
 
-export function LabirintoPage({
+export function CorridasPage({
   activeView,
   onNavigateTelemetria,
   onNavigateLabirinto,
   onNavigateCorridas,
-}: LabirintoPageProps) {
-  const { statusConexao, mensagemStatusConexao } = useTelemetria();
+}: CorridasPageProps) {
+  const corridas = useCorridas();
 
   return (
     <MonitoringLayout
@@ -23,13 +23,13 @@ export function LabirintoPage({
       onNavigateTelemetria={onNavigateTelemetria}
       onNavigateLabirinto={onNavigateLabirinto}
       onNavigateCorridas={onNavigateCorridas}
-      eyebrow="Labirinto"
-      title="Mapa do labirinto em tempo real"
-      description="Visualize paredes detectadas, percurso e posicao atual do Micromouse."
-      statusConexao={statusConexao}
-      mensagemStatusConexao={mensagemStatusConexao}
+      eyebrow="Corridas"
+      title="Consulta e registro de corridas"
+      description="Visualize o histórico, aplique filtros por tipo de labirinto e acesse os detalhes de cada corrida."
+      statusConexao="online"
+      mensagemStatusConexao="API disponível"
     >
-      <MazeViewer />
+      <CorridasDashboard corridas={corridas} />
     </MonitoringLayout>
   );
 }
