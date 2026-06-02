@@ -111,3 +111,13 @@ class PercursoResponse(BaseModel):
     tipo_percurso: str
 
     model_config = {"from_attributes": True}
+
+class CorridaResumoResponse(BaseModel):
+    id_corrida: int
+    data_hora_inicio: datetime | None
+    tempo_total: int | None
+    status_corrida: StatusCorrida
+    velocidade_media: float | None
+    tipo_labirinto: TipoLabirinto | None
+
+    model_config = {"from_attributes": True}
