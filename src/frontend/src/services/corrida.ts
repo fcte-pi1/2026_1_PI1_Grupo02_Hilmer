@@ -2,8 +2,6 @@ import type {
   CorridaDetailResponse,
   CorridaResponse,
   CorridaResumoResponse,
-  CorridaSave,
-  CorridaStart,
   TipoLabirinto,
 } from "../types/corrida";
 
@@ -42,23 +40,4 @@ export async function obterCorrida(
   idCorrida: number,
 ): Promise<CorridaDetailResponse> {
   return request<CorridaDetailResponse>(`/api/corridas/${idCorrida}`);
-}
-
-export async function iniciarCorrida(
-  payload: CorridaStart,
-): Promise<CorridaResponse> {
-  return request<CorridaResponse>("/api/corridas/iniciar", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function salvarCorrida(
-  idCorrida: number,
-  payload: CorridaSave,
-): Promise<CorridaResponse> {
-  return request<CorridaResponse>(`/api/corridas/${idCorrida}/salvar`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
 }

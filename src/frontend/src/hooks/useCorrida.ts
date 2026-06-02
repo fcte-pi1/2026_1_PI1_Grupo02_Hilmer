@@ -1,16 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
-  iniciarCorrida as postIniciarCorrida,
   listarCorridasResumo,
   obterCorrida,
-  salvarCorrida as postSalvarCorrida,
 } from "../services/corrida";
 import type {
   CorridaDetailResponse,
   CorridaResumoResponse,
-  CorridaSave,
-  CorridaStart,
   TipoLabirintoFiltro,
 } from "../types/corrida";
 
@@ -25,8 +21,6 @@ export interface UseCorridasReturn {
   setTipoFiltro: (tipo: TipoLabirintoFiltro) => void;
   selecionarCorrida: (idCorrida: number) => Promise<void>;
   recarregar: () => Promise<void>;
-  iniciarCorrida: (payload: CorridaStart) => Promise<void>;
-  salvarCorrida: (idCorrida: number, payload: CorridaSave) => Promise<void>;
 }
 
 export function useCorridas(): UseCorridasReturn {
@@ -86,38 +80,6 @@ export function useCorridas(): UseCorridasReturn {
     }
   }, []);
 
-  const iniciarCorrida = useCallback(
-    async (payload: CorridaStart) => {
-      setErro(null);
-
-      try {
-        await postIniciarCorrida(payload);
-        await carregarCorridas();
-      } catch (err) {
-        setErro(
-          err instanceof Error ? err.message : "Erro ao iniciar corrida",
-        );
-        throw err;
-      }
-    },
-    [carregarCorridas],
-  );
-
-  const salvarCorrida = useCallback(
-    async (idCorrida: number, payload: CorridaSave) => {
-      setErro(null);
-
-      try {
-        await postSalvarCorrida(idCorrida, payload);
-        await carregarCorridas();
-      } catch (err) {
-        setErro(err instanceof Error ? err.message : "Erro ao salvar corrida");
-        throw err;
-      }
-    },
-    [carregarCorridas],
-  );
-
   return {
     corridas,
     corridaSelecionada,
@@ -129,7 +91,5 @@ export function useCorridas(): UseCorridasReturn {
     setTipoFiltro,
     selecionarCorrida,
     recarregar: carregarCorridas,
-    iniciarCorrida,
-    salvarCorrida,
   };
 }
