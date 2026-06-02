@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+@theme {
+  /* Cores de Marca (Brand Colors) */
+  --color-primary: var(--color-yellow-400);
+  --color-primary-hover: var(--color-yellow-500);
+  --color-primary-active: var(--color-yellow-600);
+  
+  --color-secondary: #a855f7; /* Roxo para trajetos */
+  --color-secondary-hover: var(--color-purple-600);
+  
+  --color-tertiary: var(--color-emerald-500); /* Verde para objetivos */
+  
+  /* Cores Semânticas de Estado */
+  --color-success: var(--color-emerald-500);
+  --color-danger: var(--color-rose-500);
+  --color-warning: var(--color-amber-500);
+  --color-info: var(--color-sky-400);
+  
+  /* Cores de Fundo e Superfície (Dark Theme) */
+  --color-background: var(--color-zinc-950);
+  --color-surface: var(--color-zinc-900);
+  --color-surface-hover: var(--color-zinc-800);
+  
+  /* Bordas e Linhas */
+  --color-border: var(--color-zinc-800);
+  --color-border-focus: var(--color-zinc-700);
+}
