@@ -122,8 +122,7 @@ export function SessionsPage({
   const [contadorTabela, setContadorTabela] = useState(0);
 
   // Tipo para o CardMelhorTempo
-  const tipoParaRecorde: TipoLabirinto =
-    tipoSelecionado === "TODOS" ? "4X4" : tipoSelecionado;
+  const tipoParaRecorde: TipoLabirintoFiltro = tipoSelecionado;
 
   // Hook do melhor tempo — controlamos o refetch manualmente (CA-17-02)
   const { melhorTempo, loading: loadingRecorde, erro: erroRecorde, refetch } =

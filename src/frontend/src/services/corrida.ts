@@ -1,6 +1,7 @@
 import type {
   CorridaDetailResponse,
   CorridaResumoResponse,
+  MelhorTempoResponse,
   TipoLabirinto,
 } from "../types/corrida";
 
@@ -44,6 +45,21 @@ export async function obterCorrida(
 export async function fetchMelhorTempo(
   tipo: string,
 ): Promise<MelhorTempoResponse | null> {
+  if (tipo === "TODOS") {
+    const [t4, t8, t16] = await Promise.all([
+      fetchMelhorTempo("4X4"),
+      fetchMelhorTempo("8X8"),
+      fetchMelhorTempo("16X16"),
+    ]);
+    const resultados = [t4, t8, t16].filter((r): r is MelhorTempoResponse => r !== null);
+    if (resultados.length === 0) {
+      return null;
+    }
+    return resultados.reduce((min, curr) =>
+      curr.tempo_total < min.tempo_total ? curr : min
+    , resultados[0]);
+  }
+
   const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
   const url = `${API_BASE}/api/corridas/melhor-tempo?tipo=${encodeURIComponent(tipo)}`;
 

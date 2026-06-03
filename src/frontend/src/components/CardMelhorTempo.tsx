@@ -18,7 +18,7 @@
 
 import React from "react";
 
-import type { MelhorTempoResponse, TipoLabirinto } from "../types/corrida";
+import type { MelhorTempoResponse, TipoLabirinto, TipoLabirintoFiltro } from "../types/corrida";
 import { useMelhorTempo } from "../hooks/useMelhorTempo";
 
 // ---------------------------------------------------------------------------
@@ -97,7 +97,7 @@ const CardIndicador: React.FC<CardIndicadorProps> = ({
 
 export type CardMelhorTempoProps = {
   /** Tipo do labirinto para buscar o melhor tempo. */
-  tipo: TipoLabirinto;
+  tipo: TipoLabirintoFiltro;
   /**
    * Dados do melhor tempo (modo controlado).
    * Se não fornecido, o componente chama useMelhorTempo internamente.
