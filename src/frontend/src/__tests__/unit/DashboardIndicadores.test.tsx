@@ -50,7 +50,7 @@ function configurarHook(
     configSessao: { dimensao: null },
     enviarPacote: vi.fn(),
     erro: null,
-  } as ReturnType<typeof useTelemetria>);
+  } as unknown as ReturnType<typeof useTelemetria>);
 }
 
 // ── CT01 
