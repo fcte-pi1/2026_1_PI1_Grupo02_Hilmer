@@ -4,15 +4,17 @@ import { MonitoringLayout } from "../components/MonitoringLayout";
 import { useTelemetria } from "../hooks/useTelemetria";
 
 type LabirintoPageProps = {
-  activeView: "telemetria" | "labirinto";
+  activeView: "telemetria" | "labirinto" | "corridas";
   onNavigateTelemetria: () => void;
   onNavigateLabirinto: () => void;
+  onNavigateCorridas: () => void;
 };
 
 export function LabirintoPage({
   activeView,
   onNavigateTelemetria,
   onNavigateLabirinto,
+  onNavigateCorridas,
 }: LabirintoPageProps) {
   const telemetria = useTelemetria();
 
@@ -21,11 +23,12 @@ export function LabirintoPage({
       activeView={activeView}
       onNavigateTelemetria={onNavigateTelemetria}
       onNavigateLabirinto={onNavigateLabirinto}
-      eyebrow="Monitoramento"
-      title="Micromouse"
-      description="Painel de Controle Integrado em Tempo Real"
-      statusConexao={telemetria.statusConexao}
-      mensagemStatusConexao={telemetria.mensagemStatusConexao}
+      onNavigateCorridas={onNavigateCorridas}
+      eyebrow="Labirinto"
+      title="Mapa do labirinto em tempo real"
+      description="Visualize paredes detectadas, percurso e posicao atual do Micromouse."
+      statusConexao={statusConexao}
+      mensagemStatusConexao={mensagemStatusConexao}
     >
       <div className="flex flex-col gap-4 max-w-[1600px] mx-auto w-full">
         {/* Top compact indicators */}

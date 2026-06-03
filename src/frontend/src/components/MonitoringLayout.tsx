@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 
 type MonitoringLayoutProps = {
-  activeView: "telemetria" | "labirinto";
+  activeView: "telemetria" | "labirinto" | "corridas";
   onNavigateTelemetria: () => void;
-  onNavigateLabirinto?: () => void;
+  onNavigateLabirinto: () => void;
+  onNavigateCorridas: () => void;
   eyebrow: string;
   title: string;
   description: string;
@@ -15,7 +16,8 @@ type MonitoringLayoutProps = {
 export function MonitoringLayout({
   activeView: _activeView,
   onNavigateTelemetria,
-  onNavigateLabirinto: _onNavigateLabirinto,
+  onNavigateLabirinto,
+  onNavigateCorridas,
   eyebrow,
   title,
   description,
@@ -23,8 +25,9 @@ export function MonitoringLayout({
   mensagemStatusConexao: _mensagemStatusConexao,
   children,
 }: MonitoringLayoutProps) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
+  const exibindoTelemetria = activeView === "telemetria";
+  const exibindoLabirinto = activeView === "labirinto";
+  const exibindoCorridas = activeView === "corridas";
   const statusLabel =
     statusConexao === "online"
       ? "Online"
@@ -95,8 +98,10 @@ export function MonitoringLayout({
             <button
               type="button"
               onClick={onNavigateTelemetria}
-              className={`flex w-full items-center rounded-lg py-2.5 text-sm transition font-semibold bg-primary text-background shadow-sm hover:opacity-90 ${
-                isCollapsed ? "justify-center px-0" : "gap-3 px-3"
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
+                exibindoTelemetria
+                  ? "bg-zinc-950 text-white"
+                  : "text-zinc-600 hover:bg-zinc-100"
               }`}
               title="Monitoramento"
             >
@@ -105,13 +110,21 @@ export function MonitoringLayout({
             </button>
 
             <button
-              className={`flex w-full items-center rounded-lg py-2.5 text-sm text-zinc-400 transition hover:bg-surface-hover hover:text-primary ${
-                isCollapsed ? "justify-center px-0" : "gap-3 px-3"
+              type="button"
+              onClick={onNavigateCorridas}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
+                exibindoCorridas
+                  ? "bg-zinc-950 text-white"
+                  : "text-zinc-600 hover:bg-zinc-100"
               }`}
-              title="Estados"
             >
-              <span className="shrink-0 text-lg">▣</span>
-              {!isCollapsed && <span className="whitespace-nowrap">Estados</span>}
+              <span>↺</span>
+              Corridas
+            </button>
+
+            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-100">
+              <span>▣</span>
+              Estados
             </button>
 
             <button
