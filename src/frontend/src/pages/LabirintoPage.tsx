@@ -27,8 +27,8 @@ export function LabirintoPage({
       eyebrow="Labirinto"
       title="Mapa do labirinto em tempo real"
       description="Visualize paredes detectadas, percurso e posicao atual do Micromouse."
-      statusConexao={statusConexao}
-      mensagemStatusConexao={mensagemStatusConexao}
+      statusConexao={telemetria.statusConexao}
+      mensagemStatusConexao={telemetria.mensagemStatusConexao}
     >
       <div className="flex flex-col gap-4 max-w-[1600px] mx-auto w-full">
         {/* Top compact indicators */}

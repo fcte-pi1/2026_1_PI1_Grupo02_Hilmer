@@ -1,6 +1,5 @@
 import type {
   CorridaDetailResponse,
-  CorridaResponse,
   CorridaResumoResponse,
   TipoLabirinto,
 } from "../types/corrida";

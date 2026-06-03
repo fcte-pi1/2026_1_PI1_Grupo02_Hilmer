@@ -14,7 +14,7 @@ type MonitoringLayoutProps = {
 };
 
 export function MonitoringLayout({
-  activeView: _activeView,
+  activeView,
   onNavigateTelemetria,
   onNavigateLabirinto,
   onNavigateCorridas,
@@ -22,7 +22,6 @@ export function MonitoringLayout({
   title,
   description,
   statusConexao,
-  mensagemStatusConexao: _mensagemStatusConexao,
   children,
 }: MonitoringLayoutProps) {
   const exibindoTelemetria = activeView === "telemetria";
@@ -46,6 +45,8 @@ export function MonitoringLayout({
       : statusConexao === "offline"
         ? "bg-red-500"
         : "bg-amber-500";
+
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-primary">
@@ -117,14 +118,24 @@ export function MonitoringLayout({
                   ? "bg-zinc-950 text-white"
                   : "text-zinc-600 hover:bg-zinc-100"
               }`}
+              title="Corridas"
             >
-              <span>↺</span>
-              Corridas
+              <span className="shrink-0 text-lg">↺</span>
+              {!isCollapsed && <span className="whitespace-nowrap">Corridas</span>}
             </button>
 
-            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-100">
-              <span>▣</span>
-              Estados
+            <button
+              type="button"
+              onClick={onNavigateLabirinto}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
+                exibindoLabirinto
+                  ? "bg-zinc-950 text-white"
+                  : "text-zinc-600 hover:bg-zinc-100"
+              }`}
+              title="Labirinto"
+            >
+              <span className="shrink-0 text-lg">▣</span>
+              {!isCollapsed && <span className="whitespace-nowrap">Labirinto</span>}
             </button>
 
             <button
