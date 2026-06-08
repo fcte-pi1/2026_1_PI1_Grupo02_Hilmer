@@ -85,7 +85,7 @@ export function MonitoringLayout({
             )}
           </div>
 
-          <nav className="flex-1 space-y-2 py-6 overflow-y-auto overflow-x-hidden custom-scrollbar px-3">
+          <nav className="flex-1 space-y-2 py-6 overflow-y-auto overflow-x-hidden px-3">
             <button
               className={`flex w-full items-center rounded-lg py-2.5 text-sm text-zinc-400 transition hover:bg-surface-hover hover:text-primary ${
                 isCollapsed ? "justify-center px-0" : "gap-3 px-3"
@@ -118,10 +118,10 @@ export function MonitoringLayout({
                   ? "bg-zinc-950 text-white"
                   : "text-zinc-600 hover:bg-zinc-100"
               }`}
-              title="Corridas"
+              title="Histórico"
             >
               <span className="shrink-0 text-lg">↺</span>
-              {!isCollapsed && <span className="whitespace-nowrap">Corridas</span>}
+              {!isCollapsed && <span className="whitespace-nowrap">Histórico</span>}
             </button>
 
             <button
@@ -136,16 +136,6 @@ export function MonitoringLayout({
             >
               <span className="shrink-0 text-lg">▣</span>
               {!isCollapsed && <span className="whitespace-nowrap">Labirinto</span>}
-            </button>
-
-            <button
-              className={`flex w-full items-center rounded-lg py-2.5 text-sm text-zinc-400 transition hover:bg-surface-hover hover:text-primary ${
-                isCollapsed ? "justify-center px-0" : "gap-3 px-3"
-              }`}
-              title="Histórico"
-            >
-              <span className="shrink-0 text-lg">↺</span>
-              {!isCollapsed && <span className="whitespace-nowrap">Histórico</span>}
             </button>
 
             <button

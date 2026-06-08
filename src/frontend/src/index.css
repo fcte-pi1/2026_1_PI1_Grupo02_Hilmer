@@ -26,3 +26,33 @@
   --color-border: var(--color-zinc-800);
   --color-border-focus: var(--color-zinc-700);
 }
+
+@layer base {
+  /* Esconder barras de rolagem globalmente mas manter funcionalidade */
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE e Edge */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari e Opera */
+  }
+}
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    display: block;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-zinc-800);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--color-zinc-700);
+  }
+}

@@ -68,7 +68,7 @@ describe("MonitoringLayout", () => {
     fireEvent.click(labirintoBtn);
     expect(onNavLabirinto).toHaveBeenCalled();
 
-    const corridasBtn = screen.getByTitle("Corridas");
+    const corridasBtn = screen.getByTitle("Histórico");
     fireEvent.click(corridasBtn);
     expect(onNavCorridas).toHaveBeenCalled();
 

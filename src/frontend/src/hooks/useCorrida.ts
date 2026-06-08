@@ -59,7 +59,8 @@ export function useCorridas(): UseCorridasReturn {
   }, [tipoFiltro]);
 
   useEffect(() => {
-    void carregarCorridas();
+    // eslint-disable-next-line
+    carregarCorridas();
   }, [carregarCorridas]);
 
   const selecionarCorrida = useCallback(async (idCorrida: number) => {

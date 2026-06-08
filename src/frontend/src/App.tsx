@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { LabirintoPage } from './pages/LabirintoPage';
 import { TelemetriaPage } from './pages/TelemetriaPage';
-import { SessionsPage } from './pages/SessionsPage';
+import { HistoricoCorridasPage } from './pages/HistoricoCorridasPage';
 import Session from './components/Session';
 
 function App() {
@@ -28,7 +28,7 @@ function App() {
           onNavigateCorridas={() => setCurrentView('corridas')}
         />
       ) : (
-        <SessionsPage
+        <HistoricoCorridasPage
           activeView={currentView}
           onNavigateTelemetria={() => setCurrentView('telemetria')}
           onNavigateLabirinto={() => setCurrentView('labirinto')}

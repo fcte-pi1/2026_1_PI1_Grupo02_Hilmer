@@ -96,9 +96,24 @@ class CorridaResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CelulaResponse(BaseModel):
+    """Célula do labirinto retornada na consulta."""
+
+    id_celula: int
+    coordenada_x: int
+    coordenada_y: int
+    parede_norte: bool
+    parede_sul: bool
+    parede_leste: bool
+    parede_oeste: bool
+
+    model_config = {"from_attributes": True}
+
+
 class CorridaDetailResponse(CorridaResponse):
     """Detalhes de uma corrida, incluindo percurso."""
 
+    celulas: list[CelulaResponse] = []
     percurso: list["PercursoResponse"] = []
 
 

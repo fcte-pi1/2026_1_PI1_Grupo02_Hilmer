@@ -42,6 +42,7 @@ const mockUseTelemetria = vi.mocked(useTelemetria);
 function configurarHook(
   indicadores: ReturnType<typeof criarIndicadores> | typeof mockAguardando,
   conectado = true,
+  alertaSemSinal = false,
 ) {
   mockUseTelemetria.mockReturnValue({
     indicadores,
@@ -54,6 +55,7 @@ function configurarHook(
     ultimaMovimentacao: null,
     filaMovimentacoes: [],
     limparFilaMovimentacoes: vi.fn(),
+    alertaSemSinal,
     contadorNovoRecorde: 0,
   } as unknown as ReturnType<typeof useTelemetria>);
 }
@@ -121,59 +123,40 @@ describe("CT05 — Atualização em Tempo Real", () => {
 
 // ── CT06 
 describe("CT06 — Queda de Telemetria", () => {
-  it("exibe alerta após 3 segundos sem pacote", () => {
-    configurarHook(mockEmAndamento, true);
+  it("exibe alerta quando alertaSemSinal é verdadeiro", () => {
+    configurarHook(mockEmAndamento, true, true);
     render(<DashboardIndicadores />);
-
-    expect(screen.queryByText(/Ausência de telemetria recente/i)).not.toBeInTheDocument();
-
-    act(() => { vi.advanceTimersByTime(3001); });
 
     expect(screen.getByText(/Ausência de telemetria recente/i)).toBeInTheDocument();
   });
 
-  it("NÃO exibe alerta se pacote chegar antes de 3 segundos", () => {
-    configurarHook(mockEmAndamento, true);
-    const { rerender } = render(<DashboardIndicadores />);
-
-    act(() => { vi.advanceTimersByTime(1000); });
-
-    act(() => {
-      configurarHook(criarIndicadores({ ultimo_timestamp_ms: Date.now() + 1000 }), true);
-      rerender(<DashboardIndicadores />);
-    });
-
-    act(() => { vi.advanceTimersByTime(2000); });
+  it("NÃO exibe alerta quando alertaSemSinal é falso", () => {
+    configurarHook(mockEmAndamento, true, false);
+    render(<DashboardIndicadores />);
 
     expect(screen.queryByText(/Ausência de telemetria recente/i)).not.toBeInTheDocument();
   });
 
   it("mantém a última bateria conhecida durante falha de telemetria", () => {
-    configurarHook(mockEmAndamento, true);
+    configurarHook(mockEmAndamento, true, false);
     const { rerender } = render(<DashboardIndicadores />);
 
     expect(screen.getByText("72.5%")).toBeInTheDocument();
 
-    act(() => { vi.advanceTimersByTime(3001); });
+    act(() => {
+      configurarHook(mockEmAndamento, true, true);
+      rerender(<DashboardIndicadores />);
+    });
 
     expect(screen.getByText("72.5%")).toBeInTheDocument();
     expect(screen.getByText(/Ausência de telemetria recente/i)).toBeInTheDocument();
 
     act(() => {
-      configurarHook(mockEmAndamento, false);
+      configurarHook(mockEmAndamento, false, true);
       rerender(<DashboardIndicadores />);
     });
 
     expect(screen.getByText("72.5%")).toBeInTheDocument();
-  });
-
-  it("NÃO exibe alerta de sem sinal quando corrida está aguardando", () => {
-    configurarHook(mockAguardando, false);
-    render(<DashboardIndicadores />);
-
-    act(() => { vi.advanceTimersByTime(5000); });
-
-    expect(screen.queryByText(/Ausência de telemetria recente/i)).not.toBeInTheDocument();
   });
 });
 

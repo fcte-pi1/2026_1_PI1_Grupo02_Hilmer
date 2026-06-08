@@ -83,6 +83,10 @@ export interface UseTelemetriaReturn {
   /** Limpa a fila apos processar */
   limparFilaMovimentacoes: () => void;
   /**
+   * Indica ausência de sinal de telemetria por mais de 3 segundos.
+   */
+  alertaSemSinal: boolean;
+  /**
    * Contador incrementado a cada SESSAO_ENCERRADA com sucesso=true.
    * Componentes podem usar como dependência para disparar refetch.
    * (CA-17-02)
@@ -126,6 +130,7 @@ export function useTelemetria(
     MovimentacaoTelemetria[]
   >([]);
   const [contadorNovoRecorde, setContadorNovoRecorde] = useState(0);
+  const [alertaSemSinal, setAlertaSemSinal] = useState(false);
 
   // Ref para manter o callback sempre atualizado sem recriar o WebSocket
   const onSessaoEncerradaRef = useRef(options?.onSessaoEncerradaComSucesso);
@@ -139,6 +144,24 @@ export function useTelemetria(
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const signalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Monitora ausência de sinal
+  useEffect(() => {
+    if (signalTimerRef.current) clearTimeout(signalTimerRef.current);
+    
+    if (alertaSemSinal) setAlertaSemSinal(false);
+
+    if (indicadores.status_corrida === "em_andamento") {
+      signalTimerRef.current = setTimeout(() => {
+        setAlertaSemSinal(true);
+      }, 3000);
+    }
+
+    return () => {
+      if (signalTimerRef.current) clearTimeout(signalTimerRef.current);
+    };
+  }, [indicadores.status_corrida, indicadores.ultimo_timestamp_ms, alertaSemSinal]);
 
   const decodificarParedes = useCallback((w: number): ParedesCelula => {
     return {
@@ -297,7 +320,7 @@ export function useTelemetria(
     };
 
     wsRef.current = ws;
-  }, []);
+  }, [decodificarParedes, isMovimentacaoPayload]);
 
   useEffect(() => {
     realizarConexao();
@@ -333,6 +356,7 @@ export function useTelemetria(
     ultimaMovimentacao,
     filaMovimentacoes,
     limparFilaMovimentacoes,
+    alertaSemSinal,
     contadorNovoRecorde,
   };
 }

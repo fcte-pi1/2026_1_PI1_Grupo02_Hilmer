@@ -15,6 +15,7 @@ from ..schemas.corrida import (
     CorridaResumoResponse,
     CorridaResponse,
     PercursoResponse,
+    CelulaResponse,
 )
 from ..services.registro import RegistroError, iniciar_corrida, salvar_corrida
 
@@ -191,9 +192,18 @@ def detalhar_corrida(
     )
     percursos = session.exec(percurso_statement).all()
 
+    # Buscar células do labirinto associado
+    from ..models.celula import Celula
+    celulas_statement = (
+        select(Celula)
+        .where(Celula.id_labirinto == corrida.id_labirinto)
+    )
+    celulas = session.exec(celulas_statement).all()
+
     resp = _to_response(corrida, tipo_lab)
     return CorridaDetailResponse(
         **resp.model_dump(),
+        celulas=[CelulaResponse.model_validate(c) for c in celulas],
         percurso=[PercursoResponse.model_validate(p) for p in percursos],
     )
 

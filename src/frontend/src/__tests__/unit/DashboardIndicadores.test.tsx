@@ -6,7 +6,6 @@ import {
   mockBateriaCritica,
   mockBateriaNormal,
 } from "../utils/telemetria-mocks";
-import type { UseTelemetriaReturn } from "../../hooks/useTelemetria";
 
 vi.mock("../../hooks/useTelemetria", () => ({
   useTelemetria: vi.fn(),

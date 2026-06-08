@@ -5,7 +5,6 @@ import { CriticalAlertModal, type CriticalAlertType } from "./CriticalAlertModal
 type StatusCorrida = "aguardando" | "em_andamento" | "concluida" | "abortada";
 
 const LIMITE_BATERIA_CRITICA = 10;
-const LIMITE_SEM_TELEMETRIA_MS = 3000;
 
 const formatarTempo = (ms?: number | null): string => {
   if (ms === null || ms === undefined || Number.isNaN(ms) || ms < 0) return "00:00.000";
@@ -110,12 +109,10 @@ export const ControlPanel: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ te
 };
 
 export const TelemetryAlerts: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ telemetria }) => {
-  const { indicadores } = telemetria;
-  const statusCorrida = normalizarStatus(indicadores?.status_corrida);
+  const { indicadores, alertaSemSinal } = telemetria;
   const bateriaAtual = obterNumeroValido(indicadores?.bateria_atual);
   const ultimoTimestampMs = obterNumeroValido(indicadores?.ultimo_timestamp_ms);
   
-  const [alertaSemSinal, setAlertaSemSinal] = useState(false);
   const [alertaCritico, setAlertaCritico] = useState<{ type: CriticalAlertType; key: string; } | null>(null);
 
   const bateriaCritica = bateriaAtual !== null && bateriaAtual <= LIMITE_BATERIA_CRITICA;
@@ -123,17 +120,6 @@ export const TelemetryAlerts: React.FC<{ telemetria: UseTelemetriaReturn }> = ({
 
   const bateriaCriticaAbertaRef = useRef(false);
   const paradaInesperadaAbertaRef = useRef(false);
-
-  useEffect(() => {
-    let timer: number | undefined;
-    if (indicadores && statusCorrida === "em_andamento") {
-      setAlertaSemSinal(false);
-      timer = window.setTimeout(() => setAlertaSemSinal(true), LIMITE_SEM_TELEMETRIA_MS);
-    } else {
-      setAlertaSemSinal(false);
-    }
-    return () => { if (timer) window.clearTimeout(timer); };
-  }, [indicadores, statusCorrida, ultimoTimestampMs]);
 
   useEffect(() => {
     if (!bateriaCritica) { bateriaCriticaAbertaRef.current = false; return; }

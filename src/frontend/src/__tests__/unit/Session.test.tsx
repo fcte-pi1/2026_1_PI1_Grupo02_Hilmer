@@ -20,7 +20,7 @@ describe("SessionManager", () => {
       configSessao: { dimensao: null },
       conectado: false,
       erro: null,
-    } as any);
+    } as ReturnType<typeof useTelemetria>);
 
     render(<SessionManager />);
     expect(screen.getByText("Conectando...")).toBeInTheDocument();
@@ -33,7 +33,7 @@ describe("SessionManager", () => {
       configSessao: { dimensao: null },
       conectado: true,
       erro: "Falha de comunicação",
-    } as any);
+    } as ReturnType<typeof useTelemetria>);
 
     render(<SessionManager />);
     expect(screen.getByText("Falha de comunicação")).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe("SessionManager", () => {
       configSessao: { dimensao: "16X16" },
       conectado: true,
       erro: null,
-    } as any);
+    } as ReturnType<typeof useTelemetria>);
 
     render(<SessionManager />);
     expect(screen.getByText("Sessão Iniciada!")).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe("SessionManager", () => {
       configSessao: { dimensao: "16X16" },
       conectado: true,
       erro: null,
-    } as any);
+    } as ReturnType<typeof useTelemetria>);
 
     const onNavigateMock = vi.fn();
     render(<SessionManager onNavigate={onNavigateMock} />);
@@ -74,7 +74,7 @@ describe("SessionManager", () => {
       configSessao: { dimensao: null },
       conectado: true,
       erro: null,
-    } as any);
+    } as ReturnType<typeof useTelemetria>);
 
     const onNavigateMock = vi.fn();
     render(<SessionManager onNavigate={onNavigateMock} />);

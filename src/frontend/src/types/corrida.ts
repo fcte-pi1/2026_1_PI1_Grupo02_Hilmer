@@ -71,7 +71,18 @@ export interface CorridaResumoResponse {
   tipo_labirinto: TipoLabirinto | null;
 }
 
+export interface CelulaResponse {
+  id_celula: number;
+  coordenada_x: number;
+  coordenada_y: number;
+  parede_norte: boolean;
+  parede_sul: boolean;
+  parede_leste: boolean;
+  parede_oeste: boolean;
+}
+
 export interface CorridaDetailResponse extends CorridaResponse {
+  celulas: CelulaResponse[];
   percurso: PercursoResponse[];
 }
 

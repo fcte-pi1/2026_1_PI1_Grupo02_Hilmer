@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTelemetria } from "../../hooks/useTelemetria";
 import { createMaze, isInsideMaze, markVisited, markWall, normalizePathToOrthogonal, hasWallBetween, findGoalArea } from "./mazeUtils";
 import type { Cell, Direction, Position } from "./types";
 import { CriticalAlertModal, type CriticalAlertType } from "../CriticalAlertModal";
 
 const LIMITE_BATERIA_CRITICA = 10;
-const LIMITE_SEM_TELEMETRIA_MS = 3000;
 
 const obterNumeroValido = (valor?: number | null): number | null => {
   if (valor === null || valor === undefined || Number.isNaN(valor)) {
@@ -34,7 +33,7 @@ const formatarTempo = (ms?: number | null): string => {
 };
 
 const DEFAULT_GRID_SIZE = 8;
-
+const maxDimension = "min(100vw, 800px)";
 
 const positionsEqual = (a: Position, b: Position) =>
   a.row === b.row && a.col === b.col;
@@ -43,18 +42,36 @@ type MazeViewerProps = {
   showHeader?: boolean;
   showSidebar?: boolean;
   standalone?: boolean;
+  staticMaze?: Cell[][];
+  staticPath?: Position[];
+  staticGridSize?: number;
 };
 
-export default function MazeViewer({ showHeader = true, showSidebar = true, standalone = false }: MazeViewerProps) {
-  const { filaMovimentacoes, limparFilaMovimentacoes, configSessao, indicadores, statusConexao } =
+export default function MazeViewer({ 
+  showHeader = true, 
+  showSidebar = true, 
+  standalone = false,
+  staticMaze,
+  staticPath,
+  staticGridSize
+}: MazeViewerProps) {
+  const { filaMovimentacoes, limparFilaMovimentacoes, configSessao, indicadores, statusConexao, alertaSemSinal } =
     useTelemetria();
+  
+  const isStatic = !!staticMaze;
+
   // Estado principal da corrida e do labirinto.
-  const [gridSize, setGridSize] = useState(DEFAULT_GRID_SIZE);
-  const [maze, setMaze] = useState(() => createMaze(DEFAULT_GRID_SIZE));
-  const [position, setPosition] = useState<Position>({ row: 0, col: 0 });
+  const [gridSize, setGridSize] = useState(staticGridSize || DEFAULT_GRID_SIZE);
+  const [maze, setMaze] = useState(() => staticMaze || createMaze(DEFAULT_GRID_SIZE));
+  const [position, setPosition] = useState<Position>(() => {
+    if (staticPath && staticPath.length > 0) {
+      return staticPath[staticPath.length - 1];
+    }
+    return { row: 0, col: 0 };
+  });
   const [direction, setDirection] = useState<Direction>("east");
-  const [path, setPath] = useState<Position[]>([]);
-  const [viewMode, setViewMode] = useState<"live" | "history">("live");
+  const [path, setPath] = useState<Position[]>(staticPath || []);
+  const [viewMode, setViewMode] = useState<"live" | "history">(isStatic ? "history" : "live");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [history, setHistory] = useState<
     {
@@ -77,7 +94,6 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
   const pathRef = useRef<Position[]>(path);
   const directionRef = useRef<Direction>(direction);
 
-  const [alertaSemSinal, setAlertaSemSinal] = useState(false);
   const [alertaCritico, setAlertaCritico] = useState<{
     type: CriticalAlertType;
     key: string;
@@ -93,35 +109,19 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
   const tempoFinalMs = obterNumeroValido(indicadores?.tempo_final_ms);
   const ultimoTimestampMs = obterNumeroValido(indicadores?.ultimo_timestamp_ms);
 
-  const bateriaCritica = bateriaAtual !== null && bateriaAtual <= LIMITE_BATERIA_CRITICA;
-  const paradaInesperada = indicadores?.alerta_possivel_parada_inesperada === true;
+  const bateriaCritica = !isStatic && bateriaAtual !== null && bateriaAtual <= LIMITE_BATERIA_CRITICA;
+  const paradaInesperada = !isStatic && indicadores?.alerta_possivel_parada_inesperada === true;
 
   const tempoExibido = useMemo(() => {
+    if (isStatic) return 0;
     if (statusCorrida === "concluida" && tempoFinalMs !== null) {
       return tempoFinalMs;
     }
     return tempoDecorridoMs;
-  }, [statusCorrida, tempoDecorridoMs, tempoFinalMs]);
+  }, [isStatic, statusCorrida, tempoDecorridoMs, tempoFinalMs]);
 
   useEffect(() => {
-    let timer: number | undefined;
-
-    if (indicadores && statusCorrida === "em_andamento") {
-      setAlertaSemSinal(false);
-      timer = window.setTimeout(() => {
-        setAlertaSemSinal(true);
-      }, LIMITE_SEM_TELEMETRIA_MS);
-    } else {
-      setAlertaSemSinal(false);
-    }
-
-    return () => {
-      if (timer) window.clearTimeout(timer);
-    };
-  }, [indicadores, statusCorrida, ultimoTimestampMs]);
-
-  useEffect(() => {
-    if (!bateriaCritica) {
+    if (isStatic || !bateriaCritica) {
       bateriaCriticaAbertaRef.current = false;
       return;
     }
@@ -135,10 +135,10 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
       type: "battery",
       key: `battery-${ultimoTimestampMs ?? Date.now()}`,
     });
-  }, [bateriaCritica, ultimoTimestampMs]);
+  }, [isStatic, bateriaCritica, ultimoTimestampMs]);
 
   useEffect(() => {
-    if (!paradaInesperada) {
+    if (isStatic || !paradaInesperada) {
       paradaInesperadaAbertaRef.current = false;
       return;
     }
@@ -152,14 +152,14 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
       type: "stopped",
       key: `stopped-${ultimoTimestampMs ?? Date.now()}`,
     });
-  }, [paradaInesperada, ultimoTimestampMs]);
+  }, [isStatic, paradaInesperada, ultimoTimestampMs]);
 
-  const snapshot = viewMode === "history" ? history[historyIndex] : undefined;
-  const displayMaze = snapshot ? snapshot.maze : maze;
-  const displayPath = snapshot ? snapshot.path : path;
-  const displayPosition = snapshot ? snapshot.endPosition : position;
-  const displayDirection = snapshot ? snapshot.endDirection : direction;
-  const displayGridSize = snapshot ? snapshot.gridSize : gridSize;
+  const snapshot = viewMode === "history" && !isStatic ? history[historyIndex] : undefined;
+  const displayMaze = isStatic ? maze : (snapshot ? snapshot.maze : maze);
+  const displayPath = isStatic ? path : (snapshot ? snapshot.path : path);
+  const displayPosition = isStatic ? position : (snapshot ? snapshot.endPosition : position);
+  const displayDirection = isStatic ? direction : (snapshot ? snapshot.endDirection : direction);
+  const displayGridSize = isStatic ? gridSize : (snapshot ? snapshot.gridSize : gridSize);
   const displayGridDimension =
     displayGridSize === 16
       ? "min(72vmin, 640px)"
@@ -184,7 +184,8 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
       row.map((cell) => ({ ...cell, walls: { ...cell.walls } })),
     );
 
-  const resetRunState = (size: number) => {
+  const resetRunState = useCallback((size: number) => {
+    if (isStatic) return;
     stepRef.current = 0;
     sessionIdRef.current = null;
     setSessionStatus("idle");
@@ -195,7 +196,7 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
     setMaze(createMaze(size));
     setViewMode("live");
     setIsHistoryOpen(false);
-  };
+  }, [isStatic]);
 
 
   const startSession = () => {
@@ -231,21 +232,23 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
   }, [direction]);
 
   useEffect(() => {
-    if (!configSessao?.dimensao) return;
+    if (isStatic || !configSessao?.dimensao) return;
     const dimensao = parseInt(String(configSessao.dimensao), 10);
     if (
       !Number.isNaN(dimensao) &&
       (dimensao === 4 || dimensao === 8 || dimensao === 16)
     ) {
       if (dimensao !== gridSize) {
-        resetRunState(dimensao);
-        setGridSize(dimensao);
+        setTimeout(() => {
+          resetRunState(dimensao);
+          setGridSize(dimensao);
+        }, 0);
       }
     }
-  }, [configSessao?.dimensao, gridSize]);
+  }, [isStatic, configSessao?.dimensao, gridSize, resetRunState]);
 
   useEffect(() => {
-    if (filaMovimentacoes.length === 0) {
+    if (isStatic || filaMovimentacoes.length === 0) {
       return;
     }
 
@@ -338,12 +341,13 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
     }
 
     limparFilaMovimentacoes();
-  }, [filaMovimentacoes, gridSize, limparFilaMovimentacoes]);
+  }, [isStatic, filaMovimentacoes, gridSize, limparFilaMovimentacoes]);
 
   useEffect(() => {
     if (
-      indicadores.status_corrida !== "concluida" &&
-      indicadores.status_corrida !== "falha"
+      isStatic ||
+      (indicadores.status_corrida !== "concluida" &&
+      indicadores.status_corrida !== "falha")
     ) {
       return;
     }
@@ -360,7 +364,7 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
     ]);
     setHistoryIndex(0);
     setSessionStatus("finished");
-  }, [indicadores.status_corrida, gridSize]);
+  }, [isStatic, indicadores.status_corrida, gridSize]);
 
   if (standalone) {
     return (
@@ -463,13 +467,15 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
                 >
                   Limpar Mapa
                 </button>
-                <button
-                  type="button"
-                  onClick={openHistory}
-                  className="rounded-xl border border-zinc-700 bg-zinc-800/80 hover:bg-zinc-850 text-zinc-300 hover:text-white px-4 py-2 text-xs transition duration-150 cursor-pointer"
-                >
-                  Histórico
-                </button>
+                {!isStatic && (
+                  <button
+                    type="button"
+                    onClick={openHistory}
+                    className="rounded-xl border border-zinc-700 bg-zinc-800/80 hover:bg-zinc-850 text-zinc-300 hover:text-white px-4 py-2 text-xs transition duration-150 cursor-pointer"
+                  >
+                    Histórico
+                  </button>
+                )}
 
 
               </div>
@@ -781,26 +787,27 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
               Labirinto
             </p>
             <h2 className="text-xl font-bold text-yellow-400">
-              Mapa de navegação em tempo real
+              {isStatic ? "Visualização Estática" : "Mapa de navegação em tempo real"}
             </h2>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="rounded-lg bg-yellow-400 hover:bg-yellow-500 text-zinc-950 px-3 py-2 text-xs font-bold transition duration-150 cursor-pointer"
-              onClick={startSession}
-            >
-              Limpar mapa
-            </button>
-            <button
-              type="button"
-              className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-bold text-zinc-300 hover:text-white transition hover:bg-zinc-700 cursor-pointer"
-              onClick={openHistory}
-            >
-              Histórico
-            </button>
-
-          </div>
+          {!isStatic && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-lg bg-yellow-400 hover:bg-yellow-500 text-zinc-950 px-3 py-2 text-xs font-bold transition duration-150 cursor-pointer"
+                onClick={startSession}
+              >
+                Limpar mapa
+              </button>
+              <button
+                type="button"
+                className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-bold text-zinc-300 hover:text-white transition hover:bg-zinc-700 cursor-pointer"
+                onClick={openHistory}
+              >
+                Histórico
+              </button>
+            </div>
+          )}
         </header>
       )}
 
@@ -813,6 +820,7 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
                 gridTemplateColumns: `repeat(${displayGridSize}, minmax(0, 1fr))`,
                 width: displayGridDimension,
                 height: displayGridDimension,
+                maxWidth: maxDimension,
               }}
             >
               {displayMaze.map((row, rowIndex) =>
@@ -943,13 +951,13 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
                 <p className="flex items-center justify-between">
                   <span>Sessao</span>
                   <span className="font-semibold text-zinc-200">
-                    {sessionStatus}
+                    {isStatic ? "Finalizada" : sessionStatus}
                   </span>
                 </p>
                 <p className="flex items-center justify-between">
                   <span>Conexao</span>
                   <span className="font-semibold text-zinc-200">
-                    {statusConexao}
+                    {isStatic ? "Offline" : statusConexao}
                   </span>
                 </p>
                 <p className="flex items-center justify-between">
@@ -970,7 +978,7 @@ export default function MazeViewer({ showHeader = true, showSidebar = true, stan
         )}
       </div>
 
-      {isHistoryOpen && (
+      {!isStatic && isHistoryOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-955/60 p-4 backdrop-blur-sm"
           role="dialog"

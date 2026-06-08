@@ -47,17 +47,17 @@ describe("CT-CMT-INT-01 — Integração: estado vazio via service (CA-17-03)", 
     vi.clearAllMocks();
   });
 
-  it("exibe 'Nenhum desafio concluído ainda' quando service retorna null", async () => {
+  it("exibe 'Sem dados para este labirinto' quando service retorna null", async () => {
     render(<CardMelhorTempo tipo="4X4" />);
 
     await waitFor(() => {
       expect(
-        screen.getByText("Nenhum desafio concluído ainda"),
+        screen.getByText("Sem dados para este labirinto"),
       ).toBeInTheDocument();
     });
   });
 
-  it("chama fetchMelhorTempo com o tipo correto", async () => {
+  it("chama fetchMelhorTempo with the correct type", async () => {
     render(<CardMelhorTempo tipo="8X8" />);
 
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe("CT-CMT-INT-02 — Integração: exibe recorde via service (CA-17-01, C
     render(<CardMelhorTempo tipo="4X4" />);
 
     await waitFor(() => {
-      expect(screen.getByText(/^#\d{4}-\d{2}-\d{2}-011$/)).toBeInTheDocument();
+      expect(screen.getByText("#11")).toBeInTheDocument();
     });
   });
 
@@ -103,16 +103,16 @@ describe("CT-CMT-INT-02 — Integração: exibe recorde via service (CA-17-01, C
     });
   });
 
-  it("exibe loading antes de resolver e recorde depois", async () => {
+  it("exibe skeletons enquanto carrega", async () => {
     let resolver!: (value: MelhorTempoResponse) => void;
     mockFetchMelhorTempo.mockReturnValue(
       new Promise((res) => { resolver = res; }),
     );
 
-    render(<CardMelhorTempo tipo="4X4" />);
+    const { container } = render(<CardMelhorTempo tipo="4X4" />);
 
-    // loading: valores "--"
-    expect(screen.getAllByText("--").length).toBeGreaterThanOrEqual(2);
+    // loading: pulse animate
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
 
     // resolve o service
     await act(async () => {
@@ -179,7 +179,7 @@ describe("CT-CMT-INT-03 — Integração: refetch atualiza valores do card (CA-1
   });
 
   it("exibe loading durante refetch e novo recorde depois (CA-17-02)", async () => {
-    const { rerender } = render(
+    const { rerender, container } = render(
       <CardMelhorTempo tipo="4X4" melhorTempo={mockRecorde} loading={false} erro={null} />,
     );
 
@@ -192,7 +192,7 @@ describe("CT-CMT-INT-03 — Integração: refetch atualiza valores do card (CA-1
       );
     });
 
-    expect(screen.getAllByText("--").length).toBeGreaterThanOrEqual(2);
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
 
     // Resolve com novo recorde
     await act(async () => {
@@ -225,7 +225,7 @@ describe("CT-CMT-INT-04 — Integração: erro do service exibe mensagem", () =>
     render(<CardMelhorTempo tipo="4X4" />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Não foi possível carregar/i)).toBeInTheDocument();
+      expect(screen.getByText(/Erro ao carregar recorde/i)).toBeInTheDocument();
       expect(screen.getByText(/Falha na requisição/i)).toBeInTheDocument();
     });
   });

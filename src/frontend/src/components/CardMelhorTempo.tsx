@@ -1,23 +1,10 @@
 /**
  * Componente de destaque visual para o melhor tempo registrado em um labirinto.
- *
- * Pode receber os dados via props (modo controlado — usado pela SessionsPage
- * para coordenar refetch reativo) ou chamar useMelhorTempo internamente
- * (modo autônomo — uso standalone simples).
- *
- * Uso autônomo:
- * ```tsx
- * <CardMelhorTempo tipo="4X4" />
- * ```
- *
- * Uso controlado (SessionsPage):
- * ```tsx
- * <CardMelhorTempo tipo="4X4" melhorTempo={melhorTempo} loading={loading} erro={erro} />
- * ```
+ * Refatorado para Tema Escuro.
  */
 
 import React from "react";
-
+import { Trophy, Clock, Calendar, Hash } from "lucide-react";
 import type { MelhorTempoResponse, TipoLabirinto } from "../types/corrida";
 import { useMelhorTempo } from "../hooks/useMelhorTempo";
 
@@ -36,11 +23,7 @@ const formatarTempo = (ms?: number | null): string => {
 };
 
 const formatarIdCorrida = (id: number): string => {
-  const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-  const dia = String(hoje.getDate()).padStart(2, "0");
-  return `#${ano}-${mes}-${dia}-${String(id).padStart(3, "0")}`;
+  return `#${id}`;
 };
 
 const formatarData = (dataIso: string | null): string => {
@@ -66,30 +49,37 @@ type CardIndicadorProps = {
   titulo: string;
   valor: string;
   descricao?: string;
-  estado?: "normal" | "critico" | "sucesso" | "vazio";
+  icon: React.ReactNode;
+  variant?: "default" | "success" | "vazio";
 };
 
 const CardIndicador: React.FC<CardIndicadorProps> = ({
   titulo,
   valor,
   descricao,
-  estado = "normal",
+  icon,
+  variant = "default",
 }) => {
-  const estilos = {
-    normal: "border-neutral-200 bg-white text-neutral-900",
-    critico: "border-red-300 bg-red-50 text-red-950",
-    sucesso: "border-green-300 bg-green-50 text-green-950",
-    vazio: "border-neutral-200 bg-neutral-50 text-neutral-400",
-  }[estado];
+  const baseClasses = "rounded-2xl border p-5 transition-all duration-300";
+  const variants = {
+    default: "border-zinc-800 bg-zinc-900/40 text-zinc-100",
+    success: "border-emerald-500/20 bg-emerald-500/5 text-emerald-400",
+    vazio: "border-zinc-800 bg-zinc-900/20 text-zinc-500 opacity-60",
+  };
 
   return (
-    <section className={`rounded-xl border p-5 transition-colors ${estilos}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-        {titulo}
-      </p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight">{valor}</p>
+    <section className={`${baseClasses} ${variants[variant]}`}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`p-2 rounded-lg ${variant === 'success' ? 'bg-emerald-500/10' : 'bg-zinc-800'}`}>
+          {icon}
+        </div>
+        <p className="text-xs font-bold uppercase tracking-widest opacity-70">
+          {titulo}
+        </p>
+      </div>
+      <p className="text-2xl font-bold tracking-tight font-mono">{valor}</p>
       {descricao && (
-        <p className="mt-2 text-xs text-current opacity-75">{descricao}</p>
+        <p className="mt-2 text-[10px] uppercase font-bold tracking-tighter opacity-50">{descricao}</p>
       )}
     </section>
   );
@@ -100,16 +90,9 @@ const CardIndicador: React.FC<CardIndicadorProps> = ({
 // ---------------------------------------------------------------------------
 
 export type CardMelhorTempoProps = {
-  /** Tipo do labirinto para buscar o melhor tempo. */
   tipo: TipoLabirinto;
-  /**
-   * Dados do melhor tempo (modo controlado).
-   * Se não fornecido, o componente chama useMelhorTempo internamente.
-   */
   melhorTempo?: MelhorTempoResponse | null;
-  /** Estado de loading (modo controlado). */
   loading?: boolean;
-  /** Mensagem de erro (modo controlado). */
   erro?: string | null;
 };
 
@@ -119,122 +102,111 @@ export const CardMelhorTempo: React.FC<CardMelhorTempoProps> = ({
   loading: loadingProp,
   erro: erroProp,
 }) => {
-  // Modo autônomo: chama o hook internamente quando não recebe props externas
   const autonomo = useMelhorTempo(
-    // Só busca se estiver em modo autônomo (props não fornecidas)
     melhorTempoProp === undefined && loadingProp === undefined ? tipo : "__skip__",
   );
 
-  const melhorTempo =
-    melhorTempoProp !== undefined ? melhorTempoProp : autonomo.melhorTempo;
-  const loading =
-    loadingProp !== undefined ? loadingProp : autonomo.loading;
+  const melhorTempo = melhorTempoProp !== undefined ? melhorTempoProp : autonomo.melhorTempo;
+  const loading = loadingProp !== undefined ? loadingProp : autonomo.loading;
   const erro = erroProp !== undefined ? erroProp : autonomo.erro;
 
-  // ── Estado: carregando
   if (loading) {
     return (
-      <div className="w-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-        <header className="mb-6 border-b border-neutral-100 pb-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-            Recorde
-          </p>
-          <h2 className="text-2xl font-semibold text-neutral-950">
-            Melhor Resultado
-          </h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            Menor tempo com desafio cumprido para este labirinto.
-          </p>
-        </header>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {(["Sessão", "Tempo Total", "Conquistado em"] as const).map(
-            (titulo) => (
-              <CardIndicador key={titulo} titulo={titulo} valor="--" estado="vazio" />
-            ),
-          )}
+      <div className="w-full rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-2xl animate-pulse">
+        <div className="h-4 w-24 bg-zinc-800 rounded mb-4" />
+        <div className="h-8 w-64 bg-zinc-800 rounded mb-8" />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 bg-zinc-900/50 rounded-2xl border border-zinc-800" />
+          ))}
         </div>
       </div>
     );
   }
 
-  // ── Estado: erro
   if (erro) {
     return (
-      <div className="w-full rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
-        <p className="text-sm font-medium text-red-700">
-          ⚠️ Não foi possível carregar o melhor tempo: {erro}
-        </p>
+      <div className="w-full rounded-3xl border border-rose-500/20 bg-rose-500/5 p-8 shadow-2xl">
+        <div className="flex items-center gap-3 text-rose-400 mb-2">
+          <span className="text-xl">⚠️</span>
+          <h3 className="font-bold">Erro ao carregar recorde</h3>
+        </div>
+        <p className="text-sm text-rose-400/70">{erro}</p>
       </div>
     );
   }
 
-  // ── Estado: vazio
-  if (!melhorTempo) {
-    return (
-      <div className="w-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-        <header className="mb-6 border-b border-neutral-100 pb-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-            Recorde
-          </p>
-          <h2 className="text-2xl font-semibold text-neutral-950">
-            Melhor Resultado
+  return (
+    <div className="w-full rounded-3xl border border-zinc-800 bg-zinc-950 p-8 shadow-2xl transition-all hover:border-zinc-700">
+      <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Trophy size={16} className="text-yellow-400" />
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+              Recorde Atual
+            </p>
+          </div>
+          <h2 className="text-2xl font-bold text-zinc-100">
+            Melhor Performance em {tipo}
           </h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            Menor tempo com desafio cumprido para este labirinto.
-          </p>
-        </header>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        </div>
+        
+        {melhorTempo && (
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-bold text-emerald-400 border border-emerald-500/20">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            RECORDE ESTABELECIDO
+          </div>
+        )}
+      </header>
+
+      {!melhorTempo ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <CardIndicador
             titulo="Sessão"
-            valor="Nenhum desafio concluído ainda"
-            estado="vazio"
+            valor="N/A"
+            descricao="Sem dados para este labirinto"
+            icon={<Hash size={18} />}
+            variant="vazio"
           />
-          <CardIndicador titulo="Tempo Total" valor="--" estado="vazio" />
-          <CardIndicador titulo="Conquistado em" valor="--" estado="vazio" />
+          <CardIndicador 
+            titulo="Tempo Total" 
+            valor="--:--.---" 
+            icon={<Clock size={18} />} 
+            variant="vazio" 
+          />
+          <CardIndicador 
+            titulo="Data" 
+            valor="--/--/----" 
+            icon={<Calendar size={18} />} 
+            variant="vazio" 
+          />
         </div>
-      </div>
-    );
-  }
-
-  // ── Estado: com resultado
-  return (
-    <div className="w-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-      <header className="mb-6 flex flex-col gap-3 border-b border-neutral-100 pb-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-            Recorde
-          </p>
-          <h2 className="text-2xl font-semibold text-neutral-950">
-            Melhor Resultado
-          </h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            Menor tempo com desafio cumprido para este labirinto.
-          </p>
-        </div>
-        <span className="self-start rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-          Recorde registrado
-        </span>
-      </header>
-      <main className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <CardIndicador
-          titulo="Sessão"
-          valor={formatarIdCorrida(melhorTempo.id_corrida)}
-          descricao="ID da corrida recordista"
-          estado="sucesso"
-        />
-        <CardIndicador
-          titulo="Tempo Total"
-          valor={formatarTempo(melhorTempo.tempo_total)}
-          descricao="Menor tempo com desafio cumprido"
-          estado="sucesso"
-        />
-        <CardIndicador
-          titulo="Conquistado em"
-          valor={formatarData(melhorTempo.data_hora_fim)}
-          descricao="Data e hora da conquista"
-          estado="sucesso"
-        />
-      </main>
+      ) : (
+        <main className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <CardIndicador
+            titulo="Sessão"
+            valor={formatarIdCorrida(melhorTempo.id_corrida)}
+            descricao="ID da corrida recordista"
+            icon={<Hash size={18} className="text-blue-400" />}
+          />
+          <CardIndicador
+            titulo="Tempo Total"
+            valor={formatarTempo(melhorTempo.tempo_total)}
+            descricao="Menor tempo com sucesso"
+            icon={<Clock size={18} className="text-emerald-400" />}
+            variant="success"
+          />
+          <CardIndicador
+            titulo="Data da Conquista"
+            valor={formatarData(melhorTempo.data_hora_fim)}
+            descricao="Data e hora do término"
+            icon={<Calendar size={18} className="text-purple-400" />}
+          />
+        </main>
+      )}
     </div>
   );
 };

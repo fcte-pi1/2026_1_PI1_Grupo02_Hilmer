@@ -6,8 +6,8 @@ const mockListarCorridasResumo = vi.fn();
 const mockObterCorrida = vi.fn();
 
 vi.mock("../../services/corrida", () => ({
-  listarCorridasResumo: (...args: any[]) => mockListarCorridasResumo(...args),
-  obterCorrida: (...args: any[]) => mockObterCorrida(...args),
+  listarCorridasResumo: (...args: unknown[]) => mockListarCorridasResumo(...args),
+  obterCorrida: (...args: unknown[]) => mockObterCorrida(...args),
 }));
 
 describe("useCorrida Hook", () => {
