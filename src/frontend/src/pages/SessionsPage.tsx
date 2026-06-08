@@ -105,11 +105,13 @@ const TIPOS: { value: TipoLabirintoFiltro; label: string }[] = [
 // SessionsPage
 // ---------------------------------------------------------------------------
 
+// 1. Atualizado as tipagens dos props para aceitar a nova rota de estados
 type SessionsPageProps = {
-  activeView: "telemetria" | "labirinto" | "corridas";
+  activeView: "telemetria" | "labirinto" | "corridas" | "estados";
   onNavigateTelemetria: () => void;
   onNavigateLabirinto: () => void;
   onNavigateCorridas: () => void;
+  onNavigateEstados: () => void;
 };
 
 export function SessionsPage({
@@ -117,6 +119,7 @@ export function SessionsPage({
   onNavigateTelemetria,
   onNavigateLabirinto,
   onNavigateCorridas,
+  onNavigateEstados, // Desestruturado aqui
 }: SessionsPageProps) {
   const [corridas, setCorridas] = useState<CorridaResumoResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,14 +132,14 @@ export function SessionsPage({
   const tipoParaRecorde: TipoLabirinto =
     tipoSelecionado === "TODOS" ? "4X4" : tipoSelecionado;
 
-  // Hook do melhor tempo — controlamos o refetch manualmente (CA-17-02)
+  // Hook do melhor tempo
   const { melhorTempo, loading: loadingRecorde, erro: erroRecorde, refetch } =
     useMelhorTempo(tipoParaRecorde);
 
   // Ref para comparar tempo anterior e exibir toast de novo recorde
   const melhorTempoAnteriorRef = useRef<number | null>(null);
 
-  // CA-17-02: ao receber SESSAO_ENCERRADA com sucesso=true, refetch + toast
+  // Refetch + toast ao encerrar com sucesso
   const handleSessaoEncerradaComSucesso = useCallback(() => {
     refetch();
     setContadorTabela((c) => c + 1);
@@ -146,7 +149,7 @@ export function SessionsPage({
     onSessaoEncerradaComSucesso: handleSessaoEncerradaComSucesso,
   });
 
-  // Exibe toast de novo recorde quando o melhorTempo mudar para um valor menor
+  // Exibe toast de novo recorde
   useEffect(() => {
     if (melhorTempo === null) return;
 
@@ -194,13 +197,14 @@ export function SessionsPage({
       onNavigateTelemetria={onNavigateTelemetria}
       onNavigateLabirinto={onNavigateLabirinto}
       onNavigateCorridas={onNavigateCorridas}
+      onNavigateEstados={onNavigateEstados} // 2. Passando a propriedade obrigatória para o Layout
       eyebrow="Corridas"
       title="Histórico de Sessões"
       description="Consulte todas as corridas registradas e veja o melhor resultado por tipo de labirinto."
       statusConexao={telemetria.statusConexao}
       mensagemStatusConexao={telemetria.mensagemStatusConexao}
     >
-      {/* Destaque: melhor tempo (CA-17-01) */}
+      {/* Destaque: melhor tempo */}
       <div className="mb-8">
         <CardMelhorTempo
           tipo={tipoParaRecorde}

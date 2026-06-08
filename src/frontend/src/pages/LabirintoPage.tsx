@@ -3,11 +3,13 @@ import { TopIndicators, ControlPanel, TelemetryAlerts } from "../components/Dash
 import { MonitoringLayout } from "../components/MonitoringLayout";
 import { useTelemetria } from "../hooks/useTelemetria";
 
+// 1. Atualizada a tipagem para incluir a nova visualização e a função de navegação
 type LabirintoPageProps = {
-  activeView: "telemetria" | "labirinto" | "corridas";
+  activeView: "telemetria" | "labirinto" | "corridas" | "estados";
   onNavigateTelemetria: () => void;
   onNavigateLabirinto: () => void;
   onNavigateCorridas: () => void;
+  onNavigateEstados: () => void; // Nova propriedade obrigatória
 };
 
 export function LabirintoPage({
@@ -15,6 +17,7 @@ export function LabirintoPage({
   onNavigateTelemetria,
   onNavigateLabirinto,
   onNavigateCorridas,
+  onNavigateEstados, // Recebendo o callback aqui
 }: LabirintoPageProps) {
   const telemetria = useTelemetria();
 
@@ -24,6 +27,7 @@ export function LabirintoPage({
       onNavigateTelemetria={onNavigateTelemetria}
       onNavigateLabirinto={onNavigateLabirinto}
       onNavigateCorridas={onNavigateCorridas}
+      onNavigateEstados={onNavigateEstados} // 2. Passando a propriedade para o Layout
       eyebrow="Labirinto"
       title="Mapa do labirinto em tempo real"
       description="Visualize paredes detectadas, percurso e posicao atual do Micromouse."

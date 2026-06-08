@@ -3,11 +3,13 @@ import { TopIndicators, ControlPanel, TelemetryAlerts } from "../components/Dash
 import { MonitoringLayout } from "../components/MonitoringLayout";
 import { useTelemetria } from "../hooks/useTelemetria";
 
+// 1. Atualizada a tipagem das propriedades para abranger a visão de estados
 type TelemetriaPageProps = {
-  activeView: 'telemetria' | 'labirinto' | 'corridas';
+  activeView: 'telemetria' | 'labirinto' | 'corridas' | 'estados';
   onNavigateTelemetria: () => void;
   onNavigateLabirinto: () => void;
   onNavigateCorridas: () => void;
+  onNavigateEstados: () => void; // Callback adicionado como obrigatório
 };
 
 export function TelemetriaPage({
@@ -15,6 +17,7 @@ export function TelemetriaPage({
   onNavigateTelemetria,
   onNavigateLabirinto,
   onNavigateCorridas,
+  onNavigateEstados, // Injetado aqui
 }: TelemetriaPageProps) {
   const telemetria = useTelemetria();
 
@@ -24,6 +27,7 @@ export function TelemetriaPage({
       onNavigateTelemetria={onNavigateTelemetria}
       onNavigateLabirinto={onNavigateLabirinto}
       onNavigateCorridas={onNavigateCorridas}
+      onNavigateEstados={onNavigateEstados} // 2. Passando a propriedade obrigatória para o Layout
       eyebrow="Telemetria"
       title="Métricas em tempo real do robô MM-07"
       description="Acompanhe os indicadores exigidos para avaliação da corrida: bateria, velocidade média e tempo de execução."

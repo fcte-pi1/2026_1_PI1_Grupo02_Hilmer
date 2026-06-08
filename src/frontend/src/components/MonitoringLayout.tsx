@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 
 type MonitoringLayoutProps = {
-  activeView: "telemetria" | "labirinto" | "corridas";
+  // 1. Atualizado para aceitar "estados" como visualização ativa
+  activeView: "telemetria" | "labirinto" | "corridas" | "estados";
   onNavigateTelemetria: () => void;
   onNavigateLabirinto: () => void;
   onNavigateCorridas: () => void;
+  onNavigateEstados: () => void; // 2. Nova propriedade de navegação recebida
   eyebrow: string;
   title: string;
   description: string;
@@ -18,6 +20,7 @@ export function MonitoringLayout({
   onNavigateTelemetria,
   onNavigateLabirinto,
   onNavigateCorridas,
+  onNavigateEstados, // Injetado aqui
   eyebrow,
   title,
   description,
@@ -27,6 +30,8 @@ export function MonitoringLayout({
   const exibindoTelemetria = activeView === "telemetria";
   const exibindoLabirinto = activeView === "labirinto";
   const exibindoCorridas = activeView === "corridas";
+  const exibindoEstados = activeView === "estados"; // Variável de controle visual
+
   const statusLabel =
     statusConexao === "online"
       ? "Online"
@@ -56,7 +61,7 @@ export function MonitoringLayout({
             isCollapsed ? "w-20" : "w-64"
           }`}
         >
-          {/* Header do Menu (Área de clique para expandir/recolher) */}
+          {/* Header do Menu */}
           <div
             className={`flex h-16 items-center border-b border-border cursor-pointer hover:bg-surface-hover transition-colors shrink-0 ${
               isCollapsed ? "justify-center px-0" : "gap-3 px-5"
@@ -103,7 +108,7 @@ export function MonitoringLayout({
                 exibindoTelemetria
                   ? "bg-zinc-950 text-white"
                   : "text-zinc-600 hover:bg-zinc-100"
-              }`}
+              } ${isCollapsed ? "justify-center px-0" : ""}`}
               title="Monitoramento"
             >
               <span className="shrink-0 text-lg">⌗</span>
@@ -117,7 +122,7 @@ export function MonitoringLayout({
                 exibindoCorridas
                   ? "bg-zinc-950 text-white"
                   : "text-zinc-600 hover:bg-zinc-100"
-              }`}
+              } ${isCollapsed ? "justify-center px-0" : ""}`}
               title="Corridas"
             >
               <span className="shrink-0 text-lg">↺</span>
@@ -131,11 +136,26 @@ export function MonitoringLayout({
                 exibindoLabirinto
                   ? "bg-zinc-950 text-white"
                   : "text-zinc-600 hover:bg-zinc-100"
-              }`}
+              } ${isCollapsed ? "justify-center px-0" : ""}`}
               title="Labirinto"
             >
               <span className="shrink-0 text-lg">▣</span>
               {!isCollapsed && <span className="whitespace-nowrap">Labirinto</span>}
+            </button>
+
+            {/* 3. NOVO BOTÃO: Estados da Máquina Lógica */}
+            <button
+              type="button"
+              onClick={onNavigateEstados}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
+                exibindoEstados
+                  ? "bg-zinc-950 text-white"
+                  : "text-zinc-600 hover:bg-zinc-100"
+              } ${isCollapsed ? "justify-center px-0" : ""}`}
+              title="Estados"
+            >
+              <span className="shrink-0 text-lg">⎋</span>
+              {!isCollapsed && <span className="whitespace-nowrap">Estados</span>}
             </button>
 
             <button
@@ -178,6 +198,7 @@ export function MonitoringLayout({
           )}
         </aside>
 
+        {/* Lado Direito - Conteúdo principal */}
         <div className="flex min-w-0 flex-1 flex-col bg-background">
           <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-4 lg:px-8 shrink-0">
             <div>
