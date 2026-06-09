@@ -11,7 +11,7 @@ export default function SessionManager({ onNavigate }: SessionManagerProps) {
   const sessaoIniciada = indicadores.status_corrida === "em_andamento";
 
   return (
-    <div className="min-h-screen bg-background text-zinc-100 flex flex-col items-center justify-center p-6 font-sans">
+    <div data-testid="painel-sessao" className="min-h-screen bg-background text-zinc-100 flex flex-col items-center justify-center p-6 font-sans">
       {/* Indicador de conexão com o WebSocket */}
       <div className="absolute top-6 right-6 flex items-center gap-2 bg-surface border border-border px-4 py-2 rounded-full shadow-md">
         <span
@@ -32,10 +32,8 @@ export default function SessionManager({ onNavigate }: SessionManagerProps) {
         {!sessaoIniciada ? (
           /* FASE 1: AGUARDANDO CONFIGURAÇÃO */
           <div className="bg-surface border border-border p-8 rounded-3xl text-center shadow-xl relative overflow-hidden">
-            {/* Efeito de brilho de fundo suave */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
 
-            {/* Ícone Pulsante */}
             <div className="w-20 h-20 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm animate-bounce">
               <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" className="text-primary">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
@@ -50,29 +48,17 @@ export default function SessionManager({ onNavigate }: SessionManagerProps) {
               Micromouse para iniciar a sessão automaticamente.
             </p>
 
-            {/* Spinner/Pulse animado */}
             <div className="flex justify-center gap-1.5 py-2">
-              <span
-                className="w-2 h-2 bg-primary rounded-full animate-pulse"
-                style={{ animationDelay: "0ms" }}
-              ></span>
-              <span
-                className="w-2 h-2 bg-primary rounded-full animate-pulse"
-                style={{ animationDelay: "150ms" }}
-              ></span>
-              <span
-                className="w-2 h-2 bg-primary rounded-full animate-pulse"
-                style={{ animationDelay: "300ms" }}
-              ></span>
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: "0ms" }}></span>
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: "150ms" }}></span>
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: "300ms" }}></span>
             </div>
           </div>
         ) : (
           /* FASE 2: SESSÃO INICIADA */
           <div className="bg-surface border border-success/20 p-8 rounded-3xl shadow-xl relative overflow-hidden animate-fade-in text-center">
-            {/* Efeito de brilho verde indicando sucesso */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-success/5 rounded-full blur-3xl"></div>
 
-            {/* Ícone de Sucesso */}
             <div className="w-20 h-20 bg-success/10 border border-success/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
               <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" className="text-primary">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
@@ -102,8 +88,9 @@ export default function SessionManager({ onNavigate }: SessionManagerProps) {
               </div>
             </div>
 
-            {/* Botão de Redirecionamento */}
+            {/* Botão principal após sessão iniciada */}
             <button
+              data-testid="btn-entrar-monitoramento"
               onClick={onNavigate}
               className="w-full bg-success hover:bg-success/90 active:bg-emerald-700 text-background font-semibold py-3.5 px-6 rounded-2xl shadow-lg shadow-success/20 hover:shadow-success/30 transition-all duration-200 cursor-pointer"
             >
@@ -112,9 +99,10 @@ export default function SessionManager({ onNavigate }: SessionManagerProps) {
           </div>
         )}
 
-        {/* BOTÃO PARA PULAR INICIO DE SESSÃO --> PARA TESTAR OUTRAS PARTES DA PAGINA WEB <-- */}
+        {/* Botão de atalho para testes — sempre visível quando sessão não iniciada */}
         {onNavigate && !sessaoIniciada && (
           <button
+            data-testid="btn-entrar-monitoramento"
             onClick={onNavigate}
             className="mt-4 w-full rounded-2xl border border-border bg-surface hover:bg-surface-hover px-6 py-3.5 font-semibold text-zinc-300 shadow-sm transition-all duration-200 cursor-pointer"
           >

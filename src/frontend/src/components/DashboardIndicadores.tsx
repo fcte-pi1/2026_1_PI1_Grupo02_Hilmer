@@ -38,10 +38,10 @@ export const TopIndicators: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ t
   const velocidadeMedia = obterNumeroValido(indicadores?.velocidade_media);
   const xPos = ultimaMovimentacao ? ultimaMovimentacao.x : 0;
   const yPos = ultimaMovimentacao ? ultimaMovimentacao.y : 0;
-  
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
+      <div data-testid="indicador-bateria" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
         <span className="text-[10px] sm:text-[11px] uppercase font-bold text-zinc-500 tracking-wider">Bateria</span>
         <div className="flex items-center justify-between mt-2">
           <span className="text-lg sm:text-2xl font-mono font-bold text-white">{bateriaAtual !== null ? `${bateriaAtual.toFixed(1)}%` : "--%"}</span>
@@ -51,20 +51,21 @@ export const TopIndicators: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ t
           </div>
         </div>
       </div>
-      
-      <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
+
+      <div data-testid="indicador-velocidade" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
         <span className="text-[10px] sm:text-[11px] uppercase font-bold text-zinc-500 tracking-wider">Velocidade Média</span>
         <span className="text-lg sm:text-2xl font-mono font-bold text-white mt-2">{velocidadeMedia !== null ? `${velocidadeMedia.toFixed(1)} cm/s` : "--"}</span>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
+      <div data-testid="indicador-tempo" className="bg-surface border border-border rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
         <span className="text-[10px] sm:text-[11px] uppercase font-bold text-zinc-500 tracking-wider">Tempo Decorrido</span>
         <span className="text-lg sm:text-2xl font-mono font-bold text-primary mt-2">{formatarTempo(tempoExibido)}</span>
       </div>
 
-      <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
+      <div data-testid="indicador-status" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
+        {/* data-testid="posicao-robo" no span para satisfazer o teste de posição do robô */}
         <span className="text-[10px] sm:text-[11px] uppercase font-bold text-zinc-500 tracking-wider">Posição Atual</span>
-        <span className="text-lg sm:text-2xl font-mono font-bold text-white mt-2">({xPos}, {yPos})</span>
+        <span data-testid="posicao-robo" className="text-lg sm:text-2xl font-mono font-bold text-white mt-2">({xPos}, {yPos})</span>
       </div>
     </div>
   );
@@ -79,7 +80,7 @@ export const ControlPanel: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ te
   return (
     <div className="flex flex-col gap-3 bg-zinc-950 border border-zinc-800 rounded-xl p-4 shadow-sm w-full h-fit">
       <h3 className="text-[11px] font-bold uppercase text-zinc-500 mb-1 border-b border-zinc-800/50 pb-2 tracking-wider">Controle da Sessão</h3>
-      
+
       <div className="flex justify-between items-center">
         <span className="text-[11px] font-medium text-zinc-400">Conexão</span>
         <div className="flex items-center gap-1.5">
@@ -109,11 +110,14 @@ export const ControlPanel: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ te
 };
 
 export const TelemetryAlerts: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ telemetria }) => {
-  const { indicadores, alertaSemSinal } = telemetria;
+  const { indicadores, alertaSemSinal, statusConexao } = telemetria;
   const bateriaAtual = obterNumeroValido(indicadores?.bateria_atual);
   const ultimoTimestampMs = obterNumeroValido(indicadores?.ultimo_timestamp_ms);
   
   const [alertaCritico, setAlertaCritico] = useState<{ type: CriticalAlertType; key: string; } | null>(null);
+
+  // Alerta de conexão perdida: dispara quando statusConexao === 'offline'
+  const conexaoPerdida = statusConexao === "offline";
 
   const bateriaCritica = bateriaAtual !== null && bateriaAtual <= LIMITE_BATERIA_CRITICA;
   const paradaInesperada = indicadores?.alerta_possivel_parada_inesperada === true;
@@ -137,9 +141,34 @@ export const TelemetryAlerts: React.FC<{ telemetria: UseTelemetriaReturn }> = ({
 
   return (
     <>
-      <CriticalAlertModal open={alertaCritico !== null} type={alertaCritico?.type} soundKey={alertaCritico?.key ?? null} onDismiss={() => setAlertaCritico(null)} onConfirm={() => setAlertaCritico(null)} />
-      {(bateriaCritica || alertaSemSinal) && (
+      {/* Modal de alerta crítico — data-testid para CT-S04/HU-15 */}
+      <CriticalAlertModal
+        open={alertaCritico !== null}
+        type={alertaCritico?.type}
+        soundKey={alertaCritico?.key ?? null}
+        onDismiss={() => setAlertaCritico(null)}
+        onConfirm={() => setAlertaCritico(null)}
+      />
+      {alertaCritico !== null && (
+        <div
+          data-testid="alerta-evento-critico"
+          className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-2 text-xs font-bold text-danger mt-2"
+        >
+          ⚠️ Alerta crítico ativo
+        </div>
+      )}
+
+      {(conexaoPerdida || bateriaCritica || alertaSemSinal) && (
         <div className="w-full flex flex-col gap-2 mt-2">
+          {/* Alerta de conexão perdida — data-testid para CT-S03/HU-09 */}
+          {conexaoPerdida && (
+            <div
+              data-testid="alerta-conexao-perdida"
+              className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-2 text-xs font-bold text-danger"
+            >
+              ⚠️ Conexão perdida com o Micromouse.
+            </div>
+          )}
           {bateriaCritica && (
             <div className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-2 text-xs font-bold text-danger">
               ⚠️ Bateria crítica: {bateriaAtual?.toFixed(1)}%

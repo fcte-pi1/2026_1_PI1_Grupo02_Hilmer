@@ -180,25 +180,32 @@ export function HistoricoCorridasPage({
     >
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Recordes Section */}
-        <section>
+        <section data-testid="card-melhor-tempo">
           <CardMelhorTempo
             tipo={tipoParaRecorde}
             melhorTempo={melhorTempo}
             loading={loadingRecorde}
             erro={erroRecorde}
           />
+          {melhorTempo && (
+            <span data-testid="melhor-tempo-valor" className="sr-only">
+              {formatarTempo(melhorTempo.tempo_total)}
+            </span>
+          )}
         </section>
 
         {/* List Section */}
         <section className="space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" data-testid="filtro-labirinto">
               <Search size={18} className="text-zinc-500" />
               <div className="flex gap-1 p-1 bg-zinc-900/80 rounded-xl border border-zinc-800">
                 {TIPOS.map(({ value, label }) => (
                   <button
                     key={value}
                     type="button"
+                    data-tipo={value}
+                    data-testid={`filtro-labirinto-${value}`}
                     onClick={() => setTipoSelecionado(value)}
                     className={`rounded-lg px-4 py-1.5 text-xs font-bold transition duration-200 ${
                       tipoSelecionado === value
@@ -234,7 +241,7 @@ export function HistoricoCorridasPage({
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-900">
+                <tbody className="divide-y divide-zinc-900" data-testid="lista-corridas">
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i} className="animate-pulse">

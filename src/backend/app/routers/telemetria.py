@@ -65,7 +65,7 @@ async def websocket_telemetria(websocket: WebSocket):
         }
     }
     await manager.send_json_to_client(handshake, websocket)
-    
+
     # Enviar status atual de todas as corridas ativas para o novo cliente
     for sid in estados_ativos:
         status = connection_monitor.get_status(sid) or "online"
@@ -114,7 +114,8 @@ async def receber_pacote_telemetria(
     resultado = validar_pacote(pacote, tipo, ultimo_ts)
     if not resultado.valido:
         erros_str = ", ".join(resultado.erros)
-        logger.warning("Pacote REJEITADO por falha na validação: %s", erros_str)
+        logger.warning(
+            "Pacote REJEITADO por falha na validação: %s", erros_str)
 
         await manager.send_json_to_all_clients({
             "type": "ERROR",
@@ -142,7 +143,8 @@ async def receber_pacote_telemetria(
         if sessao_id is None or sessao_id not in estados_ativos:
             raise HTTPException(
                 status_code=409,
-                detail={"mensagem": "Nenhuma corrida ativa. Envie um pacote inicial (tipo=0) primeiro."},
+                detail={
+                    "mensagem": "Nenhuma corrida ativa. Envie um pacote inicial (tipo=0) primeiro."},
             )
         await connection_monitor.registrar_pacote(sessao_id)
 
@@ -263,7 +265,7 @@ async def receber_pacote_telemetria(
 
     # Faz o broadcast para o Dashboard via WebSocket
     estado_dict = _estado_to_dict(novo_estado)
-    print("Estado dict", estado_dict)
+    # print("Estado dict", estado_dict)
     if tipo == TipoPacote.INICIAL:
         evento = {
             "type": "SESSAO_INICIADA",
@@ -303,8 +305,8 @@ async def receber_pacote_telemetria(
         }
         await manager.send_json_to_all_clients(evento_movimentacao)
 
-    print(f"Broadcasting evento: {evento}")
-    print()
+    # print(f"Broadcasting evento: {evento}")
+    # print()
     await manager.send_json_to_all_clients(evento)
     if tipo in (TipoPacote.FINAL, TipoPacote.ALERTA_TEMPERATURA):
         del estados_ativos[sessao_id]
@@ -416,7 +418,8 @@ def _persistir_passo_percurso(
     # Recupera o id_labirinto a partir da corrida
     corrida = session.get(Corrida, id_corrida)
     if corrida is None:
-        logger.warning("_persistir_passo_percurso: corrida %d não encontrada.", id_corrida)
+        logger.warning(
+            "_persistir_passo_percurso: corrida %d não encontrada.", id_corrida)
         return
 
     # Encontra ou cria a Célula correspondente à posição

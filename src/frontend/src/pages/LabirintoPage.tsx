@@ -80,7 +80,7 @@ export function LabirintoPage({
           </aside>
 
           {/* Center: Maze Viewer */}
-          <main className="flex-1 w-full min-h-[400px] flex flex-col justify-center items-center rounded-3xl bg-zinc-900/20 border border-zinc-800 p-4 lg:p-8 relative overflow-hidden">
+          <main data-testid="mapa-labirinto" className="flex-1 w-full min-h-[400px] flex flex-col justify-center items-center rounded-3xl bg-zinc-900/20 border border-zinc-800 p-4 lg:p-8 relative overflow-hidden">
              {/* Decorative Background Elements */}
              <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-400/5 rounded-full blur-3xl pointer-events-none" />
              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />

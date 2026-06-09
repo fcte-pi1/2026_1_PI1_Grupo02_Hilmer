@@ -36,7 +36,14 @@ def setup_test_db():
     """
     if not _INSIDE_DOCKER:
         print("\nIniciando container de banco de dados de teste...")
-        subprocess.run(["docker", "compose", "up", "-d", "db_test"], check=True)
+        try:
+            subprocess.run(
+                ["docker", "compose", "--profile", "test", "up", "-d", "db_test"],
+                check=True,
+                timeout=30,
+            )
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+            print(f"Aviso: docker compose não completou ({e}). Tentando conectar mesmo assim...")
 
     # Aguarda o banco ficar pronto
     engine = create_engine(TEST_DATABASE_URL)

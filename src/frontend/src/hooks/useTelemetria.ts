@@ -5,6 +5,10 @@
  * ```tsx
  * const { indicadores, enviarPacote, conectado, erro } = useTelemetria();
  * ```
+ *
+ * Em testes E2E (Playwright), o hook também escuta o evento customizado
+ * 'ws-test-message' para permitir simulação de mensagens sem WebSocket real.
+ * Ver e2e/pages/MonitoramentoPage.ts → simularEventoWebSocket().
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -199,6 +203,110 @@ export function useTelemetria(
     [],
   );
 
+  /**
+   * Processa uma mensagem recebida (WebSocket real ou mock de teste).
+   * Centralizado aqui para evitar duplicação.
+   */
+  const processarMensagem = useCallback(
+    (parsed: unknown) => {
+      try {
+        if (!parsed || typeof parsed !== "object") return;
+
+        const msg = parsed as Record<string, unknown>;
+        const payload = (msg.data ?? msg) as Record<string, unknown>;
+
+        console.log("[useTelemetria] Mensagem recebida:", msg);
+
+        if (msg.type === "ERROR") {
+          toast.error((msg.message as string) || "Erro na telemetria", {
+            id: "telemetria-error",
+          });
+          return;
+        }
+
+        if (msg.type === "CONNECTION_STATUS") {
+          const data = msg.data as Record<string, unknown> | undefined;
+          setStatusConexao(data?.status === "offline" ? "offline" : "online");
+          setMensagemStatusConexao((data?.message as string) ?? null);
+          return;
+        }
+
+        if (msg.type === "CONEXAO_PERDIDA") {
+          setStatusConexao("offline");
+          setMensagemStatusConexao("Conexão perdida com o Micromouse.");
+          return;
+        }
+
+        if (msg.type === "SESSAO_ENCERRADA") {
+          console.log("[useTelemetria] Sessão anterior encerrada:", msg.data);
+          const data = msg.data as Record<string, unknown> | undefined;
+          if (data?.sucesso === true) {
+            setContadorNovoRecorde((c) => c + 1);
+            onSessaoEncerradaRef.current?.();
+          }
+          setIndicadores(ESTADO_INICIAL);
+          setConfigSessao(CONFIG_SESSAO_INICIAL);
+          setStatusConexao("waiting");
+          setMensagemStatusConexao(null);
+          return;
+        }
+
+        if (
+          msg.type === "MOVIMENTACAO" ||
+          msg.type === "MOVIMENTACAO_PAREDES" ||
+          isMovimentacaoPayload(payload)
+        ) {
+          if (isMovimentacaoPayload(payload)) {
+            const mov = {
+              ...payload,
+              paredes: decodificarParedes(payload.w),
+            };
+            setUltimaMovimentacao(mov);
+            setFilaMovimentacoes((prev) => [...prev, mov]);
+          }
+          return;
+        }
+
+        if (msg.type === "SESSAO_INICIADA") {
+          const pacote = msg.data as Record<string, unknown>;
+          const { dimensao, ...indicadoresData } = pacote;
+          setIndicadores(indicadoresData as IndicadoresDesempenho);
+          setConfigSessao({ dimensao } as ConfigSessao);
+          setStatusConexao("online");
+          setMensagemStatusConexao(null);
+        } else if (
+          msg.type === "ATUALIZACAO_TELEMETRIA" ||
+          msg.type === "HEARTBEAT"
+        ) {
+          setIndicadores(msg.data as IndicadoresDesempenho);
+          setStatusConexao("online");
+          setMensagemStatusConexao(null);
+        } else if (msg.type === "ALERTA_CRITICO") {
+          // Alerta crítico genérico — dispara o modal de alerta
+          // O componente TelemetryAlerts observa alerta_possivel_parada_inesperada
+          // ou bateria crítica. Para o mock de teste, forçamos via estado.
+          setIndicadores((prev) => ({
+            ...prev,
+            alerta_possivel_parada_inesperada: true,
+          }));
+        } else if (msg.type === "ALERTA_TEMPERATURA_CRITICA") {
+          const pacote = msg.data as Record<string, unknown>;
+          const { temp_c, ...indicadoresData } = pacote;
+          setIndicadores(indicadoresData as IndicadoresDesempenho);
+          setStatusConexao("online");
+          setMensagemStatusConexao(null);
+          toast.error(
+            `Alerta Crítico: Temperatura em ${temp_c}ºC! Corrida abortada.`,
+            { id: "alerta-temperatura", duration: 5000 },
+          );
+        }
+      } catch (e) {
+        console.error("[useTelemetria] Erro ao processar mensagem:", e);
+      }
+    },
+    [decodificarParedes, isMovimentacaoPayload],
+  );
+
   useEffect(() => {
     localStorage.setItem("indicadores", JSON.stringify(indicadores));
     localStorage.setItem("configSessao", JSON.stringify(configSessao));
@@ -223,89 +331,9 @@ export function useTelemetria(
     ws.onmessage = (event) => {
       try {
         const parsed = JSON.parse(event.data);
-        const payload = parsed?.data ?? parsed;
-        console.log("[useTelemetria] Mensagem recebida INICIAL:", parsed);
-
-        if (parsed.type === "ERROR") {
-          toast.error(parsed.message || "Erro na telemetria", {
-            id: "telemetria-error",
-          });
-          return;
-        }
-
-        if (parsed.type === "CONNECTION_STATUS") {
-          setStatusConexao(
-            parsed.data?.status === "offline" ? "offline" : "online",
-          );
-          setMensagemStatusConexao(parsed.data?.message ?? null);
-          return;
-        }
-
-        if (parsed.type === "SESSAO_ENCERRADA") {
-          console.log(
-            "[useTelemetria] Sessão anterior encerrada:",
-            parsed.data,
-          );
-
-          // CA-17-02: se a sessão foi encerrada com sucesso, pode haver novo recorde
-          if (parsed.data?.sucesso === true) {
-            setContadorNovoRecorde((c) => c + 1);
-            onSessaoEncerradaRef.current?.();
-          }
-
-          setIndicadores(ESTADO_INICIAL);
-          setConfigSessao(CONFIG_SESSAO_INICIAL);
-          setStatusConexao("waiting");
-          setMensagemStatusConexao(null);
-          return;
-        }
-
-        if (
-          parsed?.type === "MOVIMENTACAO" ||
-          parsed?.type === "MOVIMENTACAO_PAREDES" ||
-          isMovimentacaoPayload(payload)
-        ) {
-          if (isMovimentacaoPayload(payload)) {
-            const mov = {
-              ...payload,
-              paredes: decodificarParedes(payload.w),
-            };
-            setUltimaMovimentacao(mov);
-            setFilaMovimentacoes((prev) => [...prev, mov]);
-          }
-          return;
-        }
-
-        const pacote = parsed?.data;
-
-        if (parsed.type === "SESSAO_INICIADA") {
-          const { dimensao, ...indicadoresData } = pacote;
-          setIndicadores(indicadoresData as IndicadoresDesempenho);
-          setConfigSessao({ dimensao });
-          setStatusConexao("online");
-          setMensagemStatusConexao(null);
-        } else if (
-          parsed.type === "ATUALIZACAO_TELEMETRIA" ||
-          parsed.type === "HEARTBEAT"
-        ) {
-          setIndicadores(pacote as IndicadoresDesempenho);
-          setStatusConexao("online");
-          setMensagemStatusConexao(null);
-        } else if (parsed.type === "ALERTA_TEMPERATURA_CRITICA") {
-          const { temp_c, ...indicadoresData } = pacote;
-          setIndicadores(indicadoresData as IndicadoresDesempenho);
-          setStatusConexao("online");
-          setMensagemStatusConexao(null);
-          toast.error(
-            `Alerta Crítico: Temperatura em ${temp_c}ºC! Corrida abortada.`,
-            {
-              id: "alerta-temperatura",
-              duration: 5000,
-            },
-          );
-        }
+        processarMensagem(parsed);
       } catch (e) {
-        console.error("[useTelemetria] Erro ao processar mensagem:", e);
+        console.error("[useTelemetria] Erro ao parsear mensagem:", e);
       }
     };
 
@@ -320,7 +348,7 @@ export function useTelemetria(
     };
 
     wsRef.current = ws;
-  }, [decodificarParedes, isMovimentacaoPayload]);
+  }, [processarMensagem]);
 
   useEffect(() => {
     realizarConexao();
@@ -334,6 +362,23 @@ export function useTelemetria(
       }
     };
   }, [realizarConexao]);
+
+  /**
+   * Listener para eventos de mock de teste (Playwright E2E).
+   * O Page Object MonitoramentoPage.simularEventoWebSocket() dispara
+   * o evento 'ws-test-message' com o payload como detail.
+   */
+  useEffect(() => {
+    const handleTestMessage = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      processarMensagem(customEvent.detail);
+    };
+
+    window.addEventListener("ws-test-message", handleTestMessage);
+    return () => {
+      window.removeEventListener("ws-test-message", handleTestMessage);
+    };
+  }, [processarMensagem]);
 
   const enviarPacote = useCallback((pacote: PacoteTelemetria) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {

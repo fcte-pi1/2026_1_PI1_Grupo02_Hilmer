@@ -20,6 +20,8 @@ services:
   db_test:
     image: postgres:16
     container_name: micromouse_db_test
+    profiles:
+      - test
     environment:
       POSTGRES_USER: micromouse
       POSTGRES_PASSWORD: micromouse

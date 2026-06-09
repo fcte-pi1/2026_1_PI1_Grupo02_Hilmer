@@ -343,3 +343,6 @@ node_modules
 dist
 package-lock.json
 coverage
+playwright-report
+test-results
+pyrefly.toml

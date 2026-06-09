@@ -98,6 +98,7 @@ export function MonitoringLayout({
 
             <button
               type="button"
+              data-testid="nav-telemetria"
               onClick={onNavigateTelemetria}
               className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
                 exibindoTelemetria
@@ -112,6 +113,7 @@ export function MonitoringLayout({
 
             <button
               type="button"
+              data-testid="nav-corridas"
               onClick={onNavigateCorridas}
               className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
                 exibindoCorridas
@@ -126,6 +128,7 @@ export function MonitoringLayout({
 
             <button
               type="button"
+              data-testid="nav-labirinto"
               onClick={onNavigateLabirinto}
               className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
                 exibindoLabirinto
@@ -189,6 +192,7 @@ export function MonitoringLayout({
               <div
                 role="status"
                 aria-live="polite"
+                data-testid="status-conexao"
                 title={`Status da conexao: ${statusLabel}`}
                 className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium ${statusClasses}`}
               >
