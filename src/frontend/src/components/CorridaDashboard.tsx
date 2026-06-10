@@ -1,6 +1,6 @@
 import React from "react";
 import { AlertCircle, Search, RefreshCw } from "lucide-react";
-import type { UseCorridasReturn } from "../../hooks/useCorrida";
+import type { UseCorridasReturn } from "../hooks/useCorrida";
 
 interface CorridasDashboardProps {
   corridas: UseCorridasReturn;
@@ -89,7 +89,7 @@ export const CorridasDashboard: React.FC<CorridasDashboardProps> = ({ corridas }
                 </td>
               </tr>
             ) : (
-              lista.map((c) => (
+              lista.map((c: any) => (
                 <tr
                   key={c.id_corrida}
                   onClick={() => selecionarCorrida(c.id_corrida)}

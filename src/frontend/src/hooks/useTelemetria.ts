@@ -111,14 +111,20 @@ export function useTelemetria(
 ): UseTelemetriaReturn {
   const [indicadores, setIndicadores] = useState<IndicadoresDesempenho>(() => {
     const indicadoresSalvos = localStorage.getItem("indicadores");
-    return indicadoresSalvos ? JSON.parse(indicadoresSalvos) : ESTADO_INICIAL;
+    if (indicadoresSalvos) {
+      const parsed = JSON.parse(indicadoresSalvos);
+      if (parsed) return parsed;
+    }
+    return ESTADO_INICIAL;
   });
 
   const [configSessao, setConfigSessao] = useState<ConfigSessao>(() => {
     const configSessaoSalva = localStorage.getItem("configSessao");
-    return configSessaoSalva
-      ? JSON.parse(configSessaoSalva)
-      : CONFIG_SESSAO_INICIAL;
+    if (configSessaoSalva) {
+      const parsed = JSON.parse(configSessaoSalva);
+      if (parsed) return parsed;
+    }
+    return CONFIG_SESSAO_INICIAL;
   });
 
   const [conectado, setConectado] = useState(false);
@@ -269,36 +275,41 @@ export function useTelemetria(
 
         if (msg.type === "SESSAO_INICIADA") {
           const pacote = msg.data as Record<string, unknown>;
-          const { dimensao, ...indicadoresData } = pacote;
-          setIndicadores(indicadoresData as IndicadoresDesempenho);
-          setConfigSessao({ dimensao } as ConfigSessao);
-          setStatusConexao("online");
-          setMensagemStatusConexao(null);
+          if (pacote) {
+            const { dimensao, ...indicadoresData } = pacote;
+            setIndicadores(indicadoresData as unknown as IndicadoresDesempenho);
+            setConfigSessao({ dimensao } as ConfigSessao);
+            setStatusConexao("online");
+            setMensagemStatusConexao(null);
+          }
         } else if (
           msg.type === "ATUALIZACAO_TELEMETRIA" ||
           msg.type === "HEARTBEAT"
         ) {
-          setIndicadores(msg.data as IndicadoresDesempenho);
-          setStatusConexao("online");
-          setMensagemStatusConexao(null);
+          if (msg.data) {
+            setIndicadores(msg.data as IndicadoresDesempenho);
+            setStatusConexao("online");
+            setMensagemStatusConexao(null);
+          }
         } else if (msg.type === "ALERTA_CRITICO") {
           // Alerta crítico genérico — dispara o modal de alerta
           // O componente TelemetryAlerts observa alerta_possivel_parada_inesperada
           // ou bateria crítica. Para o mock de teste, forçamos via estado.
-          setIndicadores((prev) => ({
-            ...prev,
-            alerta_possivel_parada_inesperada: true,
-          }));
+          setIndicadores((prev) => 
+            prev ? { ...prev, alerta_possivel_parada_inesperada: true } : prev
+          );
         } else if (msg.type === "ALERTA_TEMPERATURA_CRITICA") {
           const pacote = msg.data as Record<string, unknown>;
-          const { temp_c, ...indicadoresData } = pacote;
-          setIndicadores(indicadoresData as IndicadoresDesempenho);
-          setStatusConexao("online");
-          setMensagemStatusConexao(null);
-          toast.error(
-            `Alerta Crítico: Temperatura em ${temp_c}ºC! Corrida abortada.`,
-            { id: "alerta-temperatura", duration: 5000 },
-          );
+          if (pacote) {
+            const { temp_c, ...indicadoresData } = pacote;
+            setIndicadores(indicadoresData as unknown as IndicadoresDesempenho);
+            setStatusConexao("online");
+            setMensagemStatusConexao(null);
+            toast.error(
+              `Alerta Crítico: Temperatura em ${temp_c}ºC! Corrida abortada.`,
+              { id: "alerta-temperatura", duration: 5000 },
+            );
+          }
         }
       } catch (e) {
         console.error("[useTelemetria] Erro ao processar mensagem:", e);
