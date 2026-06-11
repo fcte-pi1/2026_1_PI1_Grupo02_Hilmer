@@ -39,6 +39,13 @@ type ParedesCelula = {
   oeste: boolean;
 };
 
+// ---------------------------------------------------------------------------
+// Constantes
+// ---------------------------------------------------------------------------
+
+/** Tamanho máximo da fila de movimentações para evitar crescimento infinito. */
+const MAX_FILA_MOVIMENTACOES = 200;
+
 const ESTADO_INICIAL: IndicadoresDesempenho = {
   id_corrida_banco: null,
   sessao_hardware_id: null,
@@ -64,6 +71,28 @@ const CONFIG_SESSAO_INICIAL: ConfigSessao = {
 
 /** Intervalo entre tentativas de reconexão (ms). */
 const RECONNECT_INTERVAL_MS = 3000;
+
+/** Tipos de mensagem WebSocket esperados (para validação). */
+const TIPOS_MENSAGEM_VALIDOS = [
+  "HANDSHAKE",
+  "CONNECTION_STATUS",
+  "CONEXAO_PERDIDA",
+  "SESSAO_ENCERRADA",
+  "SESSAO_INICIADA",
+  "ATUALIZACAO_TELEMETRIA",
+  "MOVIMENTACAO",
+  "HEARTBEAT",
+  "ALERTA_CRITICO",
+  "ALERTA_TEMPERATURA_CRITICA",
+  "ERROR",
+  "ACK",
+  "WS_ACK",
+  "WS_ERROR",
+];
+
+// ---------------------------------------------------------------------------
+// Interface de retorno do hook
+// ---------------------------------------------------------------------------
 
 export interface UseTelemetriaReturn {
   /** Estado atual dos indicadores de desempenho. */
@@ -105,6 +134,42 @@ type UseTelemetriaOptions = {
    */
   onSessaoEncerradaComSucesso?: () => void;
 };
+
+// ---------------------------------------------------------------------------
+// Validação de mensagens WebSocket
+// ---------------------------------------------------------------------------
+
+/**
+ * Valida se uma mensagem recebida via WebSocket tem a estrutura esperada.
+ * Se inválida, loga aviso no console e retorna false.
+ */
+function validarMensagemWebSocket(msg: unknown): msg is Record<string, unknown> {
+  if (!msg || typeof msg !== "object") {
+    console.warn("[useTelemetria] Mensagem ignorada: não é um objeto.", msg);
+    return false;
+  }
+
+  const record = msg as Record<string, unknown>;
+
+  if (typeof record.type !== "string") {
+    console.warn("[useTelemetria] Mensagem ignorada: campo 'type' ausente ou não string.", msg);
+    return false;
+  }
+
+  if (!TIPOS_MENSAGEM_VALIDOS.includes(record.type)) {
+    console.warn(
+      "[useTelemetria] Mensagem ignorada: tipo '%s' não reconhecido.",
+      record.type,
+    );
+    return false;
+  }
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Hook principal
+// ---------------------------------------------------------------------------
 
 export function useTelemetria(
   options?: UseTelemetriaOptions,
@@ -148,6 +213,10 @@ export function useTelemetria(
     onSessaoEncerradaRef.current = options?.onSessaoEncerradaComSucesso;
   }, [options?.onSessaoEncerradaComSucesso]);
 
+  /**
+   * Limpa a fila de movimentações.
+   * Deve ser chamada pelo componente após processar as movimentações.
+   */
   const limparFilaMovimentacoes = useCallback(() => {
     setFilaMovimentacoes([]);
   }, []);
@@ -216,12 +285,25 @@ export function useTelemetria(
   const processarMensagem = useCallback(
     (parsed: unknown) => {
       try {
-        if (!parsed || typeof parsed !== "object") return;
+        // --- Validação de schema (CA-08-02) ---
+        if (!validarMensagemWebSocket(parsed)) {
+          return;
+        }
 
         const msg = parsed as Record<string, unknown>;
         const payload = (msg.data ?? msg) as Record<string, unknown>;
 
         console.log("[useTelemetria] Mensagem recebida:", msg);
+
+        // --- Tratamento de ACK (CA-08-01) ---
+        if (msg.type === "ACK") {
+          console.log(
+            "[useTelemetria] ACK recebido para pacote tipo=%s, timestamp_ms=%s",
+            payload.tipo,
+            payload.timestamp_ms,
+          );
+          return;
+        }
 
         if (msg.type === "ERROR") {
           toast.error((msg.message as string) || "Erro na telemetria", {
@@ -268,7 +350,14 @@ export function useTelemetria(
               paredes: decodificarParedes(payload.w),
             };
             setUltimaMovimentacao(mov);
-            setFilaMovimentacoes((prev) => [...prev, mov]);
+            setFilaMovimentacoes((prev) => {
+              const nova = [...prev, mov];
+              // Limitar tamanho da fila (CA-08-03)
+              if (nova.length > MAX_FILA_MOVIMENTACOES) {
+                return nova.slice(nova.length - MAX_FILA_MOVIMENTACOES);
+              }
+              return nova;
+            });
           }
           return;
         }
@@ -393,7 +482,11 @@ export function useTelemetria(
 
   const enviarPacote = useCallback((pacote: PacoteTelemetria) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(pacote));
+      // Envia pacote no formato esperado pelo WebSocket bidirecional
+      wsRef.current.send(JSON.stringify({
+        type: "PACOTE",
+        data: pacote,
+      }));
     } else {
       console.warn(
         "[useTelemetria] WebSocket não conectado, pacote descartado.",

@@ -311,7 +311,7 @@ def atualizar_indicadores(
     )
 
     if not resultado.valido:
-        logger.warning("Pacote inválido recebido: %s", resultado.erros)
+        # Log removido daqui — centralizado no router para evitar duplicidade
         novo_estado.alerta_dado_invalido = True
         return novo_estado
 
