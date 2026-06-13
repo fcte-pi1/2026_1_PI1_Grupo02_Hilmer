@@ -418,8 +418,8 @@ def _processar_pacote_final(
     estado.tempo_decorrido_ms = pacote["timestamp_ms"]
     estado.ultimo_timestamp_ms = pacote["timestamp_ms"]
 
-    # Velocidade média final consolidada (do firmware)
-    estado.velocidade_media = pacote["v_med"]
+    # Velocidade média final consolidada (do firmware, convertida de m/s para cm/s)
+    estado.velocidade_media = pacote["v_med"] * 100
 
     # Bateria final
     estado.bateria_atual = pacote["bateria"]

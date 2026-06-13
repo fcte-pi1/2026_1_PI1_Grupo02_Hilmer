@@ -19,7 +19,7 @@ import type {
   IndicadoresDesempenho,
   PacoteTelemetria,
 } from "../types/telemetria";
-import { WS_TELEMETRIA_URL } from "../services/telemetria";
+import { telemetriaSocket } from "../services/telemetriaSocket";
 
 type StatusConexaoMicromouse = "online" | "offline" | "waiting";
 
@@ -68,9 +68,6 @@ const ESTADO_INICIAL: IndicadoresDesempenho = {
 const CONFIG_SESSAO_INICIAL: ConfigSessao = {
   dimensao: null,
 };
-
-/** Intervalo entre tentativas de reconexão (ms). */
-const RECONNECT_INTERVAL_MS = 3000;
 
 /** Tipos de mensagem WebSocket esperados (para validação). */
 const TIPOS_MENSAGEM_VALIDOS = [
@@ -221,9 +218,10 @@ export function useTelemetria(
     setFilaMovimentacoes([]);
   }, []);
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const signalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Garante que o "novo recorde" dispare apenas uma vez por corrida concluída.
+  const recordeDisparadoRef = useRef(false);
 
   // Monitora ausência de sinal
   useEffect(() => {
@@ -370,15 +368,31 @@ export function useTelemetria(
             setConfigSessao({ dimensao } as ConfigSessao);
             setStatusConexao("online");
             setMensagemStatusConexao(null);
+            // Nova corrida: rearma o gatilho de "novo recorde".
+            recordeDisparadoRef.current = false;
           }
         } else if (
           msg.type === "ATUALIZACAO_TELEMETRIA" ||
           msg.type === "HEARTBEAT"
         ) {
           if (msg.data) {
-            setIndicadores(msg.data as IndicadoresDesempenho);
+            const dados = msg.data as IndicadoresDesempenho;
+            setIndicadores(dados);
             setStatusConexao("online");
             setMensagemStatusConexao(null);
+
+            // Corrida concluída com sucesso: dispara refetch de melhor tempo
+            // (CA-17-02). O pacote FINAL chega como ATUALIZACAO_TELEMETRIA, sem
+            // passar por SESSAO_ENCERRADA (que só ocorre em aborto).
+            if (
+              dados.status_corrida === "concluida" &&
+              dados.sucesso === true &&
+              !recordeDisparadoRef.current
+            ) {
+              recordeDisparadoRef.current = true;
+              setContadorNovoRecorde((c) => c + 1);
+              onSessaoEncerradaRef.current?.();
+            }
           }
         } else if (msg.type === "ALERTA_CRITICO") {
           // Alerta crítico genérico — dispara o modal de alerta
@@ -412,56 +426,25 @@ export function useTelemetria(
     localStorage.setItem("configSessao", JSON.stringify(configSessao));
   }, [indicadores, configSessao]);
 
-  const realizarConexao = useCallback(function conectar() {
-    if (
-      wsRef.current &&
-      (wsRef.current.readyState === WebSocket.OPEN ||
-        wsRef.current.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
-    }
-
-    const ws = new WebSocket(WS_TELEMETRIA_URL);
-
-    ws.onopen = () => {
-      setConectado(true);
-      setErro(null);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const parsed = JSON.parse(event.data);
-        processarMensagem(parsed);
-      } catch (e) {
-        console.error("[useTelemetria] Erro ao parsear mensagem:", e);
-      }
-    };
-
-    ws.onerror = () => {
-      setErro("Erro na conexão WebSocket.");
-    };
-
-    ws.onclose = () => {
-      setConectado(false);
-      wsRef.current = null;
-      reconnectTimerRef.current = setTimeout(conectar, RECONNECT_INTERVAL_MS);
-    };
-
-    wsRef.current = ws;
-  }, [processarMensagem]);
-
   useEffect(() => {
-    realizarConexao();
+    // Inscreve-se no WebSocket compartilhado (singleton). Todos os consumidores
+    // do hook dividem UMA única conexão, evitando sockets duplicados.
+    const unsubscribe = telemetriaSocket.subscribe({
+      onMessage: (parsed) => processarMensagem(parsed),
+      onOpen: () => {
+        setConectado(true);
+        setErro(null);
+      },
+      onClose: () => {
+        setConectado(false);
+      },
+      onError: () => {
+        setErro("Erro na conexão WebSocket.");
+      },
+    });
 
-    return () => {
-      if (reconnectTimerRef.current) {
-        clearTimeout(reconnectTimerRef.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [realizarConexao]);
+    return unsubscribe;
+  }, [processarMensagem]);
 
   /**
    * Listener para eventos de mock de teste (Playwright E2E).
@@ -481,13 +464,9 @@ export function useTelemetria(
   }, [processarMensagem]);
 
   const enviarPacote = useCallback((pacote: PacoteTelemetria) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      // Envia pacote no formato esperado pelo WebSocket bidirecional
-      wsRef.current.send(JSON.stringify({
-        type: "PACOTE",
-        data: pacote,
-      }));
-    } else {
+    // Envia pacote no formato esperado pelo WebSocket bidirecional
+    const enviado = telemetriaSocket.send({ type: "PACOTE", data: pacote });
+    if (!enviado) {
       console.warn(
         "[useTelemetria] WebSocket não conectado, pacote descartado.",
       );

@@ -1,7 +1,6 @@
 from datetime import datetime, UTC
 from typing import Dict, Any
 import logging
-import asyncio
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from sqlmodel import Session, select
@@ -133,16 +132,14 @@ async def _processar_pacote(
     # Processa os indicadores puros (Cálculos de velocidade, etc)
     novo_estado = atualizar_indicadores(estado_atual, pacote)
 
-    # --- Persistência e broadcast em background ---
-    # Dispara tarefa assíncrona para não bloquear o fluxo principal
-    asyncio.create_task(
-        _persistir_e_broadcast(
-            pacote=pacote,
-            tipo=tipo,
-            novo_estado=novo_estado,
-            estado_atual=estado_atual,
-            sessao_id=sessao_id,
-        )
+    # --- Persistência e broadcast ---
+    await _persistir_e_broadcast(
+        pacote=pacote,
+        tipo=tipo,
+        novo_estado=novo_estado,
+        estado_atual=estado_atual,
+        sessao_id=sessao_id,
+        session=session,
     )
 
     # --- ACK de confirmação ---
@@ -174,130 +171,117 @@ async def _persistir_e_broadcast(
     novo_estado: IndicadoresDesempenho,
     estado_atual: IndicadoresDesempenho,
     sessao_id: int,
+    session: Session,
 ) -> None:
-    """Persiste dados no banco e faz broadcast WebSocket.
-
-    Executado em background (asyncio.create_task) para não travar
-    o fluxo de recepção do pacote.
-    """
-    # Cria uma nova sessão de banco para a task background
-    from ..database import get_session as _get_db_session
-    db_gen = _get_db_session()
-    try:
-        db_session = await db_gen.__anext__()
-    except StopAsyncIteration:
-        db_session = next(db_gen)
-
+    """Persiste dados no banco e faz broadcast WebSocket."""
     commit_realizado = False
 
-    try:
-        # Se for pacote inicial, resolver a dimensão e criar no banco
-        tipo_lab = None
-        if tipo == TipoPacote.INICIAL and novo_estado.id_corrida_banco is None:
-            dimensao = pacote.get("dimensao")
-            if int(dimensao) == 8:
-                tipo_lab = TipoLabirinto.OITO
-            elif int(dimensao) == 16:
-                tipo_lab = TipoLabirinto.DEZESSEIS
-            elif int(dimensao) == 4:
-                tipo_lab = TipoLabirinto.QUATRO
+    tipo_lab = None
+    # Se for pacote inicial, resolver a dimensão e criar no banco
+    if tipo == TipoPacote.INICIAL and novo_estado.id_corrida_banco is None:
+        dimensao = pacote.get("dimensao")
+        if int(dimensao) == 8:
+            tipo_lab = TipoLabirinto.OITO
+        elif int(dimensao) == 16:
+            tipo_lab = TipoLabirinto.DEZESSEIS
+        elif int(dimensao) == 4:
+            tipo_lab = TipoLabirinto.QUATRO
 
-            labirinto = Labirinto(tipo_labirinto=tipo_lab)
-            db_session.add(labirinto)
-            db_session.flush()
+        labirinto = Labirinto(tipo_labirinto=tipo_lab)
+        session.add(labirinto)
+        session.flush()
 
-            corrida = Corrida(
-                sessao_hardware_id=sessao_id,
-                data_hora_inicio=datetime.now(UTC),
-                id_labirinto=labirinto.id_labirinto,
-                status_corrida=StatusCorrida.EM_ANDAMENTO,
-                bateria_inicial=pacote.get("bateria", 100)
+        corrida = Corrida(
+            sessao_hardware_id=sessao_id,
+            data_hora_inicio=datetime.now(UTC),
+            id_labirinto=labirinto.id_labirinto,
+            status_corrida=StatusCorrida.EM_ANDAMENTO,
+            bateria_inicial=pacote.get("bateria", 100)
+        )
+        session.add(corrida)
+        session.flush()
+
+        # Atualiza o estado com o ID real do banco
+        novo_estado.id_corrida_banco = corrida.id_corrida
+        novo_estado.sessao_hardware_id = sessao_id
+        _persistir_novos_alertas(session, estado_atual, novo_estado)
+        session.commit()
+        session.refresh(corrida)
+        commit_realizado = True
+
+    # Se for pacote de movimentação, persistir step no percurso exploratório
+    if tipo == TipoPacote.MOVIMENTACAO and novo_estado.id_corrida_banco is not None:
+        x = pacote.get("x")
+        y = pacote.get("y")
+        w = pacote.get("w")
+        if x is not None and y is not None:
+            _persistir_passo_percurso(
+                session,
+                id_corrida=novo_estado.id_corrida_banco,
+                x=float(x),
+                y=float(y),
+                tipo_percurso="exploratorio",
+                paredes=int(w) if w is not None else None,
             )
-            db_session.add(corrida)
-            db_session.flush()
+            if not commit_realizado:
+                _persistir_novos_alertas(session, estado_atual, novo_estado)
+                session.commit()
+                commit_realizado = True
 
-            # Atualiza o estado com o ID real do banco
-            novo_estado.id_corrida_banco = corrida.id_corrida
-            novo_estado.sessao_hardware_id = sessao_id
-            _persistir_novos_alertas(db_session, estado_atual, novo_estado)
-            db_session.commit()
-            db_session.refresh(corrida)
+    # Se for pacote de rota otimizada, persistir toda a rota
+    if tipo == TipoPacote.ROTA and novo_estado.id_corrida_banco is not None:
+        rota = pacote.get("rota")
+        if rota is not None and isinstance(rota, list):
+            for pt in rota:
+                if isinstance(pt, list) and len(pt) == 2:
+                    _persistir_passo_percurso(
+                        session,
+                        id_corrida=novo_estado.id_corrida_banco,
+                        x=float(pt[0]),
+                        y=float(pt[1]),
+                        tipo_percurso="otimizado",
+                    )
+            if not commit_realizado:
+                _persistir_novos_alertas(session, estado_atual, novo_estado)
+                session.commit()
+                commit_realizado = True
+
+    # Se for pacote final, atualizar o banco de dados
+    if tipo == TipoPacote.FINAL and novo_estado.id_corrida_banco is not None:
+        corrida = session.get(Corrida, novo_estado.id_corrida_banco)
+        if corrida:
+            corrida.status_corrida = StatusCorrida.CONCLUIDA
+            corrida.data_hora_fim = datetime.now(UTC)
+            corrida.bateria_final = novo_estado.bateria_final
+            corrida.velocidade_media = novo_estado.velocidade_media
+            corrida.tempo_total = novo_estado.tempo_final_ms
+            corrida.desafio_cumprido = novo_estado.sucesso
+            session.add(corrida)
+            _persistir_novos_alertas(session, estado_atual, novo_estado)
+            session.commit()
             commit_realizado = True
 
-        # Se for pacote de movimentação, persistir step no percurso exploratório
-        if tipo == TipoPacote.MOVIMENTACAO and novo_estado.id_corrida_banco is not None:
-            x = pacote.get("x")
-            y = pacote.get("y")
-            if x is not None and y is not None:
-                _persistir_passo_percurso(
-                    db_session,
-                    id_corrida=novo_estado.id_corrida_banco,
-                    x=float(x),
-                    y=float(y),
-                    tipo_percurso="exploratorio",
-                )
-                if not commit_realizado:
-                    _persistir_novos_alertas(db_session, estado_atual, novo_estado)
-                    db_session.commit()
-                    commit_realizado = True
+    # Se for heartbeat, apenas persistir eventuais alertas novos
+    if tipo == TipoPacote.HEARTBEAT and novo_estado.id_corrida_banco is not None:
+        if not commit_realizado and _persistir_novos_alertas(session, estado_atual, novo_estado):
+            session.commit()
+            commit_realizado = True
 
-        # Se for pacote de rota otimizada, persistir toda a rota
-        if tipo == TipoPacote.ROTA and novo_estado.id_corrida_banco is not None:
-            rota = pacote.get("rota")
-            if rota is not None and isinstance(rota, list):
-                for pt in rota:
-                    if isinstance(pt, list) and len(pt) == 2:
-                        _persistir_passo_percurso(
-                            db_session,
-                            id_corrida=novo_estado.id_corrida_banco,
-                            x=float(pt[0]),
-                            y=float(pt[1]),
-                            tipo_percurso="otimizado",
-                        )
-                if not commit_realizado:
-                    _persistir_novos_alertas(db_session, estado_atual, novo_estado)
-                    db_session.commit()
-                    commit_realizado = True
+    # Se for alerta de temperatura crítica, encerrar a corrida no banco
+    if tipo == TipoPacote.ALERTA_TEMPERATURA and novo_estado.id_corrida_banco is not None:
+        corrida = session.get(Corrida, novo_estado.id_corrida_banco)
+        if corrida and corrida.status_corrida == StatusCorrida.EM_ANDAMENTO:
+            corrida.status_corrida = StatusCorrida.ABORTADA
+            corrida.data_hora_fim = datetime.now(UTC)
+            corrida.bateria_final = novo_estado.bateria_atual
+            corrida.tempo_total = novo_estado.tempo_final_ms
+            session.add(corrida)
+            _persistir_novos_alertas(session, estado_atual, novo_estado)
+            session.commit()
+            commit_realizado = True
 
-        # Se for pacote final, atualizar o banco de dados
-        if tipo == TipoPacote.FINAL and novo_estado.id_corrida_banco is not None:
-            corrida = db_session.get(Corrida, novo_estado.id_corrida_banco)
-            if corrida:
-                corrida.status_corrida = StatusCorrida.CONCLUIDA
-                corrida.data_hora_fim = datetime.now(UTC)
-                corrida.bateria_final = novo_estado.bateria_final
-                corrida.velocidade_media = novo_estado.velocidade_media
-                corrida.tempo_total = novo_estado.tempo_final_ms
-                corrida.desafio_cumprido = novo_estado.sucesso
-                db_session.add(corrida)
-                _persistir_novos_alertas(db_session, estado_atual, novo_estado)
-                db_session.commit()
-                commit_realizado = True
-
-        # Se for heartbeat, apenas persistir eventuais alertas novos
-        if tipo == TipoPacote.HEARTBEAT and novo_estado.id_corrida_banco is not None:
-            if not commit_realizado and _persistir_novos_alertas(db_session, estado_atual, novo_estado):
-                db_session.commit()
-                commit_realizado = True
-
-        # Se for alerta de temperatura crítica, encerrar a corrida no banco
-        if tipo == TipoPacote.ALERTA_TEMPERATURA and novo_estado.id_corrida_banco is not None:
-            corrida = db_session.get(Corrida, novo_estado.id_corrida_banco)
-            if corrida and corrida.status_corrida == StatusCorrida.EM_ANDAMENTO:
-                corrida.status_corrida = StatusCorrida.ABORTADA
-                corrida.data_hora_fim = datetime.now(UTC)
-                corrida.bateria_final = novo_estado.bateria_atual
-                corrida.tempo_total = novo_estado.tempo_final_ms
-                db_session.add(corrida)
-                _persistir_novos_alertas(db_session, estado_atual, novo_estado)
-                db_session.commit()
-                commit_realizado = True
-
-        if not commit_realizado and _persistir_novos_alertas(db_session, estado_atual, novo_estado):
-            db_session.commit()
-
-    finally:
-        db_session.close()
+    if not commit_realizado and _persistir_novos_alertas(session, estado_atual, novo_estado):
+        session.commit()
 
     # --- Broadcast para o Dashboard via WebSocket ---
     estado_dict = _estado_to_dict(novo_estado)
@@ -407,11 +391,7 @@ async def websocket_telemetria(websocket: WebSocket):
 
     # Cria sessão de banco para este WebSocket (se precisar processar PACOTE)
     from ..database import get_session as _get_db_session
-    db_gen = _get_db_session()
-    try:
-        db_session = await db_gen.__anext__()
-    except StopAsyncIteration:
-        db_session = next(db_gen)
+    db_session = next(_get_db_session())
 
     try:
         while True:
@@ -530,17 +510,32 @@ def _persistir_novos_alertas(
     return True
 
 
+def _decodificar_paredes(w: int) -> dict:
+    """Decodifica o bitmask de paredes (campo ``w``) conforme telemetria.md.
+
+    Norte = bit 0 (1), Sul = bit 1 (2), Leste = bit 2 (4), Oeste = bit 3 (8).
+    """
+    return {
+        "parede_norte": bool(w & 1),
+        "parede_sul": bool(w & 2),
+        "parede_leste": bool(w & 4),
+        "parede_oeste": bool(w & 8),
+    }
+
+
 def _persistir_passo_percurso(
     session: Session,
     id_corrida: int,
     x: float,
     y: float,
     tipo_percurso: str = "exploratorio",
+    paredes: int | None = None,
 ) -> None:
     """Persiste um passo do percurso para a posição (x, y) do Micromouse.
 
     Reutiliza a Célula existente para aquela coordenada+labirinto, ou cria
-    uma nova (com paredes nulas) se for a primeira vez que o robô visita a posição.
+    uma nova se for a primeira vez que o robô visita a posição. Quando
+    ``paredes`` (bitmask ``w``) é fornecido, grava as paredes descobertas.
     """
     # Recupera o id_labirinto a partir da corrida
     corrida = session.get(Corrida, id_corrida)
@@ -548,6 +543,8 @@ def _persistir_passo_percurso(
         logger.warning(
             "_persistir_passo_percurso: corrida %d não encontrada.", id_corrida)
         return
+
+    paredes_dict = _decodificar_paredes(paredes) if paredes is not None else None
 
     # Encontra ou cria a Célula correspondente à posição
     celula = session.exec(
@@ -562,9 +559,15 @@ def _persistir_passo_percurso(
             coordenada_x=int(x),
             coordenada_y=int(y),
             id_labirinto=corrida.id_labirinto,
+            **(paredes_dict or {}),
         )
         session.add(celula)
         session.flush()  # Garante id_celula antes de criar Percurso
+    elif paredes_dict is not None:
+        # Atualiza as paredes descobertas nesta passagem.
+        for campo, valor in paredes_dict.items():
+            setattr(celula, campo, valor)
+        session.add(celula)
 
     # Registra passagem pelo passo do percurso
     passo = Percurso(
