@@ -220,7 +220,7 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
             <MetricCard 
               icon={<Gauge size={20} className="text-emerald-400" />} 
               label="Velocidade Média" 
-              value={corrida.velocidade_media ? `${corrida.velocidade_media.toFixed(2)} cm/s` : "--"} 
+              value={corrida.velocidade_media ? `${corrida.velocidade_media.toFixed(2)} m/s` : "--"}
             />
              <MetricCard 
               icon={<Zap size={20} className="text-amber-400" />} 

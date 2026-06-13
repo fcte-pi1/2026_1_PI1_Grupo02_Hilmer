@@ -133,4 +133,4 @@ class TestPersistenciaFluxoTelemetria:
     def test_corrida_conclui_com_velocidade_media_do_firmware(self, client: TestClient, session: Session):
         idb = client.post("/api/telemetria/pacote", json=PACOTE_INICIAL).json()["estado"]["id_corrida_banco"]
         client.post("/api/telemetria/pacote", json=PACOTE_FINAL)
-        assert session.get(Corrida, idb).velocidade_media == PACOTE_FINAL["v_med"] * 100
+        assert session.get(Corrida, idb).velocidade_media == PACOTE_FINAL["v_med"]

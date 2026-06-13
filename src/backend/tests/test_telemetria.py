@@ -126,9 +126,9 @@ class TestValidarPacote:
 
 class TestCalcularVelocidadeSegmento:
     def test_velocidade_basica(self):
-        assert calcular_velocidade_segmento(0, 0, 0, 1, 0, 1000) == pytest.approx(CELL_SIZE_CM, rel=1e-6)
+        assert calcular_velocidade_segmento(0, 0, 0, 1, 0, 1000) == pytest.approx(CELL_SIZE_CM / 100, rel=1e-6)
     def test_velocidade_diagonal(self):
-        assert calcular_velocidade_segmento(0, 0, 0, 1, 1, 1000) == pytest.approx(math.sqrt(2) * CELL_SIZE_CM, rel=1e-6)
+        assert calcular_velocidade_segmento(0, 0, 0, 1, 1, 1000) == pytest.approx(math.sqrt(2) * CELL_SIZE_CM / 100, rel=1e-6)
     def test_delta_t_zero_retorna_none(self):
         assert calcular_velocidade_segmento(0, 0, 1000, 1, 0, 1000) is None
     def test_delta_t_negativo_retorna_none(self):
@@ -164,7 +164,7 @@ class TestAtualizarIndicadores:
         e = atualizar_indicadores(criar_estado_inicial(), PACOTE_INICIAL_NORMAL)
         e = atualizar_indicadores(e, PACOTE_MOVIMENTACAO[0])
         e = atualizar_indicadores(e, PACOTE_MOVIMENTACAO[1])
-        assert e.velocidade_media is not None and e.velocidade_media == pytest.approx(CELL_SIZE_CM, rel=1e-6)
+        assert e.velocidade_media is not None and e.velocidade_media == pytest.approx(CELL_SIZE_CM / 100, rel=1e-6)
 
     def test_pacote_invalido_nao_altera_indicadores(self):
         e = atualizar_indicadores(criar_estado_inicial(), PACOTE_INICIAL_NORMAL)

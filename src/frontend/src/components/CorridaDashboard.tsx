@@ -128,7 +128,7 @@ export const CorridasDashboard: React.FC<CorridasDashboardProps> = ({ corridas }
              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800">
                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Velocidade Média</p>
                 <p className="text-xl font-bold text-zinc-200">
-                  {corridaSelecionada.velocidade_media?.toFixed(2)} cm/s
+                  {corridaSelecionada.velocidade_media?.toFixed(2)} m/s
                 </p>
              </div>
           </div>

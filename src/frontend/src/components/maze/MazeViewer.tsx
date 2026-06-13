@@ -700,7 +700,7 @@ export default function MazeViewer({
                     Velocidade Média
                   </p>
                   <p className="mt-2 text-2xl font-extrabold tracking-tight text-white font-mono">
-                    {velocidadeMedia !== null ? `${velocidadeMedia.toFixed(2)} cm/s` : "-- cm/s"}
+                    {velocidadeMedia !== null ? `${velocidadeMedia.toFixed(2)} m/s` : "-- m/s"}
                   </p>
                 </div>
               </div>
