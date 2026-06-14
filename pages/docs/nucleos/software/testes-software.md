@@ -159,6 +159,8 @@
 | `TestCenariosAdversos` | 6 | Verifica a resiliência a timestamps regressivos/negativos, baterias inválidas e pacotes sem sessão ativa. |
 | `TestBroadcastWebSocket` | 4 | Garante o envio correto dos eventos (`SESSAO_INICIADA`, `MOVIMENTACAO`, `HEARTBEAT`, etc.) via WebSocket. |
 | `TestDimensoesLabirinto` | 3 | Valida se as dimensões permitidas (4, 8, 16) mapeiam corretamente para os tipos de labirinto no banco. |
+| `test_recuperacao_apos_crash_servidor` | 1 | Verifica se uma corrida em andamento é recuperada corretamente do banco após o servidor reiniciar. |
+| `test_recuperacao_mantem_historico_movimentacao_no_banco` | 1 | Garante que todo o histórico de movimentação (antes e depois do crash) persista na mesma corrida. |
 
 **Módulos cobertos:** Integração ponta-a-ponta, validando contrato (`telemetria.md`), roteamento, persistência e websocket.
 **HU relacionada:** HU-08, HU-09, HU-10, HU-11, HU-14, HU-15, HU-16, HU-19, HU-20
@@ -442,10 +444,10 @@ npx playwright test e2e/tests/historico.spec.ts
 
 ## 6. Resultados da Execução
 
-### 6.1 Backend — 209 testes (todos passando ✅)
+### 6.1 Backend — 211 testes (todos passando ✅)
 
 ```
-============================= 209 passed in 16.31s =============================
+============================= 211 passed in 15.96s =============================
 ```
 
 | Arquivo de Teste | Testes | Status |
@@ -458,8 +460,8 @@ npx playwright test e2e/tests/historico.spec.ts
 | `test_telemetria.py` | 54 | ✅ Passed |
 | `test_telemetria_router.py` | 11 | ✅ Passed |
 | `test_websocket.py` | 3 | ✅ Passed |
-| `test_integracao_firmware.py` | 58 | ✅ Passed |
-| **Total** | **209** | ✅ |
+| `test_integracao_firmware.py` | 60 | ✅ Passed |
+| **Total** | **211** | ✅ |
 
 ### 6.2 Frontend — 129 testes (todos passando ✅)
 
@@ -756,7 +758,7 @@ src/
     └── vitest.config.ts
 ```
 
-**Total geral: 368 testes automatizados (209 backend + 129 frontend + 30 E2E)**
+**Total geral: 370 testes automatizados (211 backend + 129 frontend + 30 E2E)**
 
 ---
 

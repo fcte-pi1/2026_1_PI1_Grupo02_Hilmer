@@ -173,15 +173,29 @@ async def receber_pacote_telemetria(
         # 5. Salvar id_corrida em memória e registrar no monitor
         _set_corrida_atual(corrida.id_corrida, novo_estado)
         await connection_monitor.registrar_pacote(corrida.id_corrida)
-
+    # Se não for pacote inicial
     else:
-        # Para pacotes não-iniciais, deve existir uma corrida ativa
+        # Para pacotes não-iniciais, deve existir uma corrida ativa.
+        # Se o servidor reiniciou, recuperar a corrida ativa do banco.
         if _id_corrida_atual is None or _estado_atual is None:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "mensagem": "Nenhuma corrida ativa. Envie um pacote inicial (tipo=0) primeiro."},
+            corrida_recuperada = _recuperar_corrida_ativa(session)
+            if corrida_recuperada is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "mensagem": "Nenhuma corrida ativa. Envie um pacote inicial (tipo=0) primeiro."},
+                )
+            # Restaurar estado em memória a partir da corrida do banco
+            estado_recuperado = criar_estado_inicial()
+            estado_recuperado.id_corrida_banco = corrida_recuperada.id_corrida
+            estado_recuperado.bateria_inicial = corrida_recuperada.bateria_inicial
+            _set_corrida_atual(corrida_recuperada.id_corrida, estado_recuperado)
+            await connection_monitor.registrar_pacote(corrida_recuperada.id_corrida)
+            logger.info(
+                "Corrida %d recuperada do banco após reinício do servidor.",
+                corrida_recuperada.id_corrida,
             )
+
         await connection_monitor.registrar_pacote(_id_corrida_atual)
 
         estado_anterior = _estado_atual
@@ -343,6 +357,18 @@ async def _abortar_corridas_no_banco(session: Session) -> list[int]:
 
     return ids_abortados
 
+
+def _recuperar_corrida_ativa(session: Session) -> Corrida | None:
+    """Recupera a corrida EM_ANDAMENTO do banco, se existir.
+
+    Usada para restaurar o estado em memória após reinício do servidor
+    enquanto uma corrida ainda está em andamento no hardware.
+
+    Retorna a Corrida ou None se não houver corrida ativa.
+    """
+    return session.exec(
+        select(Corrida).where(Corrida.status_corrida == StatusCorrida.EM_ANDAMENTO)
+    ).first()
 
 def _estado_to_dict(estado: IndicadoresDesempenho) -> dict:
     """Converte o estado dos indicadores para dicionário serializável."""
