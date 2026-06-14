@@ -165,6 +165,7 @@ class IndicadoresDesempenho(BaseModel):
     alerta_possivel_parada_inesperada: bool = False
     alerta_dado_invalido: bool = False
     alerta_temperatura_critica: bool = False
+    temperatura_atual: float | None = None
     log_alertas: list[AlertaTelemetria] = Field(default_factory=list)
 
     # --- Campos internos para cálculo acumulado de velocidade ---

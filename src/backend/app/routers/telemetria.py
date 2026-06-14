@@ -241,6 +241,7 @@ async def receber_pacote_telemetria(
             commit_realizado = True
 
     elif tipo == TipoPacote.ALERTA_TEMPERATURA and novo_estado.id_corrida_banco is not None:
+        novo_estado.temperatura_atual = pacote.get("temp_c")
         corrida = session.get(Corrida, novo_estado.id_corrida_banco)
         if corrida and corrida.status_corrida == StatusCorrida.EM_ANDAMENTO:
             corrida.status_corrida = StatusCorrida.ABORTADA
@@ -360,6 +361,7 @@ def _estado_to_dict(estado: IndicadoresDesempenho) -> dict:
         "alerta_possivel_parada_inesperada": estado.alerta_possivel_parada_inesperada,
         "alerta_dado_invalido": estado.alerta_dado_invalido,
         "alerta_temperatura_critica": estado.alerta_temperatura_critica,
+        "temperatura_atual": estado.temperatura_atual,
         "log_alertas": [
             alerta.model_dump(mode="json")
             for alerta in estado.log_alertas

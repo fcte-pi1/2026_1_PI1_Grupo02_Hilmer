@@ -5,6 +5,7 @@ import { CriticalAlertModal, type CriticalAlertType } from "./CriticalAlertModal
 type StatusCorrida = "aguardando" | "em_andamento" | "concluida" | "abortada";
 
 const LIMITE_BATERIA_CRITICA = 10;
+const LIMITE_TEMPERATURA_CRITICA = 60;
 
 const formatarTempo = (ms?: number | null): string => {
   if (ms === null || ms === undefined || Number.isNaN(ms) || ms < 0) return "00:00.000";
@@ -36,11 +37,14 @@ export const TopIndicators: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ t
   const tempoFinalMs = obterNumeroValido(indicadores?.tempo_final_ms);
   const tempoExibido = corridaConcluida && tempoFinalMs !== null ? tempoFinalMs : tempoDecorridoMs;
   const velocidadeMedia = obterNumeroValido(indicadores?.velocidade_media);
+  const temperaturaAtual = obterNumeroValido(indicadores?.temperatura_atual);
+  const temperaturaCritica = indicadores?.alerta_temperatura_critica === true ||
+  (temperaturaAtual !== null && temperaturaAtual >= LIMITE_TEMPERATURA_CRITICA);
   const xPos = ultimaMovimentacao ? ultimaMovimentacao.x : 0;
   const yPos = ultimaMovimentacao ? ultimaMovimentacao.y : 0;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
       <div data-testid="indicador-bateria" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
         <span className="text-[10px] sm:text-[11px] uppercase font-bold text-zinc-500 tracking-wider">Bateria</span>
         <div className="flex items-center justify-between mt-2">
@@ -66,6 +70,11 @@ export const TopIndicators: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ t
         {/* data-testid="posicao-robo" no span para satisfazer o teste de posição do robô */}
         <span className="text-[10px] sm:text-[11px] uppercase font-bold text-zinc-500 tracking-wider">Posição Atual</span>
         <span data-testid="posicao-robo" className="text-lg sm:text-2xl font-mono font-bold text-white mt-2">({xPos}, {yPos})</span>
+      </div>
+      <div data-testid="indicador-temperatura" className={`bg-zinc-950 border rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm transition-colors duration-300 ${temperaturaCritica ? 'border-rose-500/60' : 'border-zinc-800'}`}>
+        <span className="text-[10px] sm:text-[11px] uppercase font-bold text-zinc-500 tracking-wider">Temperatura</span>
+        <span className={`text-lg sm:text-2xl font-mono font-bold mt-2 transition-colors duration-300 ${temperaturaCritica ? 'text-rose-400 animate-pulse' : 'text-white'}`}>
+        {temperaturaAtual !== null ? `${temperaturaAtual.toFixed(1)} °C` : "-- °C"}</span>
       </div>
     </div>
   );
@@ -121,6 +130,9 @@ export const TelemetryAlerts: React.FC<{ telemetria: UseTelemetriaReturn }> = ({
 
   const bateriaCritica = bateriaAtual !== null && bateriaAtual <= LIMITE_BATERIA_CRITICA;
   const paradaInesperada = indicadores?.alerta_possivel_parada_inesperada === true;
+  const temperaturaAtual = obterNumeroValido(indicadores?.temperatura_atual);
+  const temperaturaCritica = indicadores?.alerta_temperatura_critica === true ||
+  (temperaturaAtual !== null && temperaturaAtual >= LIMITE_TEMPERATURA_CRITICA);
 
   const bateriaCriticaAbertaRef = useRef(false);
   const paradaInesperadaAbertaRef = useRef(false);
@@ -158,7 +170,7 @@ export const TelemetryAlerts: React.FC<{ telemetria: UseTelemetriaReturn }> = ({
         </div>
       )}
 
-      {(conexaoPerdida || bateriaCritica || alertaSemSinal) && (
+      {(conexaoPerdida || bateriaCritica || alertaSemSinal || temperaturaCritica) && (
         <div className="w-full flex flex-col gap-2 mt-2">
           {/* Alerta de conexão perdida — data-testid para CT-S03/HU-09 */}
           {conexaoPerdida && (
@@ -172,6 +184,14 @@ export const TelemetryAlerts: React.FC<{ telemetria: UseTelemetriaReturn }> = ({
           {bateriaCritica && (
             <div className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-2 text-xs font-bold text-danger">
               ⚠️ Bateria crítica: {bateriaAtual?.toFixed(1)}%
+            </div>
+          )}
+          {temperaturaCritica && (
+            <div
+              data-testid="alerta-temperatura-critica"
+              className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-2 text-xs font-bold text-danger"
+            >
+              ⚠️ Temperatura crítica: {temperaturaAtual !== null ? `${temperaturaAtual.toFixed(1)}°C` : "valor indisponível"}
             </div>
           )}
           {alertaSemSinal && (

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 
 type MonitoringLayoutProps = {
-  activeView: "telemetria" | "labirinto" | "corridas";
+  activeView: "telemetria" | "corridas";
   onNavigateTelemetria: () => void;
-  onNavigateLabirinto: () => void;
   onNavigateCorridas: () => void;
   eyebrow: string;
   title: string;
@@ -16,7 +15,6 @@ type MonitoringLayoutProps = {
 export function MonitoringLayout({
   activeView,
   onNavigateTelemetria,
-  onNavigateLabirinto,
   onNavigateCorridas,
   eyebrow,
   title,
@@ -25,7 +23,6 @@ export function MonitoringLayout({
   children,
 }: MonitoringLayoutProps) {
   const exibindoTelemetria = activeView === "telemetria";
-  const exibindoLabirinto = activeView === "labirinto";
   const exibindoCorridas = activeView === "corridas";
   const statusLabel =
     statusConexao === "online"
@@ -86,24 +83,15 @@ export function MonitoringLayout({
           </div>
 
           <nav className="flex-1 space-y-2 py-6 overflow-y-auto overflow-x-hidden px-3">
-            <button
-              className={`flex w-full items-center rounded-lg py-2.5 text-sm text-zinc-400 transition hover:bg-surface-hover hover:text-primary ${
-                isCollapsed ? "justify-center px-0" : "gap-3 px-3"
-              }`}
-              title="Visão Geral"
-            >
-              <span className="shrink-0 text-lg">▦</span>
-              {!isCollapsed && <span className="whitespace-nowrap">Visão Geral</span>}
-            </button>
 
             <button
               type="button"
               data-testid="nav-telemetria"
               onClick={onNavigateTelemetria}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition cursor-pointer ${
                 exibindoTelemetria
                   ? "bg-zinc-950 text-white"
-                  : "text-zinc-600 hover:bg-zinc-100"
+                  : "text-zinc-300 hover:bg-zinc-800"
               }`}
               title="Monitoramento"
             >
@@ -115,10 +103,10 @@ export function MonitoringLayout({
               type="button"
               data-testid="nav-corridas"
               onClick={onNavigateCorridas}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition cursor-pointer ${
                 exibindoCorridas
                   ? "bg-zinc-950 text-white"
-                  : "text-zinc-600 hover:bg-zinc-100"
+                  : "text-zinc-300 hover:bg-zinc-800"
               }`}
               title="Histórico"
             >
@@ -126,30 +114,6 @@ export function MonitoringLayout({
               {!isCollapsed && <span className="whitespace-nowrap">Histórico</span>}
             </button>
 
-            <button
-              type="button"
-              data-testid="nav-labirinto"
-              onClick={onNavigateLabirinto}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
-                exibindoLabirinto
-                  ? "bg-zinc-950 text-white"
-                  : "text-zinc-600 hover:bg-zinc-100"
-              }`}
-              title="Labirinto"
-            >
-              <span className="shrink-0 text-lg">▣</span>
-              {!isCollapsed && <span className="whitespace-nowrap">Labirinto</span>}
-            </button>
-
-            <button
-              className={`flex w-full items-center rounded-lg py-2.5 text-sm text-zinc-400 transition hover:bg-surface-hover hover:text-primary ${
-                isCollapsed ? "justify-center px-0" : "gap-3 px-3"
-              }`}
-              title="Configuração"
-            >
-              <span className="shrink-0 text-lg">⚙</span>
-              {!isCollapsed && <span className="whitespace-nowrap">Configuração</span>}
-            </button>
           </nav>
 
           {!isCollapsed ? (
@@ -181,14 +145,6 @@ export function MonitoringLayout({
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden md:block">
-                <input
-                  type="text"
-                  placeholder="Buscar evento, sessão..."
-                  className="h-9 w-64 rounded-lg border border-border bg-background px-3 text-sm text-primary outline-none transition placeholder:text-zinc-600 focus:border-primary"
-                />
-              </div>
-
               <div
                 role="status"
                 aria-live="polite"
@@ -202,17 +158,6 @@ export function MonitoringLayout({
                   }`}
                 />
                 {statusLabel}
-              </div>
-
-              <button
-                type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-sm text-zinc-400 hover:text-primary transition-colors"
-              >
-                🔔
-              </button>
-
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-semibold text-background">
-                AL
               </div>
             </div>
           </header>

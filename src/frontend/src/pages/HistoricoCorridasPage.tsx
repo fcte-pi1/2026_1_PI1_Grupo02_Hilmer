@@ -97,16 +97,14 @@ const TIPOS: { value: TipoLabirintoFiltro; label: string }[] = [
 // ---------------------------------------------------------------------------
 
 type HistoricoCorridasPageProps = {
-  activeView: "telemetria" | "labirinto" | "corridas";
+  activeView: "telemetria" | "corridas";
   onNavigateTelemetria: () => void;
-  onNavigateLabirinto: () => void;
   onNavigateCorridas: () => void;
 };
 
 export function HistoricoCorridasPage({
   activeView,
   onNavigateTelemetria,
-  onNavigateLabirinto,
   onNavigateCorridas,
 }: HistoricoCorridasPageProps) {
   const [corridas, setCorridas] = useState<CorridaResumoResponse[]>([]);
@@ -170,7 +168,6 @@ export function HistoricoCorridasPage({
     <MonitoringLayout
       activeView={activeView}
       onNavigateTelemetria={onNavigateTelemetria}
-      onNavigateLabirinto={onNavigateLabirinto}
       onNavigateCorridas={onNavigateCorridas}
       eyebrow="Histórico"
       title="Análise de Performance"
@@ -198,7 +195,6 @@ export function HistoricoCorridasPage({
         <section className="space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3" data-testid="filtro-labirinto">
-              <Search size={18} className="text-zinc-500" />
               <div className="flex gap-1 p-1 bg-zinc-900/80 rounded-xl border border-zinc-800">
                 {TIPOS.map(({ value, label }) => (
                   <button
