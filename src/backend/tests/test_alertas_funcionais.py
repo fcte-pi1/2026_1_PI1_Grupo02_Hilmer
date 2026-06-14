@@ -1,7 +1,8 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 from app.models.evento import Evento
-from app.routers.telemetria import estados_ativos, _get_sessao_ativa_id
+from app.routers.telemetria import _get_id_corrida_atual
+import app.routers.telemetria as _tel_router
 from app.schemas.telemetria import StatusCorridaTelemetria
 
 
@@ -38,8 +39,8 @@ def test_alerta_de_parada_nao_dispara_fora_de_corrida_ativa(client: TestClient, 
     for status in (StatusCorridaTelemetria.AGUARDANDO, StatusCorridaTelemetria.FALHA, StatusCorridaTelemetria.CONCLUIDA):
         r0 = client.post("/api/telemetria/pacote", json={"tipo": 0, "timestamp_ms": 0, "dimensao": 4, "bateria": 85})
         idb = r0.json()["estado"]["id_corrida_banco"]
-        sid = _get_sessao_ativa_id()
-        estados_ativos[sid].status_corrida = status
+        # Manipular o estado em memória para simular corrida fora de andamento
+        _tel_router._estado_atual.status_corrida = status
         for p in (
             {"tipo": 1, "timestamp_ms": 1000, "x": 0, "y": 0, "w": 0},
             {"tipo": 1, "timestamp_ms": 5000, "x": 0, "y": 0, "w": 0},

@@ -16,6 +16,7 @@ export const mockAguardando: IndicadoresDesempenho = {
   alerta_possivel_parada_inesperada: false,
   alerta_dado_invalido: false,
   alerta_temperatura_critica: false,
+  temperatura_atual: null,
   log_alertas: [],
 };
 
@@ -35,6 +36,7 @@ export const mockEmAndamento: IndicadoresDesempenho = {
   alerta_possivel_parada_inesperada: false,
   alerta_dado_invalido: false,
   alerta_temperatura_critica: false,
+  temperatura_atual: null,
   log_alertas: [],
 };
 
@@ -60,6 +62,18 @@ export const mockConcluida: IndicadoresDesempenho = {
   status_corrida: "concluida",
   sucesso: true,
   ultimo_timestamp_ms: Date.now(),
+};
+
+export const mockTemperaturaCritica: IndicadoresDesempenho = {
+  ...mockEmAndamento,
+  alerta_temperatura_critica: true,
+  temperatura_atual: 75.3,
+};
+
+export const mockTemperaturaNormal: IndicadoresDesempenho = {
+  ...mockEmAndamento,
+  alerta_temperatura_critica: false,
+  temperatura_atual: 45.0,
 };
 
 export function criarIndicadores(

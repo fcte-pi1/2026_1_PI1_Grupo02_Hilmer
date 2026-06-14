@@ -489,3 +489,98 @@ class TestDimensoesLabirinto:
         corrida = session.get(Corrida, idb)
         lab = session.get(Labirinto, corrida.id_labirinto)
         assert lab.tipo_labirinto == tipo_esperado
+
+
+# ======================================================================
+# CENÁRIO DE RECUPERAÇÃO DE CRASH DO SERVIDOR
+# ======================================================================
+
+def test_recuperacao_apos_crash_servidor(client: TestClient, session: Session):
+    import app.routers.telemetria as _tel_router
+    
+    # Iniciar uma corrida normalmente
+    r = post(client, pkt_inicial(dimensao=4, bateria=100))
+    assert r.status_code == 201
+    estado_inicial = r.json()["estado"]
+    id_corrida = estado_inicial["id_corrida_banco"]
+    assert id_corrida is not None
+    
+    # Simular crash do servidor (limpar o estado da memória)
+    _tel_router._set_corrida_atual(None, None)
+    
+    # Confirmar que a memória foi apagada
+    assert _tel_router._get_id_corrida_atual() is None
+    
+    # Enviar um pacote não inicial, como se a corrida estivesse continuando no hardware
+    r = post(client, pkt_mov(1000, 1, 0, 0))
+    
+    # Como não retornou 409, deve ter recuperado
+    assert r.status_code == 201
+    estado_recuperado = r.json()["estado"]
+    
+    # O id da corrida deve ser o mesmo de antes do crash
+    assert estado_recuperado["id_corrida_banco"] == id_corrida
+    
+    # E na memória deve ter voltado
+    assert _tel_router._get_id_corrida_atual() == id_corrida
+    
+    # Enviar um encerramento normal para limpar o DB e não atrapalhar outros testes
+    r = post(client, pkt_final(2000, True, 0.5, 90))
+    assert r.status_code == 201
+
+
+def test_recuperacao_mantem_historico_movimentacao_no_banco(client: TestClient, session: Session):
+    """Garante que pacotes de movimentação antes e depois do crash são salvos corretamente na mesma corrida."""
+    import app.routers.telemetria as _tel_router
+    
+    # 1. Iniciar corrida
+    r = post(client, pkt_inicial(dimensao=8, bateria=100))
+    assert r.status_code == 201
+    id_corrida = r.json()["estado"]["id_corrida_banco"]
+    
+    # 2. Enviar pacotes de movimentação ANTES do crash
+    post(client, pkt_mov(1000, 0, 0, 11))
+    post(client, pkt_mov(2000, 1, 0, 6))
+    
+    # 3. Simular crash do servidor
+    _tel_router._set_corrida_atual(None, None)
+    
+    # 4. Enviar pacotes de movimentação DEPOIS do crash
+    post(client, pkt_mov(3000, 1, 1, 5))
+    post(client, pkt_mov(4000, 2, 1, 3))
+    
+    # 5. Enviar um pacote de rota (também deve ser salvo)
+    post(client, pkt_rota(5000, [[0,0], [1,0], [1,1], [2,1]]))
+    
+    # 6. Encerrar a corrida
+    post(client, pkt_final(6000, True, 1.2, 85))
+    
+    # 7. Verificar banco de dados
+    from app.models.celula import Celula
+    # Buscar percursos exploratórios
+    passos_exploratorios = session.exec(
+        select(Percurso, Celula)
+        .join(Celula)
+        .where(Percurso.id_corrida == id_corrida)
+        .where(Percurso.tipo_percurso == "exploratorio")
+        .order_by(Percurso.id_percurso)
+    ).all()
+    
+    assert len(passos_exploratorios) == 4
+    assert passos_exploratorios[0][1].coordenada_x == 0 and passos_exploratorios[0][1].coordenada_y == 0
+    assert passos_exploratorios[1][1].coordenada_x == 1 and passos_exploratorios[1][1].coordenada_y == 0
+    assert passos_exploratorios[2][1].coordenada_x == 1 and passos_exploratorios[2][1].coordenada_y == 1
+    assert passos_exploratorios[3][1].coordenada_x == 2 and passos_exploratorios[3][1].coordenada_y == 1
+    
+    # Buscar percursos otimizados (rota)
+    passos_otimizados = session.exec(
+        select(Percurso, Celula)
+        .join(Celula)
+        .where(Percurso.id_corrida == id_corrida)
+        .where(Percurso.tipo_percurso == "otimizado")
+        .order_by(Percurso.id_percurso)
+    ).all()
+    
+    assert len(passos_otimizados) == 4
+    assert passos_otimizados[0][1].coordenada_x == 0 and passos_otimizados[0][1].coordenada_y == 0
+    assert passos_otimizados[3][1].coordenada_x == 2 and passos_otimizados[3][1].coordenada_y == 1

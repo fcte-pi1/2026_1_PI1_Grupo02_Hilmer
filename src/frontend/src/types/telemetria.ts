@@ -103,6 +103,8 @@ export interface IndicadoresDesempenho {
   alerta_dado_invalido: boolean;
   alerta_temperatura_critica: boolean;
   log_alertas: AlertaTelemetria[];
+  temperatura_atual: number | null;
+
 }
 
 export interface ConfigSessao {

@@ -152,7 +152,6 @@ class IndicadoresDesempenho(BaseModel):
     """Estado consolidado dos indicadores de desempenho do dashboard."""
 
     id_corrida_banco: int | None = None
-    sessao_hardware_id: int | None = None
     bateria_inicial: float | None = None
     bateria_atual: float | None = None
     bateria_final: float | None = None
@@ -166,6 +165,7 @@ class IndicadoresDesempenho(BaseModel):
     alerta_possivel_parada_inesperada: bool = False
     alerta_dado_invalido: bool = False
     alerta_temperatura_critica: bool = False
+    temperatura_atual: float | None = None
     log_alertas: list[AlertaTelemetria] = Field(default_factory=list)
 
     # --- Campos internos para cálculo acumulado de velocidade ---

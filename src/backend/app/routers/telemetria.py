@@ -27,26 +27,32 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/telemetria", tags=["telemetria"])
 
 # ---------------------------------------------------------------------------
-# Estado em memória — sessão única ativa
+# Constantes
 # ---------------------------------------------------------------------------
-estados_ativos: Dict[int, IndicadoresDesempenho] = {}
-_sessao_ativa_id: int | None = None
-_contador_sessao: int = 0
+_DIMENSAO_PARA_TIPO_LABIRINTO: dict[int, TipoLabirinto] = {
+    4: TipoLabirinto.QUATRO,
+    8: TipoLabirinto.OITO,
+    16: TipoLabirinto.DEZESSEIS,
+}
+
+# ---------------------------------------------------------------------------
+# Estado em memória — corrida única ativa
+# ---------------------------------------------------------------------------
+_id_corrida_atual: int | None = None
+_estado_atual: IndicadoresDesempenho | None = None
 
 
-def _gerar_sessao_id() -> int:
-    global _contador_sessao
-    _contador_sessao += 1
-    return _contador_sessao
+def _get_id_corrida_atual() -> int | None:
+    return _id_corrida_atual
 
 
-def _get_sessao_ativa_id() -> int | None:
-    return _sessao_ativa_id
-
-
-def _set_sessao_ativa_id(sid: int | None) -> None:
-    global _sessao_ativa_id
-    _sessao_ativa_id = sid
+def _set_corrida_atual(
+    id_corrida: int | None,
+    estado: IndicadoresDesempenho | None,
+) -> None:
+    global _id_corrida_atual, _estado_atual
+    _id_corrida_atual = id_corrida
+    _estado_atual = estado
 
 
 # ---------------------------------------------------------------------------
@@ -72,12 +78,10 @@ async def _processar_pacote(
     tipo = identificar_tipo_pacote(pacote)
 
     # --- Validação inicial ---
-    sessao_id = _get_sessao_ativa_id()
-
     # Determinar último timestamp para validar regressão
     ultimo_ts = None
-    if sessao_id is not None and sessao_id in estados_ativos:
-        ultimo_ts = estados_ativos[sessao_id].ultimo_timestamp_ms
+    if _estado_atual is not None:
+        ultimo_ts = _estado_atual.ultimo_timestamp_ms
     # Pacote inicial reseta o timestamp
     if tipo == TipoPacote.INICIAL:
         ultimo_ts = None
@@ -91,7 +95,7 @@ async def _processar_pacote(
                 "evento": "pacote_rejeitado",
                 "tipo_pacote": tipo.value if tipo else None,
                 "erros": resultado.erros,
-                "sessao_id": sessao_id,
+                "id_corrida": _id_corrida_atual,
                 "origem": origem,
             },
         )
@@ -106,110 +110,75 @@ async def _processar_pacote(
             detail={"mensagem": "Pacote descartado", "erros": resultado.erros},
         )
 
-    # --- Gerenciamento de sessão ---
-    if tipo == TipoPacote.INICIAL:
-        # Encerrar qualquer corrida ativa anterior
-        if sessao_id is not None and sessao_id in estados_ativos:
-            await _abortar_corrida_ativa(session, sessao_id)
-
-        # Criar nova sessão
-        sessao_id = _gerar_sessao_id()
-        _set_sessao_ativa_id(sessao_id)
-        estados_ativos[sessao_id] = criar_estado_inicial()
-        await connection_monitor.registrar_pacote(sessao_id)
-    else:
-        # Para pacotes não-iniciais, deve existir uma sessão ativa
-        if sessao_id is None or sessao_id not in estados_ativos:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "mensagem": "Nenhuma corrida ativa. Envie um pacote inicial (tipo=0) primeiro."},
-            )
-        await connection_monitor.registrar_pacote(sessao_id)
-
-    estado_atual = estados_ativos[sessao_id]
-
-    # Processa os indicadores puros (Cálculos de velocidade, etc)
-    novo_estado = atualizar_indicadores(estado_atual, pacote)
-
-    # --- Persistência e broadcast ---
-    await _persistir_e_broadcast(
-        pacote=pacote,
-        tipo=tipo,
-        novo_estado=novo_estado,
-        estado_atual=estado_atual,
-        sessao_id=sessao_id,
-        session=session,
-    )
-
-    # --- ACK de confirmação ---
-    await manager.send_json_to_all_clients({
-        "type": "ACK",
-        "data": {
-            "tipo": tipo.value,
-            "timestamp_ms": pacote.get("timestamp_ms"),
-            "sessao_id": sessao_id,
-        },
-    })
-
-    # Salva o novo estado na memória (síncrono — rápido)
-    estados_ativos[sessao_id] = novo_estado
-
-    # Para pacotes FINAL ou ALERTA_TEMPERATURA, remover sessão imediatamente
-    if tipo in (TipoPacote.FINAL, TipoPacote.ALERTA_TEMPERATURA):
-        estados_ativos.pop(sessao_id, None)
-        connection_monitor.remover_corrida(sessao_id)
-        _set_sessao_ativa_id(None)
-
-    estado_dict = _estado_to_dict(novo_estado)
-    return {"message": "Pacote processado com sucesso", "estado": estado_dict}
-
-
-async def _persistir_e_broadcast(
-    pacote: dict,
-    tipo: TipoPacote,
-    novo_estado: IndicadoresDesempenho,
-    estado_atual: IndicadoresDesempenho,
-    sessao_id: int,
-    session: Session,
-) -> None:
-    """Persiste dados no banco e faz broadcast WebSocket."""
+    # --- Gerenciamento de corrida ---
     commit_realizado = False
-
     tipo_lab = None
-    # Se for pacote inicial, resolver a dimensão e criar no banco
-    if tipo == TipoPacote.INICIAL and novo_estado.id_corrida_banco is None:
-        dimensao = pacote.get("dimensao")
-        if int(dimensao) == 8:
-            tipo_lab = TipoLabirinto.OITO
-        elif int(dimensao) == 16:
-            tipo_lab = TipoLabirinto.DEZESSEIS
-        elif int(dimensao) == 4:
-            tipo_lab = TipoLabirinto.QUATRO
+
+    if tipo == TipoPacote.INICIAL:
+        # 1. Abortar corridas ativas no banco (resiliência a reinício)
+        await _abortar_corridas_no_banco(session)
+
+        # 2. Limpar estado em memória anterior (se houver)
+        if _id_corrida_atual is not None:
+            connection_monitor.remover_corrida(_id_corrida_atual)
+
+        # 3. Criar estado inicial e processar indicadores
+        estado_anterior = criar_estado_inicial()
+        novo_estado = atualizar_indicadores(estado_anterior, pacote)
+
+        # 4. Resolver dimensão e persistir labirinto + corrida no banco
+        tipo_lab = _DIMENSAO_PARA_TIPO_LABIRINTO.get(int(pacote.get("dimensao")))
 
         labirinto = Labirinto(tipo_labirinto=tipo_lab)
         session.add(labirinto)
         session.flush()
 
         corrida = Corrida(
-            sessao_hardware_id=sessao_id,
             data_hora_inicio=datetime.now(UTC),
             id_labirinto=labirinto.id_labirinto,
             status_corrida=StatusCorrida.EM_ANDAMENTO,
-            bateria_inicial=pacote.get("bateria", 100)
+            bateria_inicial=pacote.get("bateria", 100),
         )
         session.add(corrida)
         session.flush()
 
-        # Atualiza o estado com o ID real do banco
         novo_estado.id_corrida_banco = corrida.id_corrida
-        novo_estado.sessao_hardware_id = sessao_id
-        _persistir_novos_alertas(session, estado_atual, novo_estado)
+        _persistir_novos_alertas(session, estado_anterior, novo_estado)
         session.commit()
         session.refresh(corrida)
         commit_realizado = True
 
-    # Se for pacote de movimentação, persistir step no percurso exploratório
+        # 5. Salvar id_corrida em memória e registrar no monitor
+        _set_corrida_atual(corrida.id_corrida, novo_estado)
+        await connection_monitor.registrar_pacote(corrida.id_corrida)
+    else:
+        # Para pacotes não-iniciais, deve existir uma corrida ativa.
+        # Se o servidor reiniciou, recuperar a corrida ativa do banco.
+        if _id_corrida_atual is None or _estado_atual is None:
+            corrida_recuperada = _recuperar_corrida_ativa(session)
+            if corrida_recuperada is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "mensagem": "Nenhuma corrida ativa. Envie um pacote inicial (tipo=0) primeiro."},
+                )
+            # Restaurar estado em memória a partir da corrida do banco
+            estado_recuperado = criar_estado_inicial()
+            estado_recuperado.id_corrida_banco = corrida_recuperada.id_corrida
+            estado_recuperado.bateria_inicial = corrida_recuperada.bateria_inicial
+            _set_corrida_atual(corrida_recuperada.id_corrida, estado_recuperado)
+            await connection_monitor.registrar_pacote(corrida_recuperada.id_corrida)
+            logger.info(
+                "Corrida %d recuperada do banco após reinício do servidor.",
+                corrida_recuperada.id_corrida,
+            )
+
+        await connection_monitor.registrar_pacote(_id_corrida_atual)
+
+        estado_anterior = _estado_atual
+        novo_estado = atualizar_indicadores(estado_anterior, pacote)
+
+    # --- Persistência por tipo de pacote ---
     if tipo == TipoPacote.MOVIMENTACAO and novo_estado.id_corrida_banco is not None:
         x = pacote.get("x")
         y = pacote.get("y")
@@ -224,12 +193,11 @@ async def _persistir_e_broadcast(
                 paredes=int(w) if w is not None else None,
             )
             if not commit_realizado:
-                _persistir_novos_alertas(session, estado_atual, novo_estado)
+                _persistir_novos_alertas(session, estado_anterior, novo_estado)
                 session.commit()
                 commit_realizado = True
 
-    # Se for pacote de rota otimizada, persistir toda a rota
-    if tipo == TipoPacote.ROTA and novo_estado.id_corrida_banco is not None:
+    elif tipo == TipoPacote.ROTA and novo_estado.id_corrida_banco is not None:
         rota = pacote.get("rota")
         if rota is not None and isinstance(rota, list):
             for pt in rota:
@@ -242,12 +210,11 @@ async def _persistir_e_broadcast(
                         tipo_percurso="otimizado",
                     )
             if not commit_realizado:
-                _persistir_novos_alertas(session, estado_atual, novo_estado)
+                _persistir_novos_alertas(session, estado_anterior, novo_estado)
                 session.commit()
                 commit_realizado = True
 
-    # Se for pacote final, atualizar o banco de dados
-    if tipo == TipoPacote.FINAL and novo_estado.id_corrida_banco is not None:
+    elif tipo == TipoPacote.FINAL and novo_estado.id_corrida_banco is not None:
         corrida = session.get(Corrida, novo_estado.id_corrida_banco)
         if corrida:
             corrida.status_corrida = StatusCorrida.CONCLUIDA
@@ -257,18 +224,17 @@ async def _persistir_e_broadcast(
             corrida.tempo_total = novo_estado.tempo_final_ms
             corrida.desafio_cumprido = novo_estado.sucesso
             session.add(corrida)
-            _persistir_novos_alertas(session, estado_atual, novo_estado)
+            _persistir_novos_alertas(session, estado_anterior, novo_estado)
             session.commit()
             commit_realizado = True
 
-    # Se for heartbeat, apenas persistir eventuais alertas novos
-    if tipo == TipoPacote.HEARTBEAT and novo_estado.id_corrida_banco is not None:
-        if not commit_realizado and _persistir_novos_alertas(session, estado_atual, novo_estado):
+    elif tipo == TipoPacote.HEARTBEAT and novo_estado.id_corrida_banco is not None:
+        if not commit_realizado and _persistir_novos_alertas(session, estado_anterior, novo_estado):
             session.commit()
             commit_realizado = True
 
-    # Se for alerta de temperatura crítica, encerrar a corrida no banco
-    if tipo == TipoPacote.ALERTA_TEMPERATURA and novo_estado.id_corrida_banco is not None:
+    elif tipo == TipoPacote.ALERTA_TEMPERATURA and novo_estado.id_corrida_banco is not None:
+        novo_estado.temperatura_atual = pacote.get("temp_c")
         corrida = session.get(Corrida, novo_estado.id_corrida_banco)
         if corrida and corrida.status_corrida == StatusCorrida.EM_ANDAMENTO:
             corrida.status_corrida = StatusCorrida.ABORTADA
@@ -276,12 +242,25 @@ async def _persistir_e_broadcast(
             corrida.bateria_final = novo_estado.bateria_atual
             corrida.tempo_total = novo_estado.tempo_final_ms
             session.add(corrida)
-            _persistir_novos_alertas(session, estado_atual, novo_estado)
+            _persistir_novos_alertas(session, estado_anterior, novo_estado)
             session.commit()
             commit_realizado = True
 
-    if not commit_realizado and _persistir_novos_alertas(session, estado_atual, novo_estado):
+    if not commit_realizado and _persistir_novos_alertas(session, estado_anterior, novo_estado):
         session.commit()
+
+    # Salva o novo estado na memória
+    _set_corrida_atual(_id_corrida_atual, novo_estado)
+
+    # --- ACK de confirmação ---
+    await manager.send_json_to_all_clients({
+        "type": "ACK",
+        "data": {
+            "tipo": tipo.value,
+            "timestamp_ms": pacote.get("timestamp_ms"),
+            "id_corrida": _id_corrida_atual,
+        },
+    })
 
     # --- Broadcast para o Dashboard via WebSocket ---
     estado_dict = _estado_to_dict(novo_estado)
@@ -311,6 +290,7 @@ async def _persistir_e_broadcast(
             "type": "ATUALIZACAO_TELEMETRIA",
             "data": estado_dict
         }
+
     if tipo == TipoPacote.MOVIMENTACAO:
         evento_movimentacao = {
             "type": "MOVIMENTACAO",
@@ -325,6 +305,13 @@ async def _persistir_e_broadcast(
         await manager.send_json_to_all_clients(evento_movimentacao)
 
     await manager.send_json_to_all_clients(evento)
+
+    if tipo in (TipoPacote.FINAL, TipoPacote.ALERTA_TEMPERATURA):
+        id_corrida_encerrada = _id_corrida_atual
+        connection_monitor.remover_corrida(id_corrida_encerrada)
+        _set_corrida_atual(None, None)
+
+    return {"message": "Pacote processado com sucesso", "estado": estado_dict}
 
 
 # ---------------------------------------------------------------------------
@@ -341,8 +328,8 @@ async def receber_pacote_telemetria(
     Endpoint HTTP para o Micromouse enviar pacotes de telemetria.
     Recebe o pacote, atualiza o estado em memória e notifica o Dashboard.
 
-    O ESP32 não envia ``id_corrida``; o backend gerencia uma sessão
-    única ativa por vez.
+    O ESP32 não envia ``id_corrida``; o backend gerencia uma corrida
+    única ativa por vez, mantendo o ``id_corrida`` real do banco em memória.
     """
     return await _processar_pacote(payload, session, origem="http")
 
@@ -377,19 +364,19 @@ async def websocket_telemetria(websocket: WebSocket):
     }
     await manager.send_json_to_client(handshake, websocket)
 
-    # Enviar status atual de todas as corridas ativas para o novo cliente
-    for sid in estados_ativos:
-        status = connection_monitor.get_status(sid) or "online"
+    # Enviar status da corrida ativa (se houver) para o novo cliente
+    id_corrida = _id_corrida_atual
+    if id_corrida is not None:
+        status = connection_monitor.get_status(id_corrida) or "online"
         await manager.send_json_to_client({
             "type": "CONNECTION_STATUS",
             "data": {
-                "id_corrida": sid,
+                "id_corrida": id_corrida,
                 "status": status,
                 "message": "Status recuperado ao conectar"
             }
         }, websocket)
 
-    # Cria sessão de banco para este WebSocket (se precisar processar PACOTE)
     from ..database import get_session as _get_db_session
     db_session = next(_get_db_session())
 
@@ -397,7 +384,6 @@ async def websocket_telemetria(websocket: WebSocket):
         while True:
             data = await websocket.receive_json()
 
-            # Se o Micromouse enviar um pacote via WebSocket
             if isinstance(data, dict) and data.get("type") == "PACOTE":
                 pacote = data.get("data", {})
                 try:
@@ -418,52 +404,63 @@ async def websocket_telemetria(websocket: WebSocket):
 
 
 # ---------------------------------------------------------------------------
-# Funções auxiliares de sessão
+# Funções auxiliares
 # ---------------------------------------------------------------------------
 
 
-async def _abortar_corrida_ativa(
-    session: Session,
-    sessao_id: int,
-) -> None:
-    """Aborta a corrida ativa quando uma nova sessão é iniciada.
+async def _abortar_corridas_no_banco(session: Session) -> list[int]:
+    """Consulta o banco e aborta todas as corridas EM_ANDAMENTO.
 
-    Garante que apenas uma corrida esteja ativa por vez,
-    abortando a anterior com status ABORTADA no banco de dados.
+    Chamada ao receber um pacote inicial para garantir que não existam
+    corridas órfãs (ex.: após reinício do servidor).
+
+    Retorna a lista de id_corrida abortados.
     """
-    estado = estados_ativos.pop(sessao_id, None)
-    if estado is None:
-        return
+    corridas = session.exec(
+        select(Corrida).where(Corrida.status_corrida == StatusCorrida.EM_ANDAMENTO)
+    ).all()
 
-    # Atualizar registro no banco se existir
-    if estado.id_corrida_banco is not None:
-        corrida = session.get(Corrida, estado.id_corrida_banco)
-        if corrida and corrida.status_corrida == StatusCorrida.EM_ANDAMENTO:
-            corrida.status_corrida = StatusCorrida.ABORTADA
-            corrida.data_hora_fim = datetime.now(UTC)
-            session.add(corrida)
+    ids_abortados = []
+    for corrida in corridas:
+        corrida.status_corrida = StatusCorrida.ABORTADA
+        corrida.data_hora_fim = datetime.now(UTC)
+        session.add(corrida)
+        ids_abortados.append(corrida.id_corrida)
 
-    connection_monitor.remover_corrida(sessao_id)
-    session.commit()
+    if ids_abortados:
+        session.commit()
+        for id_abortado in ids_abortados:
+            await manager.send_json_to_all_clients({
+                "type": "SESSAO_ENCERRADA",
+                "data": {
+                    "sessao_encerrada": id_abortado,
+                    "motivo": "Nova sessão iniciada pelo Micromouse",
+                }
+            })
+        logger.info(
+            "Corridas abortadas ao receber pacote inicial: %s", ids_abortados
+        )
 
-    await manager.send_json_to_all_clients({
-        "type": "SESSAO_ENCERRADA",
-        "data": {
-            "sessao_encerrada": sessao_id,
-            "motivo": "Nova sessão iniciada pelo Micromouse",
-        }
-    })
+    return ids_abortados
 
-    logger.info(
-        "Corrida encerrada automaticamente: %s", sessao_id
-    )
+
+def _recuperar_corrida_ativa(session: Session) -> Corrida | None:
+    """Recupera a corrida EM_ANDAMENTO do banco, se existir.
+
+    Usada para restaurar o estado em memória após reinício do servidor
+    enquanto uma corrida ainda está em andamento no hardware.
+
+    Retorna a Corrida ou None se não houver corrida ativa.
+    """
+    return session.exec(
+        select(Corrida).where(Corrida.status_corrida == StatusCorrida.EM_ANDAMENTO)
+    ).first()
 
 
 def _estado_to_dict(estado: IndicadoresDesempenho) -> dict:
     """Converte o estado dos indicadores para dicionário serializável."""
     return {
         "id_corrida_banco": estado.id_corrida_banco,
-        "sessao_hardware_id": estado.sessao_hardware_id,
         "bateria_inicial": estado.bateria_inicial,
         "bateria_atual": estado.bateria_atual,
         "bateria_final": estado.bateria_final,
@@ -477,6 +474,7 @@ def _estado_to_dict(estado: IndicadoresDesempenho) -> dict:
         "alerta_possivel_parada_inesperada": estado.alerta_possivel_parada_inesperada,
         "alerta_dado_invalido": estado.alerta_dado_invalido,
         "alerta_temperatura_critica": estado.alerta_temperatura_critica,
+        "temperatura_atual": estado.temperatura_atual,
         "log_alertas": [
             alerta.model_dump(mode="json")
             for alerta in estado.log_alertas
@@ -537,7 +535,6 @@ def _persistir_passo_percurso(
     uma nova se for a primeira vez que o robô visita a posição. Quando
     ``paredes`` (bitmask ``w``) é fornecido, grava as paredes descobertas.
     """
-    # Recupera o id_labirinto a partir da corrida
     corrida = session.get(Corrida, id_corrida)
     if corrida is None:
         logger.warning(
@@ -546,7 +543,6 @@ def _persistir_passo_percurso(
 
     paredes_dict = _decodificar_paredes(paredes) if paredes is not None else None
 
-    # Encontra ou cria a Célula correspondente à posição
     celula = session.exec(
         select(Celula)
         .where(Celula.coordenada_x == int(x))
@@ -562,14 +558,12 @@ def _persistir_passo_percurso(
             **(paredes_dict or {}),
         )
         session.add(celula)
-        session.flush()  # Garante id_celula antes de criar Percurso
+        session.flush()
     elif paredes_dict is not None:
-        # Atualiza as paredes descobertas nesta passagem.
         for campo, valor in paredes_dict.items():
             setattr(celula, campo, valor)
         session.add(celula)
 
-    # Registra passagem pelo passo do percurso
     passo = Percurso(
         id_celula=celula.id_celula,
         id_corrida=id_corrida,

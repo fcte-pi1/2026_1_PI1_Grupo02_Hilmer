@@ -13,7 +13,7 @@ from app.services.telemetria import (
 from app.models.corrida import Corrida
 from app.models.evento import Evento
 from app.models.enums import StatusCorrida
-from app.routers.telemetria import _get_sessao_ativa_id
+from app.routers.telemetria import _get_id_corrida_atual
 
 # =========================================================================
 # Pacotes de teste
@@ -188,7 +188,7 @@ class TestAlertaTemperaturaRouter:
     def test_alerta_temperatura_encerra_sessao_em_memoria(self, client: TestClient):
         client.post("/api/telemetria/pacote", json=PACOTE_INICIAL)
         client.post("/api/telemetria/pacote", json=PACOTE_TEMP)
-        assert _get_sessao_ativa_id() is None
+        assert _get_id_corrida_atual() is None
 
     def test_alerta_temperatura_sem_sessao_retorna_409(self, client: TestClient):
         r = client.post("/api/telemetria/pacote", json=PACOTE_TEMP)
