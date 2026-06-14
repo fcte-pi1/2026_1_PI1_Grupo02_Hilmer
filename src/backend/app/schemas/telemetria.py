@@ -152,7 +152,6 @@ class IndicadoresDesempenho(BaseModel):
     """Estado consolidado dos indicadores de desempenho do dashboard."""
 
     id_corrida_banco: int | None = None
-    sessao_hardware_id: int | None = None
     bateria_inicial: float | None = None
     bateria_atual: float | None = None
     bateria_final: float | None = None

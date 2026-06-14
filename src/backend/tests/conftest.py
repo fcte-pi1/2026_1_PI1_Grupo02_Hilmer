@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.database import get_session
 from app.config import settings
-from app.routers.telemetria import estados_ativos, _set_sessao_ativa_id
+from app.routers.telemetria import _set_corrida_atual
 import app.routers.telemetria as _tel_router
 from app.services.connection_monitor import connection_monitor
 
@@ -118,12 +118,8 @@ def client_fixture(session: Session):
 @pytest.fixture(autouse=True)
 def limpar_estados_ativos():
     """Isola o estado em memória da telemetria entre testes."""
-    estados_ativos.clear()
-    _set_sessao_ativa_id(None)
-    _tel_router._contador_sessao = 0
+    _set_corrida_atual(None, None)
     connection_monitor.clear()
     yield
-    estados_ativos.clear()
-    _set_sessao_ativa_id(None)
-    _tel_router._contador_sessao = 0
+    _set_corrida_atual(None, None)
     connection_monitor.clear()
