@@ -86,7 +86,7 @@ export function MonitoringLayout({
 
             <button
               type="button"
-              data-testid="nav-telemetria"
+              data-testid="nav-labirinto"
               onClick={onNavigateTelemetria}
               className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition cursor-pointer ${
                 exibindoTelemetria

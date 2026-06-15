@@ -138,10 +138,10 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
       const openSet = openDirections.get(coordKey) || new Set();
 
       const walls = {
-        north: isInPercurso && !isGoal && !openSet.has("north"),
-        south: isInPercurso && !isGoal && !openSet.has("south"),
-        east: isInPercurso && !isGoal && !openSet.has("east"),
-        west: isInPercurso && !isGoal && !openSet.has("west"),
+        north: !isInPercurso || (!isGoal && !openSet.has("north")),
+        south: !isInPercurso || (!isGoal && !openSet.has("south")),
+        east: !isInPercurso || (!isGoal && !openSet.has("east")),
+        west: !isInPercurso || (!isGoal && !openSet.has("west")),
       };
 
       return {

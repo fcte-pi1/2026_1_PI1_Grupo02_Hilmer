@@ -816,6 +816,7 @@ export default function MazeViewer({
           <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/20 p-3">
             <div
               className="relative grid mx-auto"
+              data-testid="maze-grid"
               style={{
                 gridTemplateColumns: `repeat(${displayGridSize}, minmax(0, 1fr))`,
                 width: displayGridDimension,
@@ -871,6 +872,7 @@ export default function MazeViewer({
                   return (
                     <div
                       key={`${rowIndex}-${colIndex}`}
+                      data-testid={`cell-${rowIndex}-${colIndex}`}
                       className={`z-20 ${classes}`}
                       style={{
                         backgroundColor,
