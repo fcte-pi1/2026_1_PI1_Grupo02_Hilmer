@@ -252,16 +252,6 @@ async def _processar_pacote(
     # Salva o novo estado na memória
     _set_corrida_atual(_id_corrida_atual, novo_estado)
 
-    # --- ACK de confirmação ---
-    await manager.send_json_to_all_clients({
-        "type": "ACK",
-        "data": {
-            "tipo": tipo.value,
-            "timestamp_ms": pacote.get("timestamp_ms"),
-            "id_corrida": _id_corrida_atual,
-        },
-    })
-
     # --- Broadcast para o Dashboard via WebSocket ---
     estado_dict = _estado_to_dict(novo_estado)
     if tipo == TipoPacote.INICIAL:
@@ -305,6 +295,16 @@ async def _processar_pacote(
         await manager.send_json_to_all_clients(evento_movimentacao)
 
     await manager.send_json_to_all_clients(evento)
+
+    # --- ACK de confirmação ---
+    await manager.send_json_to_all_clients({
+        "type": "ACK",
+        "data": {
+            "tipo": tipo.value,
+            "timestamp_ms": pacote.get("timestamp_ms"),
+            "id_corrida": _id_corrida_atual,
+        },
+    })
 
     if tipo in (TipoPacote.FINAL, TipoPacote.ALERTA_TEMPERATURA):
         id_corrida_encerrada = _id_corrida_atual
