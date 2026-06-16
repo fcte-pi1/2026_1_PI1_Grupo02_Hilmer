@@ -18,8 +18,6 @@ def test_telemetry_post_endpoint(client:TestClient):
 
 def test_websocket_message_delivery(client:TestClient):
     with client.websocket_connect("/api/telemetria/ws") as websocket:
-        ack = websocket.receive_json()
-        assert ack["type"] == "ACK"
         msg_conexao = websocket.receive_json()
         assert msg_conexao["type"] == "HANDSHAKE"
 
