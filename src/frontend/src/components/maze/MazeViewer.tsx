@@ -420,95 +420,10 @@ export default function MazeViewer({
       <div className="mt-6 flex flex-col gap-6 lg:flex-row">
         <div className="flex-1">
           <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/20 p-3">
-<<<<<<< HEAD
             <div className="relative grid mx-auto" style={{ gridTemplateColumns: `repeat(${displayGridSize}, minmax(0, 1fr))`, width: displayGridDimension, height: displayGridDimension }}>
               {renderMazeGrid(displayMaze, displayPosition, displayPath, staticGoalPosition)}
               <svg className="pointer-events-none absolute inset-0 z-20 h-full w-full" viewBox={`0 0 ${displayGridSize} ${displayGridSize}`}>
                 <polyline points={pathPointsString} fill="none" stroke="#a855f7" strokeWidth="0.04" strokeLinecap="round" strokeLinejoin="round" className="opacity-75" />
-=======
-            <div
-              className="relative grid mx-auto"
-              data-testid="maze-grid"
-              style={{
-                gridTemplateColumns: `repeat(${displayGridSize}, minmax(0, 1fr))`,
-                width: displayGridDimension,
-                height: displayGridDimension,
-                maxWidth: maxDimension,
-              }}
-            >
-              {displayMaze.map((row, rowIndex) =>
-                row.map((cell, colIndex) => {
-                  const cellPosition = { row: rowIndex, col: colIndex };
-                  const isCurrent = positionsEqual(
-                    cellPosition,
-                    displayPosition,
-                  );
-                  const isOnPath = displayPath.some((step) =>
-                    positionsEqual(step, cellPosition),
-                  );
-                  const isGoal = goalAreaCells.some((goalCell) => 
-                    positionsEqual(goalCell, cellPosition)
-                  );
-                  
-                  const backgroundColor = isCurrent
-                    ? "rgb(125 211 252)"
-                    : isGoal
-                      ? "rgb(34 197 94)" // verde vibrante para destacar do amarelo das paredes
-                      : cell.visited
-                        ? "rgb(30 41 59)"
-                        : isOnPath
-                          ? "rgb(15 23 42)"
-                          : "rgb(9 9 11)";
-                  const wallShadows = [
-                    cell.walls.north
-                      ? `inset 0 2px 0 0 rgb(234 179 8)`
-                      : null,
-                    cell.walls.south
-                      ? `inset 0 -2px 0 0 rgb(234 179 8)`
-                      : null,
-                    cell.walls.east
-                      ? `inset -2px 0 0 0 rgb(234 179 8)`
-                      : null,
-                    cell.walls.west
-                      ? `inset 2px 0 0 0 rgb(234 179 8)`
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(", ");
-                  const classes = [
-                    "relative aspect-square border border-zinc-900",
-                  ]
-                    .filter(Boolean)
-                    .join(" ");
-
-                  return (
-                    <div
-                      key={`${rowIndex}-${colIndex}`}
-                      data-testid={`cell-${rowIndex}-${colIndex}`}
-                      className={`z-20 ${classes}`}
-                      style={{
-                        backgroundColor,
-                        boxShadow: wallShadows || undefined,
-                      }}
-                    />
-                  );
-                }),
-              )}
-              <svg
-                className="pointer-events-none absolute inset-0 z-20 h-full w-full"
-                viewBox={`0 0 ${displayGridSize} ${displayGridSize}`}
-                aria-hidden="true"
-              >
-                <polyline
-                  points={pathPointsString}
-                  fill="none"
-                  stroke="#a855f7"
-                  strokeWidth="0.04"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="opacity-75"
-                />
->>>>>>> 183e02df00ffff92e301c3829c277c57acf232bc
               </svg>
               <img
                 src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"

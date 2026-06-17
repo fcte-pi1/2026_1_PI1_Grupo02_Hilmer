@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { X, Clock, Zap, Gauge, MapPin, Target, ChevronRight, Activity } from "lucide-react";
+import { X, Clock, Gauge, MapPin, Target, ChevronRight, Activity } from "lucide-react";
 import { obterCorrida } from "../../services/corrida";
-import type { CorridaDetailResponse } from "../../types/corrida";
-import MazeViewer from "../maze/MazeViewer";
+import type { CorridaDetailResponse, CelulaResponse } from "../../types/corrida";
 import type { Cell, Position } from "../maze/types";
 
 interface CorridaDetailOverlayProps {
@@ -123,7 +122,6 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
       // Lógica de Corredor: Identificar onde o caminho entra e sai desta célula
       const allowed = { north: false, south: false, east: false, west: false };
       
-<<<<<<< HEAD
       for (let i = 0; i < pathPositions.length; i++) {
         const curr = pathPositions[i];
         if (curr.row === row && curr.col === col) {
@@ -145,26 +143,6 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
           }
         }
       }
-=======
-      // Verificar se é área de objetivo (central 2x2 ou conforme detectado)
-      // Usamos a lógica de mazeUtils se possível, mas aqui fazemos uma checagem simples
-      // Micromouse oficial center é (gridSize/2-1, gridSize/2-1) até (gridSize/2, gridSize/2)
-      const isGoal = (
-        row >= Math.floor(gridSize / 2) - 1 && 
-        row <= Math.ceil(gridSize / 2) && 
-        col >= Math.floor(gridSize / 2) - 1 && 
-        col <= Math.ceil(gridSize / 2)
-      );
-
-      const openSet = openDirections.get(coordKey) || new Set();
-
-      const walls = {
-        north: !isInPercurso || (!isGoal && !openSet.has("north")),
-        south: !isInPercurso || (!isGoal && !openSet.has("south")),
-        east: !isInPercurso || (!isGoal && !openSet.has("east")),
-        west: !isInPercurso || (!isGoal && !openSet.has("west")),
-      };
->>>>>>> 183e02df00ffff92e301c3829c277c57acf232bc
 
       // Adiciona parede em todas as direções pela qual a rota NÃO passa
       return {
