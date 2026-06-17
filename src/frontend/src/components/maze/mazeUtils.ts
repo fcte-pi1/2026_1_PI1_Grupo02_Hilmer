@@ -143,53 +143,11 @@ export const hasWallBetween = (
  */
 export const normalizePathToOrthogonal = (
   points: Position[],
-  maze?: Cell[][],
+  _maze?: Cell[][],
 ): Position[] => {
-  if (points.length <= 1) {
-    return [...points];
-  }
-
-  const normalized: Position[] = [];
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const current = points[i];
-    const next = points[i + 1];
-
-    normalized.push(current);
-
-    const movedInRow = current.row !== next.row;
-    const movedInCol = current.col !== next.col;
-
-    if (movedInRow && movedInCol) {
-      const p1 = { row: current.row, col: next.col }; // Move col first
-      const p2 = { row: next.row, col: current.col }; // Move row first
-
-      let useP1 = true;
-
-      if (maze) {
-        // Check which intermediate point avoids walls
-        const p1Valid =
-          !hasWallBetween(maze, current, p1) && !hasWallBetween(maze, p1, next);
-        const p2Valid =
-          !hasWallBetween(maze, current, p2) && !hasWallBetween(maze, p2, next);
-
-        if (!p1Valid && p2Valid) {
-          useP1 = false;
-        }
-      }
-
-      if (useP1) {
-        normalized.push(p1);
-      } else {
-        normalized.push(p2);
-      }
-    }
-  }
-
-  // Adicionar o último ponto.
-  normalized.push(points[points.length - 1]);
-
-  return normalized;
+  // Para rotas otimizadas e histórico fiel, não tentamos 'adivinhar' caminhos intermediários.
+  // Retornamos os pontos originais para garantir que a linha siga exatamente o array.
+  return [...points];
 };
 
 // Encontra a área 2x2 que representa o objetivo.

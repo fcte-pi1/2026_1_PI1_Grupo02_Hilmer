@@ -34,15 +34,15 @@ Envia o tamanho do labirinto e o número da tentativa para preparar a interface 
 
 ## Convenção Espacial e de Coordenadas 
 
-Para alinhar perfeitamente a lógica matemática do firmware em C++ com a renderização visual, adotamos o **Sistema Cartesiano Padrão**:
+Para alinhar perfeitamente a lógica matemática do firmware em C++ com a renderização visual, adotamos o sistema de **Grade de Interface (Top-Left)**:
 
-* **Origem `[0,0]`:** Localizada no **canto inferior esquerdo** do labirinto.
+* **Origem `[0,0]`:** Localizada no **canto superior esquerdo** do labirinto.
 * **Eixo X:** Cresce para a **direita** (Direção Leste).
-* **Eixo Y:** Cresce para **cima** (Direção Norte).
+* **Eixo Y:** Cresce para **baixo** (Direção Sul).
 
 ### Impacto na Movimentação do Robô (Lógica do ESP32):
-* **Andar para o Norte:** Avança para frente $\rightarrow$ **Soma 1 em Y** (`y++`)
-* **Andar para o Sul:** Anda para trás $\rightarrow$ **Subtrai 1 em Y** (`y--`)
+* **Andar para o Norte:** Avança para cima $\rightarrow$ **Subtrai 1 em Y** (`y--`)
+* **Andar para o Sul:** Avança para baixo $\rightarrow$ **Soma 1 em Y** (`y++`)
 * **Andar para o Leste:** Vira/anda para a direita $\rightarrow$ **Soma 1 em X** (`x++`)
 * **Andar para o Oeste:** Vira/anda para a esquerda $\rightarrow$ **Subtrai 1 em X** (`x--`)
 
