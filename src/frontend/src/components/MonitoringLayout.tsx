@@ -113,7 +113,6 @@ export function MonitoringLayout({
               <span className="shrink-0 text-lg">↺</span>
               {!isCollapsed && <span className="whitespace-nowrap">Histórico</span>}
             </button>
-
           </nav>
 
           {!isCollapsed ? (

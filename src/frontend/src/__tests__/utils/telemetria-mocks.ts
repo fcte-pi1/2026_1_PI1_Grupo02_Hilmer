@@ -64,6 +64,18 @@ export const mockConcluida: IndicadoresDesempenho = {
   ultimo_timestamp_ms: Date.now(),
 };
 
+export const mockFalha: IndicadoresDesempenho = {
+  ...mockEmAndamento,
+  bateria_atual: 58.4,
+  bateria_final: 58.4,
+  velocidade_media: 31.25,
+  tempo_decorrido_ms: 97890,
+  tempo_final_ms: 97890,
+  status_corrida: "falha",
+  sucesso: false,
+  ultimo_timestamp_ms: Date.now(),
+};
+
 export const mockTemperaturaCritica: IndicadoresDesempenho = {
   ...mockEmAndamento,
   alerta_temperatura_critica: true,

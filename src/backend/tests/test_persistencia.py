@@ -16,7 +16,7 @@ PACOTE_INICIAL = {"tipo": 0, "timestamp_ms": 0, "dimensao": 4, "bateria": 100}
 PACOTE_MOV_1 = {"tipo": 1, "timestamp_ms": 1000, "x": 1, "y": 0, "w": 0}
 PACOTE_MOV_2 = {"tipo": 1, "timestamp_ms": 2000, "x": 2, "y": 0, "w": 0}
 PACOTE_ROTA = {"tipo": 2, "timestamp_ms": 3000, "rota": [[0, 0], [1, 0], [2, 0]]}
-PACOTE_FINAL = {"tipo": 3, "timestamp_ms": 5000, "sucesso": True, "v_med": 25.0, "bateria": 85}
+PACOTE_FINAL = {"tipo": 3, "timestamp_ms": 5000, "sucesso": True, "v_med": 0.25, "bateria": 85}
 
 class TestIniciarCorrida:
     def test_cria_labirinto_e_corrida(self, session: Session):
@@ -98,6 +98,17 @@ class TestPersistenciaFluxoTelemetria:
         client.post("/api/telemetria/pacote", json=PACOTE_MOV_1)
         client.post("/api/telemetria/pacote", json={**PACOTE_MOV_1, "timestamp_ms": 3000})
         assert len(session.exec(select(Celula).where(Celula.coordenada_x == 1).where(Celula.coordenada_y == 0)).all()) == 1
+
+    def test_movimentacao_persiste_paredes_decodificadas(self, client: TestClient, session: Session):
+        # w=5 → Norte (bit 0) + Leste (bit 2), conforme telemetria.md
+        client.post("/api/telemetria/pacote", json=PACOTE_INICIAL)
+        client.post("/api/telemetria/pacote", json={**PACOTE_MOV_1, "w": 5})
+        celula = session.exec(
+            select(Celula).where(Celula.coordenada_x == 1).where(Celula.coordenada_y == 0)
+        ).first()
+        assert celula is not None
+        assert celula.parede_norte is True and celula.parede_leste is True
+        assert celula.parede_sul is False and celula.parede_oeste is False
 
     def test_pacote_final_salva_tempo_total(self, client: TestClient, session: Session):
         idb = client.post("/api/telemetria/pacote", json=PACOTE_INICIAL).json()["estado"]["id_corrida_banco"]

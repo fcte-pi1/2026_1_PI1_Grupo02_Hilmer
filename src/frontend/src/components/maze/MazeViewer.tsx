@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTelemetria } from "../../hooks/useTelemetria";
-import { createMaze, isInsideMaze, markVisited, markWall, normalizePathToOrthogonal, hasWallBetween, findGoalArea } from "./mazeUtils";
+import { createMaze, isInsideMaze, markVisited, markWall, normalizePathToOrthogonal, findGoalArea } from "./mazeUtils";
 import type { Cell, Direction, Position } from "./types";
 import { CriticalAlertModal, type CriticalAlertType } from "../CriticalAlertModal";
 
@@ -49,14 +49,13 @@ type MazeViewerProps = {
 
 export default function MazeViewer({ 
   showHeader = true, 
-  showSidebar = true, 
   standalone = false,
   staticMaze,
   staticPath,
   staticGridSize,
   staticGoalPosition
 }: MazeViewerProps) {
-  const { filaMovimentacoes, limparFilaMovimentacoes, configSessao, indicadores, statusConexao, alertaSemSinal } =
+  const { filaMovimentacoes, limparFilaMovimentacoes, configSessao, indicadores, statusConexao } =
     useTelemetria();
   
   const isStatic = !!staticMaze;
@@ -69,7 +68,6 @@ export default function MazeViewer({
   const [path, setPath] = useState<Position[]>([]);
   
   const [viewMode, setViewMode] = useState<"live" | "history">(isStatic ? "history" : "live");
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [history, setHistory] = useState<
     {
       maze: Cell[][];
@@ -79,7 +77,7 @@ export default function MazeViewer({
       gridSize: number;
     }[]
   >([]);
-  const [historyIndex, setHistoryIndex] = useState(0);
+  const [historyIndex] = useState(0);
   const [sessionStatus, setSessionStatus] = useState<
     "idle" | "running" | "finished"
   >("idle");
@@ -124,7 +122,7 @@ export default function MazeViewer({
   const displayMaze = staticMaze || (snapshot ? snapshot.maze : maze);
   const displayPath = staticPath || (snapshot ? snapshot.path : path);
   const displayPosition = isStatic 
-    ? (displayPath && displayPath.length > 0 ? displayPath[0] : { row: 0, col: 0 }) 
+    ? (displayPath && displayPath.length > 0 ? displayPath[displayPath.length - 1] : { row: 0, col: 0 }) 
     : (snapshot ? snapshot.endPosition : position);
   const displayDirection = isStatic ? "east" : (snapshot ? snapshot.endDirection : direction);
   const displayGridSize = staticGridSize || (snapshot ? snapshot.gridSize : gridSize);
@@ -136,15 +134,13 @@ export default function MazeViewer({
         ? "min(70vmin, 520px)"
         : "min(60vmin, 360px)";
 
-  // Lógica de Trajeto: No modo estático (histórico), seguimos estritamente o array sem prepender origem (0,0)
+  // Lógica de Trajeto
   const rawPathPoints = isStatic ? [...(displayPath || [])] : [{ row: 0, col: 0 }, ...(displayPath || [])];
   
-  // No modo live, adicionamos a posição atual ao rastro se for diferente da última registrada
   if (!isStatic && rawPathPoints.length > 0 && !positionsEqual(rawPathPoints[rawPathPoints.length - 1], displayPosition)) {
     rawPathPoints.push(displayPosition);
   }
 
-  // Normaliza o trajeto e gera a string de pontos para o polyline
   const pathPoints = normalizePathToOrthogonal(rawPathPoints, displayMaze);
   const pathPointsString = pathPoints
     ?.filter(p => p !== undefined && p !== null)
@@ -169,7 +165,6 @@ export default function MazeViewer({
     setPath([]);
     setMaze(createMaze(size));
     setViewMode("live");
-    setIsHistoryOpen(false);
   }, [isStatic]);
 
   useEffect(() => {
@@ -236,7 +231,6 @@ export default function MazeViewer({
         nextPosition = { row: 0, col: 0 };
         nextDirection = "east";
         setViewMode("live");
-        setIsHistoryOpen(false);
       }
 
       const currentTarget = { 
@@ -290,11 +284,9 @@ export default function MazeViewer({
       },
       ...prev,
     ]);
-    setHistoryIndex(0);
     setSessionStatus("finished");
   }, [isStatic, statusCorrida, gridSize]);
 
-  // RENDERER: Helper para renderizar o grid comum
   const renderMazeGrid = (mazeData: Cell[][], currentPos: Position, trail: Position[], targetPos?: Position) => {
     if (!mazeData || !Array.isArray(mazeData)) return null;
     
@@ -305,7 +297,6 @@ export default function MazeViewer({
         const isCurrent = positionsEqual(cellPosition, currentPos);
         const isOnPath = trail?.some((step) => positionsEqual(step, cellPosition));
         
-        // Prioridade para o objetivo 1x1 estático
         const isGoal = targetPos 
           ? positionsEqual(targetPos, cellPosition)
           : goalAreaCells?.some((goalCell) => positionsEqual(goalCell, cellPosition));
@@ -400,6 +391,83 @@ export default function MazeViewer({
                 />
               </div>
             </div>
+
+            <footer className="mt-2 pt-4 border-t border-zinc-800 flex flex-wrap gap-x-6 gap-y-3 justify-center text-xs font-semibold tracking-wide text-zinc-400">
+              <span className="text-zinc-500 uppercase mr-1">Legenda:</span>
+              <div className="flex items-center gap-2">
+                <span className="h-3.5 w-3.5 rounded bg-[rgb(30,41,59)] border border-zinc-700" />
+                <span>Visitada</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3.5 w-3.5 rounded bg-[rgb(34,197,94)] border border-green-500" />
+                <span>Mapeada (Objetivo 2x2)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3.5 w-3.5 rounded bg-transparent border border-zinc-800 shadow-[inset_0_2px_0_0_rgb(234,179,8)]" />
+                <span>Parede Detectada</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-1 w-3 bg-[#a855f7] rounded-full" />
+                <span>Rastro</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <img
+                  src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
+                  alt="Pikachu Icon"
+                  className="h-5 w-5 object-contain"
+                />
+                <span>Pikachu (Atual)</span>
+              </div>
+            </footer>
+          </div>
+
+          <div className="w-full lg:w-96 flex flex-col gap-6">
+            <section className="rounded-3xl border border-zinc-800 bg-zinc-900/20 p-6 backdrop-blur-md shadow-lg flex-1">
+              <h2 className="text-lg font-semibold tracking-wide text-yellow-400 border-b border-zinc-800 pb-4">
+                Telemetria
+              </h2>
+
+              <div className="mt-6 space-y-6">
+                <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden">
+                  <span className="absolute right-4 top-4 text-2xl text-zinc-700">🎯</span>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Posição Atual</p>
+                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-white font-mono">({displayPosition.col}, {displayPosition.row})</p>
+                </div>
+
+                <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden">
+                  <span className="absolute right-4 top-4 text-2xl text-zinc-700">🧭</span>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Direção</p>
+                  <p className="mt-2 text-2xl font-extrabold tracking-tight text-white uppercase">
+                    {displayDirection === "north" ? "Norte (↑)" : displayDirection === "south" ? "Sul (↓)" : displayDirection === "east" ? "Leste (→)" : "Oeste (←)"}
+                  </p>
+                </div>
+
+                <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden">
+                  <span className="absolute right-4 top-4 text-2xl text-zinc-700">⚡</span>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Nível de Bateria</p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold tracking-tight text-white font-mono">{bateriaAtual !== null ? `${bateriaAtual.toFixed(1)}%` : "--%"}</span>
+                    {bateriaCritica && <span className="text-xs text-rose-400 font-bold animate-pulse">[CRÍTICA]</span>}
+                  </div>
+                  <div className="mt-3 w-full bg-zinc-800 rounded-full h-2">
+                    <div className={`h-2 rounded-full transition-all duration-300 ${bateriaCritica ? "bg-rose-500" : bateriaAtual !== null && bateriaAtual <= 50 ? "bg-yellow-500" : "bg-emerald-500"}`} style={{ width: `${bateriaAtual ?? 0}%` }} />
+                  </div>
+                </div>
+
+                <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden">
+                  <span className="absolute right-4 top-4 text-2xl text-zinc-700">⏱️</span>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Tempo Decorrido</p>
+                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-white font-mono">{formatarTempo(tempoExibido)}</p>
+                  <p className="mt-1 text-[10px] text-zinc-500 leading-none">{sessionStatus === "finished" ? "Tempo fixado de corrida concluída" : "Atualizado em tempo real"}</p>
+                </div>
+
+                <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden">
+                  <span className="absolute right-4 top-4 text-2xl text-zinc-700">📈</span>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Velocidade Média</p>
+                  <p className="mt-2 text-2xl font-extrabold tracking-tight text-white font-mono">{velocidadeMedia !== null ? `${velocidadeMedia.toFixed(2)} cm/s` : "-- cm/s"}</p>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </div>

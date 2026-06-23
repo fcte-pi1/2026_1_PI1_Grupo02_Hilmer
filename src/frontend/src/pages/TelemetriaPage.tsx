@@ -1,6 +1,9 @@
 import MazeViewer from "../components/maze/MazeViewer";
 import { TopIndicators, ControlPanel, TelemetryAlerts } from "../components/DashboardIndicadores";
 import { MonitoringLayout } from "../components/MonitoringLayout";
+import { EstadoCorridaCard } from "../components/estados/EstadoCorridaCard";
+import { HistoricoEstadoCard } from "../components/estados/HistoricoEstadoCard";
+import { useHistoricoEstados } from "../hooks/useEstados";
 import { useTelemetria } from "../hooks/useTelemetria";
 import { ChevronRight, History } from "lucide-react";
 
@@ -16,6 +19,7 @@ export function TelemetriaPage({
   onNavigateCorridas,
 }: TelemetriaPageProps) {
   const telemetria = useTelemetria();
+  const historicoEstados = useHistoricoEstados(telemetria.indicadores);
 
   return (
     <MonitoringLayout
@@ -40,6 +44,10 @@ export function TelemetriaPage({
           {/* Sidebar: Controls + Logs */}
           <aside className="w-full lg:w-64 xl:w-72 flex flex-col gap-6 flex-shrink-0">
             <ControlPanel telemetria={telemetria} />
+
+            <EstadoCorridaCard indicadores={telemetria.indicadores}/>
+
+            <HistoricoEstadoCard historico={historicoEstados}/>
 
             {/* Trajectory Logs Section */}
             <section className="rounded-2xl bg-zinc-900/40 border border-zinc-800 p-5 shadow-sm">

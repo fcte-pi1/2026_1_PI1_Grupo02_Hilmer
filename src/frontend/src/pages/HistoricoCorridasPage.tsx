@@ -284,7 +284,7 @@ export function HistoricoCorridasPage({
                         </td>
                         <td className="px-6 py-5 text-zinc-400">
                           {corrida.velocidade_media != null
-                            ? `${corrida.velocidade_media.toFixed(2)} cm/s`
+                            ? `${corrida.velocidade_media.toFixed(2)} m/s`
                             : "--"}
                         </td>
                         <td className="px-6 py-5">

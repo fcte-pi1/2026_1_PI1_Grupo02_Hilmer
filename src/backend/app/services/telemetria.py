@@ -248,7 +248,7 @@ def calcular_velocidade_segmento(
     y2: float,
     t2_ms: int,
 ) -> float | None:
-    """Calcula a velocidade (cm/s) entre dois pontos do percurso.
+    """Calcula a velocidade (m/s) entre dois pontos do percurso.
 
     Args:
         x1, y1: posição anterior (em células).
@@ -257,7 +257,7 @@ def calcular_velocidade_segmento(
         t2_ms: timestamp atual (ms).
 
     Returns:
-        Velocidade em cm/s, ou ``None`` se deltaT ≤ 0.
+        Velocidade em m/s, ou ``None`` se deltaT ≤ 0.
     """
     delta_t_s = (t2_ms - t1_ms) / 1000.0
     if delta_t_s <= 0:
@@ -265,7 +265,7 @@ def calcular_velocidade_segmento(
 
     distancia_celulas = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
     distancia_cm = distancia_celulas * CELL_SIZE_CM
-    velocidade = distancia_cm / delta_t_s
+    velocidade = distancia_cm / delta_t_s / 100
 
     return max(velocidade, 0.0)
 
@@ -311,7 +311,7 @@ def atualizar_indicadores(
     )
 
     if not resultado.valido:
-        logger.warning("Pacote inválido recebido: %s", resultado.erros)
+        # Log removido daqui — centralizado no router para evitar duplicidade
         novo_estado.alerta_dado_invalido = True
         return novo_estado
 
@@ -386,15 +386,15 @@ def _processar_pacote_movimentacao(
                 + (y_atual - estado._ultima_posicao_y) ** 2
             )
             distancia_cm = distancia_celulas * CELL_SIZE_CM
-            velocidade_segmento = max(distancia_cm / delta_t_s, 0.0)
+            velocidade_segmento = max(distancia_cm / delta_t_s / 100, 0.0)
 
             estado._distancia_total_cm += distancia_cm
             estado._tempo_total_movimento_s += delta_t_s
 
-            # Velocidade média acumulada
+            # Velocidade média acumulada (m/s)
             if estado._tempo_total_movimento_s > 0:
                 estado.velocidade_media = (
-                    estado._distancia_total_cm / estado._tempo_total_movimento_s
+                    estado._distancia_total_cm / estado._tempo_total_movimento_s / 100
                 )
 
     _atualizar_alerta_parada_inesperada(
@@ -418,7 +418,7 @@ def _processar_pacote_final(
     estado.tempo_decorrido_ms = pacote["timestamp_ms"]
     estado.ultimo_timestamp_ms = pacote["timestamp_ms"]
 
-    # Velocidade média final consolidada (do firmware)
+    # Velocidade média final consolidada (do firmware, em m/s)
     estado.velocidade_media = pacote["v_med"]
 
     # Bateria final

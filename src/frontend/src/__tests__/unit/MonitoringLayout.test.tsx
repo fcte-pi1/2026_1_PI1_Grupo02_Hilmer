@@ -6,7 +6,6 @@ describe("MonitoringLayout", () => {
   const defaultProps = {
     activeView: "telemetria" as const,
     onNavigateTelemetria: vi.fn(),
-    onNavigateLabirinto: vi.fn(),
     onNavigateCorridas: vi.fn(),
     eyebrow: "Monitoring",
     title: "Dashboard",
@@ -49,14 +48,12 @@ describe("MonitoringLayout", () => {
   });
 
   it("chama funcoes de navegacao", () => {
-    const onNavLabirinto = vi.fn();
     const onNavTelemetria = vi.fn();
     const onNavCorridas = vi.fn();
 
     render(
       <MonitoringLayout 
         {...defaultProps} 
-        onNavigateLabirinto={onNavLabirinto}
         onNavigateTelemetria={onNavTelemetria}
         onNavigateCorridas={onNavCorridas}
       >
@@ -64,10 +61,6 @@ describe("MonitoringLayout", () => {
       </MonitoringLayout>
     );
     
-    const labirintoBtn = screen.getByTitle("Labirinto");
-    fireEvent.click(labirintoBtn);
-    expect(onNavLabirinto).toHaveBeenCalled();
-
     const corridasBtn = screen.getByTitle("Histórico");
     fireEvent.click(corridasBtn);
     expect(onNavCorridas).toHaveBeenCalled();

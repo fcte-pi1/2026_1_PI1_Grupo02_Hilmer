@@ -5,7 +5,8 @@ import { HistoricoCorridasPage } from './pages/HistoricoCorridasPage';
 import Session from './components/Session';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'session' | 'telemetria' | 'corridas'>('session');
+  const [currentView, setCurrentView] = useState<
+    'session' | 'telemetria' | 'corridas'>('session');
 
   return (
     <main className="app">

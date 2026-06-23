@@ -55,56 +55,26 @@ def _set_corrida_atual(
     _estado_atual = estado
 
 
-@router.websocket("/ws")
-async def websocket_telemetria(websocket: WebSocket):
+# ---------------------------------------------------------------------------
+# Função central de processamento de pacotes (reutilizada via HTTP e WS)
+# ---------------------------------------------------------------------------
+
+
+async def _processar_pacote(
+    pacote: dict,
+    session: Session,
+    origem: str = "http",
+) -> dict:
+    """Processa um pacote de telemetria e retorna o estado processado.
+
+    Args:
+        pacote: dicionário com dados do pacote.
+        session: sessão do banco de dados.
+        origem: "http" ou "websocket" (para logging).
+
+    Returns:
+        Dicionário com o resultado do processamento.
     """
-    Endpoint de WebSocket para o dashboard.
-    O front-end se conecta aqui para ouvir eventos em tempo real.
-    """
-    await manager.connect(websocket)
-    handshake = {
-        "type": "HANDSHAKE",
-        "data": {
-            "status": "connected",
-            "server_time": datetime.now(UTC).isoformat(),
-            "version": "0.1.0",
-        }
-    }
-    await manager.send_json_to_client(handshake, websocket)
-
-    # Enviar status da corrida ativa (se houver) para o novo cliente
-    id_corrida = _id_corrida_atual
-    if id_corrida is not None:
-        status = connection_monitor.get_status(id_corrida) or "online"
-        await manager.send_json_to_client({
-            "type": "CONNECTION_STATUS",
-            "data": {
-                "id_corrida": id_corrida,
-                "status": status,
-                "message": "Status recuperado ao conectar"
-            }
-        }, websocket)
-
-    try:
-        while True:
-            await websocket.receive_json()
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-
-
-@router.post("/pacote", status_code=201)
-async def receber_pacote_telemetria(
-    payload: Dict[str, Any],
-    session: Session = Depends(get_session)
-):
-    """
-    Endpoint HTTP para o Micromouse enviar pacotes de telemetria.
-    Recebe o pacote, atualiza o estado em memória e notifica o Dashboard.
-
-    O ESP32 não envia ``id_corrida``; o backend gerencia uma corrida
-    única ativa por vez, mantendo o ``id_corrida`` real do banco em memória.
-    """
-    pacote = payload
     tipo = identificar_tipo_pacote(pacote)
 
     # --- Validação inicial ---
@@ -120,7 +90,15 @@ async def receber_pacote_telemetria(
     if not resultado.valido:
         erros_str = ", ".join(resultado.erros)
         logger.warning(
-            "Pacote REJEITADO por falha na validação: %s", erros_str)
+            "Pacote REJEITADO por falha na validação",
+            extra={
+                "evento": "pacote_rejeitado",
+                "tipo_pacote": tipo.value if tipo else None,
+                "erros": resultado.erros,
+                "id_corrida": _id_corrida_atual,
+                "origem": origem,
+            },
+        )
 
         await manager.send_json_to_all_clients({
             "type": "ERROR",
@@ -173,7 +151,6 @@ async def receber_pacote_telemetria(
         # 5. Salvar id_corrida em memória e registrar no monitor
         _set_corrida_atual(corrida.id_corrida, novo_estado)
         await connection_monitor.registrar_pacote(corrida.id_corrida)
-    # Se não for pacote inicial
     else:
         # Para pacotes não-iniciais, deve existir uma corrida ativa.
         # Se o servidor reiniciou, recuperar a corrida ativa do banco.
@@ -205,6 +182,7 @@ async def receber_pacote_telemetria(
     if tipo == TipoPacote.MOVIMENTACAO and novo_estado.id_corrida_banco is not None:
         x = pacote.get("x")
         y = pacote.get("y")
+        w = pacote.get("w")
         if x is not None and y is not None:
             _persistir_passo_percurso(
                 session,
@@ -212,6 +190,7 @@ async def receber_pacote_telemetria(
                 x=float(x),
                 y=float(y),
                 tipo_percurso="exploratorio",
+                paredes=int(w) if w is not None else None,
             )
             if not commit_realizado:
                 _persistir_novos_alertas(session, estado_anterior, novo_estado)
@@ -301,6 +280,7 @@ async def receber_pacote_telemetria(
             "type": "ATUALIZACAO_TELEMETRIA",
             "data": estado_dict
         }
+
     if tipo == TipoPacote.MOVIMENTACAO:
         evento_movimentacao = {
             "type": "MOVIMENTACAO",
@@ -315,11 +295,117 @@ async def receber_pacote_telemetria(
         await manager.send_json_to_all_clients(evento_movimentacao)
 
     await manager.send_json_to_all_clients(evento)
+
+    # --- ACK de confirmação ---
+    await manager.send_json_to_all_clients({
+        "type": "ACK",
+        "data": {
+            "tipo": tipo.value,
+            "timestamp_ms": pacote.get("timestamp_ms"),
+            "id_corrida": _id_corrida_atual,
+        },
+    })
+
     if tipo in (TipoPacote.FINAL, TipoPacote.ALERTA_TEMPERATURA):
         id_corrida_encerrada = _id_corrida_atual
         connection_monitor.remover_corrida(id_corrida_encerrada)
         _set_corrida_atual(None, None)
+
     return {"message": "Pacote processado com sucesso", "estado": estado_dict}
+
+
+# ---------------------------------------------------------------------------
+# Endpoint HTTP para o Micromouse
+# ---------------------------------------------------------------------------
+
+
+@router.post("/pacote", status_code=201)
+async def receber_pacote_telemetria(
+    payload: Dict[str, Any],
+    session: Session = Depends(get_session)
+):
+    """
+    Endpoint HTTP para o Micromouse enviar pacotes de telemetria.
+    Recebe o pacote, atualiza o estado em memória e notifica o Dashboard.
+
+    O ESP32 não envia ``id_corrida``; o backend gerencia uma corrida
+    única ativa por vez, mantendo o ``id_corrida`` real do banco em memória.
+    """
+    return await _processar_pacote(payload, session, origem="http")
+
+
+# ---------------------------------------------------------------------------
+# Endpoint WebSocket (bidirecional)
+# ---------------------------------------------------------------------------
+
+
+@router.websocket("/ws")
+async def websocket_telemetria(websocket: WebSocket):
+    """
+    Endpoint de WebSocket para o dashboard e para o Micromouse.
+
+    Funcionalidades:
+    1. Dashboard se conecta para OUVIR eventos em tempo real.
+    2. Micromouse pode ENVIAR pacotes via mensagem ``{"type": "PACOTE", "data": {...}}``
+       para reduzir latência (evitando HTTP POST).
+
+    Fluxo:
+    - Dashboard: apenas recebe eventos (broadcast).
+    - Micromouse: envia ``{"type": "PACOTE", "data": {...}}`` e recebe ACK.
+    """
+    await manager.connect(websocket)
+    handshake = {
+        "type": "HANDSHAKE",
+        "data": {
+            "status": "connected",
+            "server_time": datetime.now(UTC).isoformat(),
+            "version": "0.1.0",
+        }
+    }
+    await manager.send_json_to_client(handshake, websocket)
+
+    # Enviar status da corrida ativa (se houver) para o novo cliente
+    id_corrida = _id_corrida_atual
+    if id_corrida is not None:
+        status = connection_monitor.get_status(id_corrida) or "online"
+        await manager.send_json_to_client({
+            "type": "CONNECTION_STATUS",
+            "data": {
+                "id_corrida": id_corrida,
+                "status": status,
+                "message": "Status recuperado ao conectar"
+            }
+        }, websocket)
+
+    from ..database import get_session as _get_db_session
+    db_session = next(_get_db_session())
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+
+            if isinstance(data, dict) and data.get("type") == "PACOTE":
+                pacote = data.get("data", {})
+                try:
+                    resultado = await _processar_pacote(pacote, db_session, origem="websocket")
+                    await manager.send_json_to_client({
+                        "type": "WS_ACK",
+                        "data": resultado,
+                    }, websocket)
+                except HTTPException as exc:
+                    await manager.send_json_to_client({
+                        "type": "WS_ERROR",
+                        "data": exc.detail,
+                    }, websocket)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    finally:
+        db_session.close()
+
+
+# ---------------------------------------------------------------------------
+# Funções auxiliares
+# ---------------------------------------------------------------------------
 
 
 async def _abortar_corridas_no_banco(session: Session) -> list[int]:
@@ -369,6 +455,7 @@ def _recuperar_corrida_ativa(session: Session) -> Corrida | None:
     return session.exec(
         select(Corrida).where(Corrida.status_corrida == StatusCorrida.EM_ANDAMENTO)
     ).first()
+
 
 def _estado_to_dict(estado: IndicadoresDesempenho) -> dict:
     """Converte o estado dos indicadores para dicionário serializável."""
@@ -421,26 +508,41 @@ def _persistir_novos_alertas(
     return True
 
 
+def _decodificar_paredes(w: int) -> dict:
+    """Decodifica o bitmask de paredes (campo ``w``) conforme telemetria.md.
+
+    Norte = bit 0 (1), Sul = bit 1 (2), Leste = bit 2 (4), Oeste = bit 3 (8).
+    """
+    return {
+        "parede_norte": bool(w & 1),
+        "parede_sul": bool(w & 2),
+        "parede_leste": bool(w & 4),
+        "parede_oeste": bool(w & 8),
+    }
+
+
 def _persistir_passo_percurso(
     session: Session,
     id_corrida: int,
     x: float,
     y: float,
     tipo_percurso: str = "exploratorio",
+    paredes: int | None = None,
 ) -> None:
     """Persiste um passo do percurso para a posição (x, y) do Micromouse.
 
     Reutiliza a Célula existente para aquela coordenada+labirinto, ou cria
-    uma nova (com paredes nulas) se for a primeira vez que o robô visita a posição.
+    uma nova se for a primeira vez que o robô visita a posição. Quando
+    ``paredes`` (bitmask ``w``) é fornecido, grava as paredes descobertas.
     """
-    # Recupera o id_labirinto a partir da corrida
     corrida = session.get(Corrida, id_corrida)
     if corrida is None:
         logger.warning(
             "_persistir_passo_percurso: corrida %d não encontrada.", id_corrida)
         return
 
-    # Encontra ou cria a Célula correspondente à posição
+    paredes_dict = _decodificar_paredes(paredes) if paredes is not None else None
+
     celula = session.exec(
         select(Celula)
         .where(Celula.coordenada_x == int(x))
@@ -453,11 +555,15 @@ def _persistir_passo_percurso(
             coordenada_x=int(x),
             coordenada_y=int(y),
             id_labirinto=corrida.id_labirinto,
+            **(paredes_dict or {}),
         )
         session.add(celula)
-        session.flush()  # Garante id_celula antes de criar Percurso
+        session.flush()
+    elif paredes_dict is not None:
+        for campo, valor in paredes_dict.items():
+            setattr(celula, campo, valor)
+        session.add(celula)
 
-    # Registra passagem pelo passo do percurso
     passo = Percurso(
         id_celula=celula.id_celula,
         id_corrida=id_corrida,

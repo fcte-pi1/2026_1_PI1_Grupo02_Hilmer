@@ -58,7 +58,7 @@ export const TopIndicators: React.FC<{ telemetria: UseTelemetriaReturn }> = ({ t
 
       <div data-testid="indicador-velocidade" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
         <span className="text-[10px] sm:text-[11px] uppercase font-bold text-zinc-500 tracking-wider">Velocidade Média</span>
-        <span className="text-lg sm:text-2xl font-mono font-bold text-white mt-2">{velocidadeMedia !== null ? `${velocidadeMedia.toFixed(1)} cm/s` : "--"}</span>
+        <span className="text-lg sm:text-2xl font-mono font-bold text-white mt-2">{velocidadeMedia !== null ? `${velocidadeMedia.toFixed(2)} m/s` : "--"}</span>
       </div>
 
       <div data-testid="indicador-tempo" className="bg-surface border border-border rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">

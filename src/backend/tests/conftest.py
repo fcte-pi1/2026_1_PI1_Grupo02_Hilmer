@@ -33,12 +33,14 @@ def setup_test_db():
     Garante que o banco de teste esteja rodando e as tabelas criadas.
     - Fora do Docker: sobe o container db_test via docker compose.
     - Dentro do Docker: o db_test já está disponível na rede Docker.
+    Ao final da sessão, remove o container db_test para não deixar
+    a rede do compose ocupada fora do perfil de testes.
     """
     if not _INSIDE_DOCKER:
         print("\nIniciando container de banco de dados de teste...")
         try:
             subprocess.run(
-                ["docker", "compose", "--profile", "test", "up", "-d", "db_test"],
+                ["docker", "compose", "--profile", "test", "up", "-d", "--build", "db_test"],
                 check=True,
                 timeout=30,
             )
@@ -63,6 +65,19 @@ def setup_test_db():
 
     SQLModel.metadata.create_all(engine)
     engine.dispose()
+
+    yield
+
+    if not _INSIDE_DOCKER:
+        try:
+            # Remove o db_test para evitar sobra de rede/container após pytest.
+            subprocess.run(
+                ["docker", "compose", "rm", "-sf", "db_test"],
+                check=False,
+                timeout=30,
+            )
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+            pass
 
 
 
