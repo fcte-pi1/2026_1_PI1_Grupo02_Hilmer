@@ -2,8 +2,8 @@
 """
 Simulador de exploração DFS do Micromouse em um labirinto NxN.
 
-Gera um labirinto aleatório com paredes internas e um objetivo 2×2
-posicionado aleatoriamente, depois executa uma exploração DFS
+Gera um labirinto aleatório com paredes internas e um objetivo central 2×2,
+depois executa uma exploração DFS
 (Depth-First Search) célula a célula, enviando cada passo via HTTP
 POST para o backend — exatamente como a ESP32 faria.
 
@@ -50,46 +50,38 @@ WEST  = 8   # bit 3
 
 OPPOSITE = {NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST}
 
-# Deslocamento (dx, dy) no sistema de grade UI (Top-Left):
+# Deslocamento (dx, dy) no mesmo sistema cartesiano usado pelo firmware:
 #   - x cresce para a direita (Leste)
-#   - y cresce para baixo (Sul)
+#   - y cresce para cima (Norte)
 DELTA = {
-    NORTH: (0, -1),  # Norte = y-- (sobe)
-    SOUTH: (0,  1),  # Sul   = y++ (desce)
+    NORTH: (0,  1),  # Norte = y++
+    SOUTH: (0, -1),  # Sul   = y--
     EAST:  (1,  0),  # Leste = x++ (direita)
     WEST:  (-1, 0),  # Oeste = x-- (esquerda)
 }
 
 
 # ---------------------------------------------------------------------------
-# Objetivo 2×2 randomizado
+# Região objetivo 2×2 central
 # ---------------------------------------------------------------------------
 
-def choose_goal_2x2(size: int) -> list[tuple[int, int]]:
-    """Escolhe aleatoriamente um bloco 2×2 como objetivo no labirinto.
-    """
-    # Para o objetivo, evitamos as bordas extremas.
-    # gx, gy variam de 1 a size-2.
-    candidates = []
-    for gx in range(1, size - 1):
-        for gy in range(1, size - 1):
-            cells = [(gx, gy), (gx + 1, gy), (gx, gy + 1), (gx + 1, gy + 1)]
-            # O bloco não pode incluir a partida (0, 0)
-            if (0, 0) not in cells:
-                candidates.append(cells)
-                
-    if not candidates:
-        gx, gy = size // 2, size // 2
-        return [(gx, gy), (gx + 1, gy), (gx, gy + 1), (gx + 1, gy + 1)]
-        
-    return random.choice(candidates)
+def central_goal_region(size: int) -> list[tuple[int, int]]:
+    """Retorna a região objetivo central 2×2 do labirinto Micromouse."""
+    lower = size // 2 - 1
+    upper = size // 2
+    return [
+        (lower, lower),
+        (upper, lower),
+        (lower, upper),
+        (upper, upper),
+    ]
 
 
-def open_goal_walls(walls: list[list[int]], goal_cells: list[tuple[int, int]]) -> None:
-    """Remove as paredes internas entre as 4 células do objetivo 2×2.
+def open_goal_walls(walls: list[list[int]], goal_region: list[tuple[int, int]]) -> None:
+    """Remove as paredes internas entre as 4 células da região objetivo 2×2.
     """
-    goal_set = set(goal_cells)
-    for (x, y) in goal_cells:
+    goal_set = set(goal_region)
+    for (x, y) in goal_region:
         for d, (dx, dy) in DELTA.items():
             nx, ny = x + dx, y + dy
             if (nx, ny) in goal_set:
@@ -108,7 +100,7 @@ def generate_maze(size: int) -> list[list[int]]:
     Retorna uma matriz size×size onde cada célula contém um bitmask
     das paredes presentes (15 = todas as paredes).
 
-    A indexação é walls[y][x] com y=0 no canto SUPERIOR (Top-Left).
+    A indexação é walls[y][x] com y=0 no canto inferior, igual ao firmware.
     """
     # Começa com todas as paredes fechadas
     walls = [[NORTH | SOUTH | EAST | WEST for _ in range(size)] for _ in range(size)]
@@ -132,28 +124,29 @@ def generate_maze(size: int) -> list[list[int]]:
 
 
 # ---------------------------------------------------------------------------
-# Exploração DFS com parada no objetivo
+# Exploração DFS do mapa inteiro
 # ---------------------------------------------------------------------------
 
 def dfs_explore(
     walls: list[list[int]],
     size: int,
-    goal_cells: list[tuple[int, int]],
+    goal_region: list[tuple[int, int]],
 ) -> tuple[list[tuple[int, int, int]], bool]:
-    """Simula exploração DFS como o Micromouse faria.
+    """Simula exploração DFS completa para mapear o labirinto inteiro.
     """
-    goal_set = set(goal_cells)
+    goal_set = set(goal_region)
     visited = [[False] * size for _ in range(size)]
     steps: list[tuple[int, int, int]] = []
     reached_goal = False
 
     def explore(x: int, y: int) -> None:
         nonlocal reached_goal
+
         visited[y][x] = True
         w = walls[y][x]
         steps.append((x, y, w))
 
-        # Chegou no objetivo?
+        # Chegou em qualquer célula da região objetivo?
         if (x, y) in goal_set:
             reached_goal = True
 
@@ -180,11 +173,11 @@ def bfs_shortest_path(
     walls: list[list[int]],
     size: int,
     start: tuple[int, int],
-    goal_cells: list[tuple[int, int]],
+    goal_region: list[tuple[int, int]],
 ) -> list[list[int]]:
-    """Calcula o caminho mais curto de start até o objetivo.
+    """Calcula o caminho mais curto de start até qualquer célula da região objetivo.
     """
-    goal_set = set(goal_cells)
+    goal_set = set(goal_region)
     visited = [[False] * size for _ in range(size)]
     parent: dict[tuple[int, int], tuple[int, int] | None] = {}
 
@@ -231,13 +224,13 @@ def bfs_shortest_path(
 def print_maze_ascii(
     walls: list[list[int]],
     size: int,
-    goal_cells: list[tuple[int, int]],
+    goal_region: list[tuple[int, int]],
 ) -> None:
     """Imprime o labirinto no terminal com representação ASCII (Top-Down).
     """
-    goal_set = set(goal_cells)
+    goal_set = set(goal_region)
 
-    for y in range(size):
+    for y in range(size - 1, -1, -1):
         # Linha superior (paredes norte)
         line_top = ""
         for x in range(size):
@@ -269,11 +262,11 @@ def print_maze_ascii(
             line_mid += " "
         print(f"   {line_mid}")
 
-    # Linha inferior (paredes sul da última linha)
+    # Linha inferior visual: paredes sul da linha cartesiana y=0.
     line_bottom = ""
     for x in range(size):
         line_bottom += "+"
-        if walls[size - 1][x] & SOUTH:
+        if walls[0][x] & SOUTH:
             line_bottom += "---"
         else:
             line_bottom += "   "
@@ -337,37 +330,37 @@ def main():
     print("🏗  Gerando labirinto...")
     maze_walls = generate_maze(size)
 
-    # 2. Escolher objetivo 2×2 aleatório
-    goal_cells = choose_goal_2x2(size)
-    gx_min = min(c[0] for c in goal_cells)
-    gy_min = min(c[1] for c in goal_cells)
+    # 2. Definir região objetivo 2×2 central
+    goal_region = central_goal_region(size)
+    gx_min = min(c[0] for c in goal_region)
+    gy_min = min(c[1] for c in goal_region)
     print(f"   ✓ Labirinto {size}×{size} gerado.")
-    print(f"   🎯 Objetivo 2×2 em: ({gx_min},{gy_min})–({gx_min+1},{gy_min+1})")
-    print(f"      Células: {goal_cells}")
+    print(f"   🎯 Região objetivo 2×2 em: ({gx_min},{gy_min})–({gx_min+1},{gy_min+1})")
+    print(f"      Células: {goal_region}")
 
-    # 3. Abrir paredes internas do objetivo
-    open_goal_walls(maze_walls, goal_cells)
-    print(f"   ✓ Paredes internas do objetivo removidas.")
+    # 3. Abrir paredes internas da região objetivo
+    open_goal_walls(maze_walls, goal_region)
+    print(f"   ✓ Paredes internas da região objetivo removidas.")
     print()
 
     if args.show_maze:
         print("🗺  Labirinto gerado:")
-        print_maze_ascii(maze_walls, size, goal_cells)
+        print_maze_ascii(maze_walls, size, goal_region)
         print()
 
-    # 4. Simular exploração DFS (para ao atingir o objetivo)
+    # 4. Simular exploração DFS do mapa inteiro
     print("🔍 Calculando rota de exploração (DFS)...")
-    steps, reached_goal = dfs_explore(maze_walls, size, goal_cells)
+    steps, reached_goal = dfs_explore(maze_walls, size, goal_region)
     unique_cells = len(set((x, y) for x, y, _ in steps))
     status_str = "✓ OBJETIVO ALCANÇADO" if reached_goal else "✗ Objetivo NÃO alcançado"
     print(f"   {status_str}")
-    print(f"   {len(steps)} movimentos, {unique_cells} células únicas visitadas.")
+    print(f"   {len(steps)} movimentos, {unique_cells} células únicas mapeadas.")
     print()
 
     # 5. Calcular rota otimizada (BFS)
     print("🧠 Calculando rota otimizada (BFS)...")
-    # A rota ótima é o caminho mais curto de (0,0) até a entrada do objetivo 2x2
-    optimal_route = bfs_shortest_path(maze_walls, size, (0, 0), goal_cells)
+    # A rota ótima é o caminho mais curto de (0,0) até qualquer célula da região 2x2.
+    optimal_route = bfs_shortest_path(maze_walls, size, (0, 0), goal_region)
     print(f"   ✓ Rota ótima: {len(optimal_route)} passos.")
     print()
 
@@ -405,7 +398,7 @@ def main():
         progress = int((i + 1) / len(steps) * bar_len)
         bar = "█" * progress + "░" * (bar_len - progress)
 
-        in_goal = "🎯" if (x, y) in set(goal_cells) else "  "
+        in_goal = "🎯" if (x, y) in set(goal_region) else "  "
         print(f"\r   [{bar}] {i+1}/{len(steps)}  pos=({x:2d},{y:2d})  w={w:02d} {in_goal}", end="", flush=True)
         send_packet(pkt, f"MOV {i+1}")
         time.sleep(delay)
@@ -442,7 +435,7 @@ def main():
     else:
         print("   ✗ Corrida finalizada — objetivo não alcançado.")
     print()
-    print(f"🎉 Simulação concluída! {unique_cells}/{size*size} células exploradas.")
+    print(f"🎉 Simulação concluída! {unique_cells}/{size*size} células mapeadas.")
     print(f"   Rota ótima: {len(optimal_route)} passos.")
 
 

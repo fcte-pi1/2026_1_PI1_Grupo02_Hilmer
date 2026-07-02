@@ -8,10 +8,44 @@ import {
   markVisited,
   hasWallBetween,
   findGoalArea,
+  mazeToDisplayPosition,
+  displayToMazePosition,
 } from "../../components/maze/mazeUtils";
 import type { Position } from "../../components/maze/types";
 
 describe("mazeUtils", () => {
+  describe("coordinate conversion", () => {
+    it("converts firmware coordinates to display row/col", () => {
+      expect(mazeToDisplayPosition({ x: 0, y: 0 }, 4)).toEqual({ row: 3, col: 0 });
+      expect(mazeToDisplayPosition({ x: 0, y: 1 }, 4)).toEqual({ row: 2, col: 0 });
+      expect(mazeToDisplayPosition({ x: 2, y: 2 }, 4)).toEqual({ row: 1, col: 2 });
+    });
+
+    it("converts display row/col back to firmware coordinates", () => {
+      expect(displayToMazePosition({ row: 3, col: 0 }, 4)).toEqual({ x: 0, y: 0 });
+      expect(displayToMazePosition({ row: 2, col: 0 }, 4)).toEqual({ x: 0, y: 1 });
+      expect(displayToMazePosition({ row: 1, col: 2 }, 4)).toEqual({ x: 2, y: 2 });
+    });
+
+    it("maps the firmware mock optimized route to a bottom-left origin display path", () => {
+      const route = [
+        { x: 0, y: 0 },
+        { x: 0, y: 1 },
+        { x: 0, y: 2 },
+        { x: 1, y: 2 },
+        { x: 2, y: 2 },
+      ];
+
+      expect(route.map((point) => mazeToDisplayPosition(point, 4))).toEqual([
+        { row: 3, col: 0 },
+        { row: 2, col: 0 },
+        { row: 1, col: 0 },
+        { row: 1, col: 1 },
+        { row: 1, col: 2 },
+      ]);
+    });
+  });
+
   describe("createMaze", () => {
     it("should create a maze of given size with external walls", () => {
       const maze = createMaze(4);

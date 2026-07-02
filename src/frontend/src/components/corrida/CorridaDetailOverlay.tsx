@@ -3,7 +3,7 @@ import { X, Clock, Gauge, MapPin, Target, ChevronRight, Activity } from "lucide-
 import { obterCorrida } from "../../services/corrida";
 import type { CorridaDetailResponse, CelulaResponse } from "../../types/corrida";
 import type { Cell, Position } from "../maze/types";
-import { createMaze } from "../maze/mazeUtils";
+import { createMaze, mazeToDisplayPosition } from "../maze/mazeUtils";
 
 interface CorridaDetailOverlayProps {
   idCorrida: number;
@@ -17,7 +17,13 @@ export function buildStaticMazeFromCells(
 ): Cell[][] {
   const baseMaze = createMaze(gridSize);
   const cellsByCoordinate = new Map(
-    celulas.map((cell) => [`${cell.coordenada_x},${cell.coordenada_y}`, cell]),
+    celulas.map((cell) => {
+      const displayPosition = mazeToDisplayPosition(
+        { x: cell.coordenada_x, y: cell.coordenada_y },
+        gridSize,
+      );
+      return [`${displayPosition.col},${displayPosition.row}`, cell];
+    }),
   );
 
   return baseMaze.map((row, rowIndex) =>
@@ -30,7 +36,7 @@ export function buildStaticMazeFromCells(
       }
 
       return {
-        visited: routeCells.has(coordKey),
+        visited: routeCells.has(`${cell.coordenada_x},${cell.coordenada_y}`),
         walls: {
           north: cell.parede_norte,
           south: cell.parede_sul,
@@ -122,13 +128,11 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
     if (cell) {
       const x = cell.coordenada_x;
       const y = cell.coordenada_y;
-      
-      const row = y;
-      const col = x;
-      const key = `${col},${row}`;
+      const displayPosition = mazeToDisplayPosition({ x, y }, gridSize);
+      const key = `${x},${y}`;
       
       cellsInRouteMap.set(key, cell);
-      pathPositions.push({ row, col });
+      pathPositions.push(displayPosition);
     }
   });
 
@@ -136,7 +140,10 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
   const ultimoPasso = percursoParaExibir.length > 0 ? percursoParaExibir[percursoParaExibir.length - 1] : null;
   const ultimaCelulaData = ultimoPasso ? celulasList.find(c => c.id_celula === ultimoPasso.id_celula) : null;
   const staticGoalPosition: Position | undefined = ultimaCelulaData 
-    ? { row: ultimaCelulaData.coordenada_y, col: ultimaCelulaData.coordenada_x }
+    ? mazeToDisplayPosition(
+        { x: ultimaCelulaData.coordenada_x, y: ultimaCelulaData.coordenada_y },
+        gridSize,
+      )
     : undefined;
 
   const staticMaze = buildStaticMazeFromCells(gridSize, celulasList, cellsInRouteMap);
@@ -229,15 +236,14 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
                     row.map((cell, colIndex) => {
                       const x = colIndex;
                       const y = rowIndex;
-                      const coordKey = `${x},${y}`;
-                      const isInRoute = cellsInRouteMap.has(coordKey);
+                      const isInRoute = cell.visited;
 
-                      const wallShadows = isInRoute ? [
+                      const wallShadows = [
                         cell.walls.north ? `inset 0 2px 0 0 rgb(234 179 8)` : null,
                         cell.walls.south ? `inset 0 -2px 0 0 rgb(234 179 8)` : null,
                         cell.walls.east ? `inset -2px 0 0 0 rgb(234 179 8)` : null,
                         cell.walls.west ? `inset 2px 0 0 0 rgb(234 179 8)` : null,
-                      ].filter(Boolean).join(", ") : undefined;
+                      ].filter(Boolean).join(", ");
 
                       const isCurrent = pathPositions.length > 0 && 
                                        pathPositions[pathPositions.length - 1].row === y && 
@@ -252,7 +258,7 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
 
                       return (
                         <div
-                          key={coordKey}
+                          key={`${x},${y}`}
                           className="relative aspect-square border border-zinc-900/50 z-20"
                           style={{ backgroundColor, boxShadow: wallShadows || undefined }}
                         />

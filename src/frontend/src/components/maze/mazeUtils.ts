@@ -1,5 +1,28 @@
 import type { Cell, Direction, Position } from "./types";
 
+export interface MazeCoordinate {
+  x: number;
+  y: number;
+}
+
+// Firmware: origem no canto inferior esquerdo e y crescendo para o Norte.
+// Grid visual: row=0 no topo e row crescendo para baixo.
+export const mazeToDisplayPosition = (
+  coordinate: MazeCoordinate,
+  gridSize: number,
+): Position => ({
+  row: gridSize - 1 - coordinate.y,
+  col: coordinate.x,
+});
+
+export const displayToMazePosition = (
+  position: Position,
+  gridSize: number,
+): MazeCoordinate => ({
+  x: position.col,
+  y: gridSize - 1 - position.row,
+});
+
 // Cria o labirinto inicial com paredes externas fechadas.
 export const createMaze = (size: number): Cell[][] => {
   return Array.from({ length: size }, (_, row) =>

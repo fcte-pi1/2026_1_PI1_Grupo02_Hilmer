@@ -37,14 +37,14 @@ describe("buildStaticMazeFromCells", () => {
 
     const maze = buildStaticMazeFromCells(4, cells, routeCells);
 
-    expect(maze[0][0].visited).toBe(true);
-    expect(maze[0][0].walls).toEqual({
+    expect(maze[3][0].visited).toBe(true);
+    expect(maze[3][0].walls).toEqual({
       north: false,
       south: true,
       east: false,
       west: true,
     });
-    expect(maze[2][0].walls.north).toBe(true);
+    expect(maze[1][0].walls.north).toBe(true);
   });
 
   it("keeps default external walls for cells absent from the persisted maze", () => {

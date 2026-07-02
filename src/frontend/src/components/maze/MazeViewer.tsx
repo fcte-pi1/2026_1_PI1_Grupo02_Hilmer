@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTelemetria } from "../../hooks/useTelemetria";
-import { createMaze, isInsideMaze, markVisited, markWall, normalizePathToOrthogonal, findGoalArea } from "./mazeUtils";
+import {
+  createMaze,
+  displayToMazePosition,
+  findGoalArea,
+  isInsideMaze,
+  markVisited,
+  markWall,
+  mazeToDisplayPosition,
+  normalizePathToOrthogonal,
+} from "./mazeUtils";
 import type { Cell, Direction, Position } from "./types";
 import { CriticalAlertModal, type CriticalAlertType } from "../CriticalAlertModal";
 
@@ -33,6 +42,10 @@ const formatarTempo = (ms?: number | null): string => {
 };
 
 const DEFAULT_GRID_SIZE = 8;
+const DEFAULT_START_POSITION = mazeToDisplayPosition(
+  { x: 0, y: 0 },
+  DEFAULT_GRID_SIZE,
+);
 
 const positionsEqual = (a: Position | null | undefined, b: Position | null | undefined) =>
   !!a && !!b && a.row === b.row && a.col === b.col;
@@ -63,7 +76,9 @@ export default function MazeViewer({
   // Estado principal da corrida e do labirinto.
   const [gridSize, setGridSize] = useState(staticGridSize || DEFAULT_GRID_SIZE);
   const [maze, setMaze] = useState(() => staticMaze || createMaze(DEFAULT_GRID_SIZE));
-  const [position, setPosition] = useState<Position>({ row: 0, col: 0 });
+  const [position, setPosition] = useState<Position>(
+    staticGridSize ? mazeToDisplayPosition({ x: 0, y: 0 }, staticGridSize) : DEFAULT_START_POSITION,
+  );
   const [direction, setDirection] = useState<Direction>("east");
   const [path, setPath] = useState<Position[]>([]);
   
@@ -84,7 +99,9 @@ export default function MazeViewer({
   
   const stepRef = useRef(0);
   const sessionIdRef = useRef<number | null>(null);
-  const positionRef = useRef<Position>({ row: 0, col: 0 });
+  const positionRef = useRef<Position>(
+    staticGridSize ? mazeToDisplayPosition({ x: 0, y: 0 }, staticGridSize) : DEFAULT_START_POSITION,
+  );
   const mazeRef = useRef<Cell[][]>(maze);
   const pathRef = useRef<Position[]>(path);
   const directionRef = useRef<Direction>(direction);
@@ -121,11 +138,13 @@ export default function MazeViewer({
   // Computação Reativa e Segura dos dados de exibição
   const displayMaze = staticMaze || (snapshot ? snapshot.maze : maze);
   const displayPath = staticPath || (snapshot ? snapshot.path : path);
+  const displayGridSize = staticGridSize || (snapshot ? snapshot.gridSize : gridSize);
+  const startPosition = mazeToDisplayPosition({ x: 0, y: 0 }, displayGridSize);
   const displayPosition = isStatic 
-    ? (displayPath && displayPath.length > 0 ? displayPath[displayPath.length - 1] : { row: 0, col: 0 }) 
+    ? (displayPath && displayPath.length > 0 ? displayPath[displayPath.length - 1] : startPosition) 
     : (snapshot ? snapshot.endPosition : position);
   const displayDirection = isStatic ? "east" : (snapshot ? snapshot.endDirection : direction);
-  const displayGridSize = staticGridSize || (snapshot ? snapshot.gridSize : gridSize);
+  const displayMazeCoordinate = displayToMazePosition(displayPosition, displayGridSize);
   
   const displayGridDimension =
     displayGridSize === 16
@@ -135,7 +154,7 @@ export default function MazeViewer({
         : "min(60vmin, 360px)";
 
   // Lógica de Trajeto
-  const rawPathPoints = isStatic ? [...(displayPath || [])] : [{ row: 0, col: 0 }, ...(displayPath || [])];
+  const rawPathPoints = isStatic ? [...(displayPath || [])] : [startPosition, ...(displayPath || [])];
   
   if (!isStatic && rawPathPoints.length > 0 && !positionsEqual(rawPathPoints[rawPathPoints.length - 1], displayPosition)) {
     rawPathPoints.push(displayPosition);
@@ -156,11 +175,12 @@ export default function MazeViewer({
 
   const resetRunState = useCallback((size: number) => {
     if (isStatic) return;
+    const nextStartPosition = mazeToDisplayPosition({ x: 0, y: 0 }, size);
     stepRef.current = 0;
     sessionIdRef.current = null;
     setSessionStatus("idle");
-    setPosition({ row: 0, col: 0 });
-    positionRef.current = { row: 0, col: 0 };
+    setPosition(nextStartPosition);
+    positionRef.current = nextStartPosition;
     setDirection("east");
     setPath([]);
     setMaze(createMaze(size));
@@ -228,15 +248,12 @@ export default function MazeViewer({
         setSessionStatus("idle");
         nextMaze = createMaze(gridSize);
         nextPath = [];
-        nextPosition = { row: 0, col: 0 };
+        nextPosition = mazeToDisplayPosition({ x: 0, y: 0 }, gridSize);
         nextDirection = "east";
         setViewMode("live");
       }
 
-      const currentTarget = { 
-        row: mov.y, 
-        col: mov.x 
-      };
+      const currentTarget = mazeToDisplayPosition({ x: mov.x, y: mov.y }, gridSize);
       if (!isInsideMaze(currentTarget, gridSize)) continue;
 
       if (currentTarget.row === nextPosition.row - 1) nextDirection = "north";
@@ -252,7 +269,9 @@ export default function MazeViewer({
       stepRef.current += 1;
       nextMaze = markVisited(nextMaze, currentTarget, stepRef.current);
 
-      const last = nextPath.length > 0 ? nextPath[nextPath.length - 1] : { row: 0, col: 0 };
+      const last = nextPath.length > 0
+        ? nextPath[nextPath.length - 1]
+        : mazeToDisplayPosition({ x: 0, y: 0 }, gridSize);
       if (!positionsEqual(last, currentTarget)) {
         nextPath.push(currentTarget);
       }
@@ -431,7 +450,7 @@ export default function MazeViewer({
                 <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden">
                   <span className="absolute right-4 top-4 text-2xl text-zinc-700">🎯</span>
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Posição Atual</p>
-                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-white font-mono">({displayPosition.col}, {displayPosition.row})</p>
+                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-white font-mono">({displayMazeCoordinate.x}, {displayMazeCoordinate.y})</p>
                 </div>
 
                 <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden">
