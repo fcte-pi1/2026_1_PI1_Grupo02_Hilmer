@@ -63,6 +63,7 @@ const ESTADO_INICIAL: IndicadoresDesempenho = {
   alerta_dado_invalido: false,
   alerta_temperatura_critica: false,
   log_alertas: [],
+  temperatura_atual: null,
 };
 
 const CONFIG_SESSAO_INICIAL: ConfigSessao = {

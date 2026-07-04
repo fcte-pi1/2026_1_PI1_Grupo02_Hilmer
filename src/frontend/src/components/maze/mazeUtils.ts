@@ -166,11 +166,154 @@ export const hasWallBetween = (
  */
 export const normalizePathToOrthogonal = (
   points: Position[],
-  _maze?: Cell[][],
+  maze?: Cell[][],
 ): Position[] => {
-  // Para rotas otimizadas e histórico fiel, não tentamos 'adivinhar' caminhos intermediários.
-  // Retornamos os pontos originais para garantir que a linha siga exatamente o array.
-  return [...points];
+  if (points.length <= 1) return [...points];
+
+  const normalized: Position[] = [points[0]];
+  const areAdjacent = (p1: Position, p2: Position) =>
+    Math.abs(p1.row - p2.row) + Math.abs(p1.col - p2.col) === 1;
+  const routeBlocked = (p1: Position, corner: Position, p2: Position) =>
+    !!maze &&
+    areAdjacent(p1, corner) &&
+    areAdjacent(corner, p2) &&
+    (hasWallBetween(maze, p1, corner) || hasWallBetween(maze, corner, p2));
+
+  for (let i = 1; i < points.length; i += 1) {
+    const previous = normalized[normalized.length - 1];
+    const current = points[i];
+    const rowChanged = previous.row !== current.row;
+    const colChanged = previous.col !== current.col;
+
+    if (rowChanged && colChanged) {
+      const horizontalFirst = { row: previous.row, col: current.col };
+      const verticalFirst = { row: current.row, col: previous.col };
+
+      const horizontalFirstBlocked = routeBlocked(
+        previous,
+        horizontalFirst,
+        current,
+      );
+      const verticalFirstBlocked = routeBlocked(
+        previous,
+        verticalFirst,
+        current,
+      );
+
+      normalized.push(
+        horizontalFirstBlocked && !verticalFirstBlocked
+          ? verticalFirst
+          : horizontalFirst,
+      );
+    }
+
+    normalized.push(current);
+  }
+
+  return normalized;
+};
+
+const areAdjacent = (p1: Position, p2: Position) =>
+  Math.abs(p1.row - p2.row) + Math.abs(p1.col - p2.col) === 1;
+
+const samePosition = (p1: Position, p2: Position) =>
+  p1.row === p2.row && p1.col === p2.col;
+
+const canDrawAdjacentStep = (
+  maze: Cell[][] | undefined,
+  p1: Position,
+  p2: Position,
+) => areAdjacent(p1, p2) && (!maze || !hasWallBetween(maze, p1, p2));
+
+const canDrawStraightSegment = (
+  maze: Cell[][] | undefined,
+  from: Position,
+  to: Position,
+): boolean => {
+  if (samePosition(from, to)) return true;
+  if (from.row !== to.row && from.col !== to.col) return false;
+
+  const rowStep = Math.sign(to.row - from.row);
+  const colStep = Math.sign(to.col - from.col);
+  let cursor = from;
+
+  while (!samePosition(cursor, to)) {
+    const next = {
+      row: cursor.row + rowStep,
+      col: cursor.col + colStep,
+    };
+
+    if (!canDrawAdjacentStep(maze, cursor, next)) {
+      return false;
+    }
+
+    cursor = next;
+  }
+
+  return true;
+};
+
+const appendPoint = (segment: Position[], point: Position) => {
+  const last = segment[segment.length - 1];
+  if (!last || !samePosition(last, point)) {
+    segment.push(point);
+  }
+};
+
+export const buildDrawablePathSegments = (
+  points: Position[],
+  maze?: Cell[][],
+): Position[][] => {
+  if (points.length === 0) return [];
+
+  const segments: Position[][] = [[points[0]]];
+  let currentSegment = segments[0];
+
+  const startNewSegment = (point: Position) => {
+    currentSegment = [point];
+    segments.push(currentSegment);
+  };
+
+  for (let i = 1; i < points.length; i += 1) {
+    const previous = points[i - 1];
+    const current = points[i];
+
+    if (samePosition(previous, current)) {
+      appendPoint(currentSegment, current);
+      continue;
+    }
+
+    if (canDrawStraightSegment(maze, previous, current)) {
+      appendPoint(currentSegment, current);
+      continue;
+    }
+
+    const rowDelta = Math.abs(previous.row - current.row);
+    const colDelta = Math.abs(previous.col - current.col);
+    const isSingleCellDiagonal = rowDelta === 1 && colDelta === 1;
+
+    if (isSingleCellDiagonal) {
+      const horizontalFirst = { row: previous.row, col: current.col };
+      const verticalFirst = { row: current.row, col: previous.col };
+      const canUseHorizontalFirst =
+        canDrawAdjacentStep(maze, previous, horizontalFirst) &&
+        canDrawAdjacentStep(maze, horizontalFirst, current);
+      const canUseVerticalFirst =
+        canDrawAdjacentStep(maze, previous, verticalFirst) &&
+        canDrawAdjacentStep(maze, verticalFirst, current);
+
+      if (canUseHorizontalFirst || canUseVerticalFirst) {
+        const corner = canUseHorizontalFirst ? horizontalFirst : verticalFirst;
+        appendPoint(currentSegment, corner);
+        appendPoint(currentSegment, current);
+        continue;
+      }
+    }
+
+    startNewSegment(current);
+  }
+
+  return segments.filter((segment) => segment.length > 1);
 };
 
 // Encontra a área 2x2 que representa o objetivo.

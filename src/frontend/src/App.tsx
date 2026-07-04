@@ -7,24 +7,37 @@ import Session from './components/Session';
 function App() {
   const [currentView, setCurrentView] = useState<
     'session' | 'telemetria' | 'corridas'>('session');
+  const monitoringStarted = currentView !== 'session';
 
   return (
     <main className="app">
       <Toaster position="top-right" />
-      {currentView === 'session' ? (
+      {!monitoringStarted ? (
         <Session onNavigate={() => setCurrentView('telemetria')} />
-      ) : currentView === 'telemetria' ? (
-        <TelemetriaPage
-          activeView={currentView}
-          onNavigateTelemetria={() => setCurrentView('telemetria')}
-          onNavigateCorridas={() => setCurrentView('corridas')}
-        />
       ) : (
-        <HistoricoCorridasPage
-          activeView={currentView}
-          onNavigateTelemetria={() => setCurrentView('telemetria')}
-          onNavigateCorridas={() => setCurrentView('corridas')}
-        />
+        <>
+          <div
+            className={currentView === 'telemetria' ? 'block' : 'hidden'}
+            aria-hidden={currentView !== 'telemetria'}
+          >
+            <TelemetriaPage
+              activeView={currentView}
+              onNavigateTelemetria={() => setCurrentView('telemetria')}
+              onNavigateCorridas={() => setCurrentView('corridas')}
+            />
+          </div>
+
+          <div
+            className={currentView === 'corridas' ? 'block' : 'hidden'}
+            aria-hidden={currentView !== 'corridas'}
+          >
+            <HistoricoCorridasPage
+              activeView={currentView}
+              onNavigateTelemetria={() => setCurrentView('telemetria')}
+              onNavigateCorridas={() => setCurrentView('corridas')}
+            />
+          </div>
+        </>
       )}
     </main>
   );

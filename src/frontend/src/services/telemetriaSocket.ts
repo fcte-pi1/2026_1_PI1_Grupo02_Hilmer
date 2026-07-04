@@ -34,6 +34,11 @@ class TelemetriaSocket {
 
   /** Abre a conexão se ainda não houver uma ativa/conectando. */
   private connect = (): void => {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     if (
       this.ws &&
       (this.ws.readyState === WebSocket.OPEN ||
@@ -66,6 +71,7 @@ class TelemetriaSocket {
     ws.onclose = () => {
       this.ws = null;
       this.closeListeners.forEach((l) => l());
+      if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
       this.reconnectTimer = setTimeout(this.connect, RECONNECT_INTERVAL_MS);
     };
 

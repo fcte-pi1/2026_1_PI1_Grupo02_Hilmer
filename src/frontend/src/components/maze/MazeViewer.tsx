@@ -4,11 +4,11 @@ import {
   createMaze,
   displayToMazePosition,
   findGoalArea,
+  buildDrawablePathSegments,
   isInsideMaze,
   markVisited,
   markWall,
   mazeToDisplayPosition,
-  normalizePathToOrthogonal,
 } from "./mazeUtils";
 import type { Cell, Direction, Position } from "./types";
 import { CriticalAlertModal, type CriticalAlertType } from "../CriticalAlertModal";
@@ -46,9 +46,86 @@ const DEFAULT_START_POSITION = mazeToDisplayPosition(
   { x: 0, y: 0 },
   DEFAULT_GRID_SIZE,
 );
+const LIVE_MAZE_STORAGE_KEY = "mazeViewerLiveState";
 
 const positionsEqual = (a: Position | null | undefined, b: Position | null | undefined) =>
   !!a && !!b && a.row === b.row && a.col === b.col;
+
+type LiveMazeState = {
+  gridSize: number;
+  maze: Cell[][];
+  position: Position;
+  direction: Direction;
+  path: Position[];
+  sessionId: number | null;
+  step: number;
+  sessionStatus: "idle" | "running" | "finished";
+};
+
+const isBrowser = () => typeof window !== "undefined";
+
+const readLiveMazeState = (): LiveMazeState | null => {
+  if (!isBrowser()) return null;
+
+  try {
+    const raw = window.localStorage.getItem(LIVE_MAZE_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<LiveMazeState>;
+    const gridSize =
+      parsed.gridSize === 4 || parsed.gridSize === 8 || parsed.gridSize === 16
+        ? parsed.gridSize
+        : null;
+    const direction =
+      parsed.direction === "north" ||
+      parsed.direction === "south" ||
+      parsed.direction === "east" ||
+      parsed.direction === "west"
+        ? parsed.direction
+        : null;
+    const sessionStatus =
+      parsed.sessionStatus === "idle" ||
+      parsed.sessionStatus === "running" ||
+      parsed.sessionStatus === "finished"
+        ? parsed.sessionStatus
+        : "running";
+
+    if (
+      gridSize === null ||
+      !Array.isArray(parsed.maze) ||
+      !Array.isArray(parsed.path) ||
+      !parsed.position ||
+      typeof parsed.position.row !== "number" ||
+      typeof parsed.position.col !== "number" ||
+      direction === null
+    ) {
+      return null;
+    }
+
+    return {
+      gridSize,
+      maze: parsed.maze,
+      path: parsed.path,
+      position: parsed.position,
+      direction,
+      sessionId: typeof parsed.sessionId === "number" ? parsed.sessionId : null,
+      step: typeof parsed.step === "number" ? parsed.step : parsed.path.length,
+      sessionStatus,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const saveLiveMazeState = (state: LiveMazeState) => {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(LIVE_MAZE_STORAGE_KEY, JSON.stringify(state));
+};
+
+const clearLiveMazeState = () => {
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(LIVE_MAZE_STORAGE_KEY);
+};
 
 type MazeViewerProps = {
   showHeader?: boolean;
@@ -72,15 +149,27 @@ export default function MazeViewer({
     useTelemetria();
   
   const isStatic = !!staticMaze;
+  const savedLiveState = useMemo(
+    () => (isStatic ? null : readLiveMazeState()),
+    [isStatic],
+  );
 
   // Estado principal da corrida e do labirinto.
-  const [gridSize, setGridSize] = useState(staticGridSize || DEFAULT_GRID_SIZE);
-  const [maze, setMaze] = useState(() => staticMaze || createMaze(DEFAULT_GRID_SIZE));
-  const [position, setPosition] = useState<Position>(
-    staticGridSize ? mazeToDisplayPosition({ x: 0, y: 0 }, staticGridSize) : DEFAULT_START_POSITION,
+  const [gridSize, setGridSize] = useState(
+    staticGridSize || savedLiveState?.gridSize || DEFAULT_GRID_SIZE,
   );
-  const [direction, setDirection] = useState<Direction>("east");
-  const [path, setPath] = useState<Position[]>([]);
+  const [maze, setMaze] = useState(
+    () => staticMaze || savedLiveState?.maze || createMaze(savedLiveState?.gridSize || DEFAULT_GRID_SIZE),
+  );
+  const [position, setPosition] = useState<Position>(
+    staticGridSize
+      ? mazeToDisplayPosition({ x: 0, y: 0 }, staticGridSize)
+      : savedLiveState?.position || DEFAULT_START_POSITION,
+  );
+  const [direction, setDirection] = useState<Direction>(
+    savedLiveState?.direction || "east",
+  );
+  const [path, setPath] = useState<Position[]>(savedLiveState?.path || []);
   
   const [viewMode, setViewMode] = useState<"live" | "history">(isStatic ? "history" : "live");
   const [history, setHistory] = useState<
@@ -95,12 +184,14 @@ export default function MazeViewer({
   const [historyIndex] = useState(0);
   const [sessionStatus, setSessionStatus] = useState<
     "idle" | "running" | "finished"
-  >("idle");
+  >(savedLiveState?.sessionStatus || "idle");
   
-  const stepRef = useRef(0);
-  const sessionIdRef = useRef<number | null>(null);
+  const stepRef = useRef(savedLiveState?.step || 0);
+  const sessionIdRef = useRef<number | null>(savedLiveState?.sessionId || null);
   const positionRef = useRef<Position>(
-    staticGridSize ? mazeToDisplayPosition({ x: 0, y: 0 }, staticGridSize) : DEFAULT_START_POSITION,
+    staticGridSize
+      ? mazeToDisplayPosition({ x: 0, y: 0 }, staticGridSize)
+      : savedLiveState?.position || DEFAULT_START_POSITION,
   );
   const mazeRef = useRef<Cell[][]>(maze);
   const pathRef = useRef<Position[]>(path);
@@ -154,17 +245,26 @@ export default function MazeViewer({
         : "min(60vmin, 360px)";
 
   // Lógica de Trajeto
-  const rawPathPoints = isStatic ? [...(displayPath || [])] : [startPosition, ...(displayPath || [])];
+  const shouldAnchorPathAtStart =
+    isStatic ||
+    (displayPath || []).length > 0 ||
+    positionsEqual(displayPosition, startPosition);
+  const rawPathPoints = isStatic
+    ? [...(displayPath || [])]
+    : shouldAnchorPathAtStart
+      ? [startPosition, ...(displayPath || [])]
+      : [...(displayPath || [])];
   
   if (!isStatic && rawPathPoints.length > 0 && !positionsEqual(rawPathPoints[rawPathPoints.length - 1], displayPosition)) {
     rawPathPoints.push(displayPosition);
   }
 
-  const pathPoints = normalizePathToOrthogonal(rawPathPoints, displayMaze);
-  const pathPointsString = pathPoints
-    ?.filter(p => p !== undefined && p !== null)
-    .map((point) => `${(point.col ?? 0) + 0.5},${(point.row ?? 0) + 0.5}`)
-    .join(" ") || "";
+  const pathSegments = buildDrawablePathSegments(rawPathPoints, displayMaze);
+  const pathSegmentStrings = pathSegments.map((segment) =>
+    segment
+      .map((point) => `${point.col + 0.5},${point.row + 0.5}`)
+      .join(" "),
+  );
 
   const goalAreaCells = findGoalArea(displayMaze);
 
@@ -185,6 +285,7 @@ export default function MazeViewer({
     setPath([]);
     setMaze(createMaze(size));
     setViewMode("live");
+    clearLiveMazeState();
   }, [isStatic]);
 
   useEffect(() => {
@@ -287,6 +388,16 @@ export default function MazeViewer({
       positionRef.current = nextPosition;
       setDirection(nextDirection);
       setSessionStatus("running");
+      saveLiveMazeState({
+        gridSize,
+        maze: nextMaze,
+        path: nextPath,
+        position: nextPosition,
+        direction: nextDirection,
+        sessionId: sessionIdRef.current,
+        step: stepRef.current,
+        sessionStatus: "running",
+      });
     }
     limparFilaMovimentacoes();
   }, [isStatic, filaMovimentacoes, gridSize, limparFilaMovimentacoes]);
@@ -304,6 +415,16 @@ export default function MazeViewer({
       ...prev,
     ]);
     setSessionStatus("finished");
+    saveLiveMazeState({
+      gridSize,
+      maze: mazeRef.current,
+      path: pathRef.current,
+      position: positionRef.current,
+      direction: directionRef.current,
+      sessionId: sessionIdRef.current,
+      step: stepRef.current,
+      sessionStatus: "finished",
+    });
   }, [isStatic, statusCorrida, gridSize]);
 
   const renderMazeGrid = (mazeData: Cell[][], currentPos: Position, trail: Position[], targetPos?: Position) => {
@@ -394,7 +515,9 @@ export default function MazeViewer({
               <div className="relative grid select-none" style={{ gridTemplateColumns: `repeat(${displayGridSize}, minmax(0, 1fr))`, width: displayGridDimension, height: displayGridDimension }}>
                 {renderMazeGrid(displayMaze, displayPosition, displayPath, staticGoalPosition)}
                 <svg className="pointer-events-none absolute inset-0 z-20 h-full w-full" viewBox={`0 0 ${displayGridSize} ${displayGridSize}`}>
-                  <polyline points={pathPointsString} fill="none" stroke="#a855f7" strokeWidth="0.04" strokeLinecap="round" strokeLinejoin="round" className="opacity-75" />
+                  {pathSegmentStrings.map((points, index) => (
+                    <polyline key={index} points={points} fill="none" stroke="#a855f7" strokeWidth="0.04" strokeLinecap="round" strokeLinejoin="round" className="opacity-75" />
+                  ))}
                 </svg>
                 <img
                   src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
@@ -510,7 +633,9 @@ export default function MazeViewer({
             <div className="relative grid mx-auto" style={{ gridTemplateColumns: `repeat(${displayGridSize}, minmax(0, 1fr))`, width: displayGridDimension, height: displayGridDimension }}>
               {renderMazeGrid(displayMaze, displayPosition, displayPath, staticGoalPosition)}
               <svg className="pointer-events-none absolute inset-0 z-20 h-full w-full" viewBox={`0 0 ${displayGridSize} ${displayGridSize}`}>
-                <polyline points={pathPointsString} fill="none" stroke="#a855f7" strokeWidth="0.04" strokeLinecap="round" strokeLinejoin="round" className="opacity-75" />
+                {pathSegmentStrings.map((points, index) => (
+                  <polyline key={index} points={points} fill="none" stroke="#a855f7" strokeWidth="0.04" strokeLinecap="round" strokeLinejoin="round" className="opacity-75" />
+                ))}
               </svg>
               <img
                 src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
