@@ -12,6 +12,7 @@ import {
 } from "./mazeUtils";
 import type { Cell, Direction, Position } from "./types";
 import { CriticalAlertModal, type CriticalAlertType } from "../CriticalAlertModal";
+import ratImage from "../../assets/25.png";
 
 const LIMITE_BATERIA_CRITICA = 10;
 
@@ -520,8 +521,8 @@ export default function MazeViewer({
                   ))}
                 </svg>
                 <img
-                  src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
-                  alt="Pikachu"
+                  src={ratImage}
+                  alt="Rato"
                   className="pointer-events-none absolute z-30 object-contain"
                   style={{
                     width: `${120 / displayGridSize}%`,
@@ -554,11 +555,11 @@ export default function MazeViewer({
               </div>
               <div className="flex items-center gap-2">
                 <img
-                  src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
-                  alt="Pikachu Icon"
+                  src={ratImage}
+                  alt="Rato Icon"
                   className="h-5 w-5 object-contain"
                 />
-                <span>Pikachu (Atual)</span>
+                <span>Rato (Atual)</span>
               </div>
             </footer>
           </div>
@@ -638,8 +639,8 @@ export default function MazeViewer({
                 ))}
               </svg>
               <img
-                src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
-                alt="Pikachu"
+                src={ratImage}
+                alt="Rato"
                 className="pointer-events-none absolute z-30 object-contain"
                 style={{
                   width: `${120 / displayGridSize}%`,

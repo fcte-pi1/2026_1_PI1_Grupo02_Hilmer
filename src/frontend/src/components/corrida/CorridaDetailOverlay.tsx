@@ -4,6 +4,7 @@ import { obterCorrida } from "../../services/corrida";
 import type { CorridaDetailResponse, CelulaResponse } from "../../types/corrida";
 import type { Cell, Position } from "../maze/types";
 import { createMaze, mazeToDisplayPosition } from "../maze/mazeUtils";
+import ratImage from "../../assets/25.png";
 
 interface CorridaDetailOverlayProps {
   idCorrida: number;
@@ -280,8 +281,8 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
 
                   {pathPositions.length > 0 && (
                     <img
-                      src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
-                      alt="Pikachu"
+                      src={ratImage}
+                      alt="Rato"
                       className="pointer-events-none absolute z-30 object-contain"
                       style={{
                         width: `${120 / gridSize}%`,
