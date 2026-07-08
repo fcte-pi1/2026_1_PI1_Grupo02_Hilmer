@@ -91,6 +91,8 @@ class CorridaResponse(BaseModel):
     desafio_cumprido: bool | None
     data_hora_inicio: datetime | None
     data_hora_fim: datetime | None
+    bateria_inicial: int | None
+    bateria_final: int | None
     tipo_labirinto: TipoLabirinto | None = None
 
     model_config = {"from_attributes": True}
@@ -133,6 +135,8 @@ class CorridaResumoResponse(BaseModel):
     tempo_total: int | None
     status_corrida: StatusCorrida
     velocidade_media: float | None
+    bateria_inicial: int | None
+    bateria_final: int | None
     tipo_labirinto: TipoLabirinto | None
 
     model_config = {"from_attributes": True}

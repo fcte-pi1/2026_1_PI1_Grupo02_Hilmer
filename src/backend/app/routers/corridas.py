@@ -229,6 +229,8 @@ def _to_response(
         desafio_cumprido=corrida.desafio_cumprido,
         data_hora_inicio=corrida.data_hora_inicio,
         data_hora_fim=corrida.data_hora_fim,
+        bateria_inicial=corrida.bateria_inicial,
+        bateria_final=corrida.bateria_final,
         tipo_labirinto=tipo_labirinto,
     )
 
@@ -244,5 +246,7 @@ def _to_response_resumed(
         status_corrida=corrida.status_corrida,
         data_hora_inicio=corrida.data_hora_inicio,
         data_hora_fim=corrida.data_hora_fim,
+        bateria_inicial=corrida.bateria_inicial,
+        bateria_final=corrida.bateria_final,
         tipo_labirinto=tipo_labirinto,
     )

@@ -134,3 +134,55 @@ class TestPersistenciaFluxoTelemetria:
         idb = client.post("/api/telemetria/pacote", json=PACOTE_INICIAL).json()["estado"]["id_corrida_banco"]
         client.post("/api/telemetria/pacote", json=PACOTE_FINAL)
         assert session.get(Corrida, idb).velocidade_media == PACOTE_FINAL["v_med"]
+
+
+class TestConsultaCorridas:
+    def _criar_corrida_com_bateria(self, session: Session) -> Corrida:
+        labirinto = Labirinto(tipo_labirinto=TipoLabirinto.QUATRO)
+        session.add(labirinto)
+        session.flush()
+
+        corrida = Corrida(
+            id_labirinto=labirinto.id_labirinto,
+            tempo_total=5000,
+            velocidade_media=0.25,
+            status_corrida=StatusCorrida.CONCLUIDA,
+            desafio_cumprido=True,
+            data_hora_inicio=datetime.now(UTC),
+            data_hora_fim=datetime.now(UTC),
+            bateria_inicial=100,
+            bateria_final=85,
+        )
+        session.add(corrida)
+        session.commit()
+        session.refresh(corrida)
+        return corrida
+
+    def test_resumo_inclui_bateria_inicial_e_final(
+        self,
+        client: TestClient,
+        session: Session,
+    ):
+        corrida = self._criar_corrida_com_bateria(session)
+
+        resp = client.get("/api/corridas/resumo")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        item = next(c for c in data if c["id_corrida"] == corrida.id_corrida)
+        assert item["bateria_inicial"] == 100
+        assert item["bateria_final"] == 85
+
+    def test_detalhe_inclui_bateria_inicial_e_final(
+        self,
+        client: TestClient,
+        session: Session,
+    ):
+        corrida = self._criar_corrida_com_bateria(session)
+
+        resp = client.get(f"/api/corridas/{corrida.id_corrida}")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["bateria_inicial"] == 100
+        assert data["bateria_final"] == 85

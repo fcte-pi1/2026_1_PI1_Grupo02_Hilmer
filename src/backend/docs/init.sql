@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS corrida (
     data_hora_fim TIMESTAMPTZ,
     id_labirinto INTEGER,
     desafio_cumprido BOOLEAN,
+    sessao_hardware_id INTEGER,
+    bateria_inicial INTEGER,
+    bateria_final INTEGER,
     CONSTRAINT pk_corrida_id_corrida PRIMARY KEY (id_corrida),
     CONSTRAINT fk_corrida_labirinto FOREIGN KEY (id_labirinto)
         REFERENCES labirinto (id_labirinto)

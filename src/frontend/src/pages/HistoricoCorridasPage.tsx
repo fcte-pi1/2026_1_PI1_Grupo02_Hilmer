@@ -4,7 +4,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { RefreshCw, Search, AlertCircle } from "lucide-react";
+import { RefreshCw, AlertCircle } from "lucide-react";
 
 import { CardMelhorTempo } from "../components/CardMelhorTempo";
 import { MonitoringLayout } from "../components/MonitoringLayout";
@@ -45,6 +45,13 @@ const formatarData = (dataIso: string | null): string => {
   } catch {
     return dataIso;
   }
+};
+
+const formatarBateria = (valor?: number | null): string => {
+  if (valor === null || valor === undefined || Number.isNaN(valor)) {
+    return "--";
+  }
+  return `${valor}%`;
 };
 
 // ---------------------------------------------------------------------------
@@ -234,6 +241,8 @@ export function HistoricoCorridasPage({
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Dimensão</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Tempo Total</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Vel. Média</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Bateria Inicial</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Bateria Final</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Status</th>
                   </tr>
                 </thead>
@@ -241,14 +250,14 @@ export function HistoricoCorridasPage({
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i} className="animate-pulse">
-                        <td colSpan={6} className="px-6 py-4">
+                        <td colSpan={8} className="px-6 py-4">
                           <div className="h-6 bg-zinc-900/50 rounded-lg w-full" />
                         </td>
                       </tr>
                     ))
                   ) : erro ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-rose-400 font-medium">
+                      <td colSpan={8} className="px-6 py-12 text-center text-rose-400 font-medium">
                         <div className="flex flex-col items-center gap-2">
                           <AlertCircle size={24} />
                           <span>{erro}</span>
@@ -257,7 +266,7 @@ export function HistoricoCorridasPage({
                     </tr>
                   ) : corridas.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-20 text-center text-zinc-600 italic">
+                      <td colSpan={8} className="px-6 py-20 text-center text-zinc-600 italic">
                         Nenhum registro encontrado para este filtro.
                       </td>
                     </tr>
@@ -286,6 +295,12 @@ export function HistoricoCorridasPage({
                           {corrida.velocidade_media != null
                             ? `${corrida.velocidade_media.toFixed(2)} m/s`
                             : "--"}
+                        </td>
+                        <td className="px-6 py-5 font-mono text-zinc-300 font-medium">
+                          {formatarBateria(corrida.bateria_inicial)}
+                        </td>
+                        <td className="px-6 py-5 font-mono text-zinc-300 font-medium">
+                          {formatarBateria(corrida.bateria_final)}
                         </td>
                         <td className="px-6 py-5">
                           <BadgeStatus status={corrida.status_corrida} />

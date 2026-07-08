@@ -59,6 +59,8 @@ export interface CorridaResponse {
   desafio_cumprido: boolean | null;
   data_hora_inicio: string | null;
   data_hora_fim: string | null;
+  bateria_inicial: number | null;
+  bateria_final: number | null;
   tipo_labirinto: TipoLabirinto | null;
 }
 
@@ -68,6 +70,8 @@ export interface CorridaResumoResponse {
   tempo_total: number | null;
   status_corrida: StatusCorrida;
   velocidade_media: number | null;
+  bateria_inicial: number | null;
+  bateria_final: number | null;
   tipo_labirinto: TipoLabirinto | null;
 }
 

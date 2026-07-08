@@ -28,6 +28,8 @@ test.describe('Histórico de Corridas - Rota Otimizada', () => {
           data_hora_inicio: '2026-06-14T10:00:00Z',
           tempo_total: 15000,
           velocidade_media: 10.5,
+          bateria_inicial: 100,
+          bateria_final: 85,
           desafio_cumprido: true,
           celulas: celulas,
           // Percurso: Caminho em linha reta na primeira linha: (0,0) -> (1,0) -> (2,0)
@@ -53,6 +55,8 @@ test.describe('Histórico de Corridas - Rota Otimizada', () => {
             tipo_labirinto: '4X4',
             tempo_total: 15000,
             velocidade_media: 10.5,
+            bateria_inicial: 100,
+            bateria_final: 85,
           },
         ]),
       });
