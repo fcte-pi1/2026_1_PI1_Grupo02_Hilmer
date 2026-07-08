@@ -8,6 +8,7 @@ export const pacoteInicial = {
   tipo: 'inicio',
   id_corrida: '8x8_001',
   timestamp_ms: 0,
+  lado_largada: 'esquerda',
   dimensao: 8,
   tentativa: 1,
   bateria: 100,

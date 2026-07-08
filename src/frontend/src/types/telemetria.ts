@@ -23,6 +23,7 @@ export interface PacoteInicial {
   tipo: number;
   timestamp_ms: number;
   dimensao: number;
+  lado_largada: string;
   bateria: number;
 }
 

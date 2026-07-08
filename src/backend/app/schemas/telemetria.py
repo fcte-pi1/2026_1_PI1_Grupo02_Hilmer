@@ -71,6 +71,7 @@ class PacoteInicial(BaseModel):
 
     tipo: int = Field(0)
     timestamp_ms: int = Field(ge=0)
+    lado_largada: str
     dimensao: int
     bateria: int = Field(ge=0, le=100)
 
