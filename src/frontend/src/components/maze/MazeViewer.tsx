@@ -135,7 +135,6 @@ type MazeViewerProps = {
   staticMaze?: Cell[][];
   staticPath?: Position[];
   staticGridSize?: number;
-  staticGoalPosition?: Position;
 };
 
 export default function MazeViewer({ 
@@ -143,8 +142,7 @@ export default function MazeViewer({
   standalone = false,
   staticMaze,
   staticPath,
-  staticGridSize,
-  staticGoalPosition
+  staticGridSize
 }: MazeViewerProps) {
   const { filaMovimentacoes, limparFilaMovimentacoes, configSessao, indicadores, statusConexao } =
     useTelemetria();
@@ -428,7 +426,7 @@ export default function MazeViewer({
     });
   }, [isStatic, statusCorrida, gridSize]);
 
-  const renderMazeGrid = (mazeData: Cell[][], currentPos: Position, trail: Position[], targetPos?: Position) => {
+  const renderMazeGrid = (mazeData: Cell[][], currentPos: Position, trail: Position[]) => {
     if (!mazeData || !Array.isArray(mazeData)) return null;
     
     return mazeData.map((row, rowIndex) =>
@@ -438,9 +436,7 @@ export default function MazeViewer({
         const isCurrent = positionsEqual(cellPosition, currentPos);
         const isOnPath = trail?.some((step) => positionsEqual(step, cellPosition));
         
-        const isGoal = targetPos 
-          ? positionsEqual(targetPos, cellPosition)
-          : goalAreaCells?.some((goalCell) => positionsEqual(goalCell, cellPosition));
+        const isGoal = goalAreaCells?.some((goalCell) => positionsEqual(goalCell, cellPosition));
         
         const backgroundColor = isCurrent
           ? "rgb(125 211 252)"
@@ -514,7 +510,7 @@ export default function MazeViewer({
 
             <div className="flex justify-center items-center py-6 bg-zinc-950/20 rounded-2xl border border-zinc-800/50">
               <div className="relative grid select-none" style={{ gridTemplateColumns: `repeat(${displayGridSize}, minmax(0, 1fr))`, width: displayGridDimension, height: displayGridDimension }}>
-                {renderMazeGrid(displayMaze, displayPosition, displayPath, staticGoalPosition)}
+                {renderMazeGrid(displayMaze, displayPosition, displayPath)}
                 <svg className="pointer-events-none absolute inset-0 z-20 h-full w-full" viewBox={`0 0 ${displayGridSize} ${displayGridSize}`}>
                   {pathSegmentStrings.map((points, index) => (
                     <polyline key={index} points={points} fill="none" stroke="#a855f7" strokeWidth="0.04" strokeLinecap="round" strokeLinejoin="round" className="opacity-75" />
@@ -632,7 +628,7 @@ export default function MazeViewer({
         <div className="flex-1">
           <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/20 p-3">
             <div className="relative grid mx-auto" style={{ gridTemplateColumns: `repeat(${displayGridSize}, minmax(0, 1fr))`, width: displayGridDimension, height: displayGridDimension }}>
-              {renderMazeGrid(displayMaze, displayPosition, displayPath, staticGoalPosition)}
+              {renderMazeGrid(displayMaze, displayPosition, displayPath)}
               <svg className="pointer-events-none absolute inset-0 z-20 h-full w-full" viewBox={`0 0 ${displayGridSize} ${displayGridSize}`}>
                 {pathSegmentStrings.map((points, index) => (
                   <polyline key={index} points={points} fill="none" stroke="#a855f7" strokeWidth="0.04" strokeLinecap="round" strokeLinejoin="round" className="opacity-75" />

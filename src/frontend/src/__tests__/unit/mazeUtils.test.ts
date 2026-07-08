@@ -183,39 +183,54 @@ describe("mazeUtils", () => {
   });
 
   describe("findGoalArea", () => {
-    it("returns empty array if no 2x2 goal area is found", () => {
+    it("returns the fixed central 2x2 area for a 4x4 maze", () => {
       const maze = createMaze(4);
-      expect(findGoalArea(maze)).toEqual([]);
+      expect(findGoalArea(maze)).toEqual([
+        { row: 1, col: 1 },
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 2, col: 2 },
+      ]);
+    });
+
+    it("returns the fixed central 2x2 area for an 8x8 maze", () => {
+      const maze = createMaze(8);
+      expect(findGoalArea(maze)).toEqual([
+        { row: 3, col: 3 },
+        { row: 4, col: 3 },
+        { row: 3, col: 4 },
+        { row: 4, col: 4 },
+      ]);
     });
 
     it("returns empty array for empty maze", () => {
       expect(findGoalArea([])).toEqual([]);
     });
 
-    it("returns goal area positions if a valid 2x2 area is visited", () => {
+    it("does not depend on visited cells", () => {
       let maze = createMaze(4);
       maze = markVisited(maze, { row: 1, col: 1 }, 1);
-      
-      const goal = findGoalArea(maze);
-      expect(goal).toHaveLength(4);
-      // The first 2x2 area without inner walls that contains 1,1 is the top-left one (0,0)
-      expect(goal).toContainEqual({ row: 0, col: 0 });
-      expect(goal).toContainEqual({ row: 0, col: 1 });
-      expect(goal).toContainEqual({ row: 1, col: 0 });
-      expect(goal).toContainEqual({ row: 1, col: 1 });
+
+      expect(findGoalArea(maze)).toEqual([
+        { row: 1, col: 1 },
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 2, col: 2 },
+      ]);
     });
 
-    it("returns empty if 2x2 area has inner walls", () => {
+    it("does not depend on internal walls", () => {
       let maze = createMaze(4);
       maze = markVisited(maze, { row: 1, col: 1 }, 1);
-      // Mark an inner wall inside the 0,0 2x2 block
-      maze = markWall(maze, { row: 0, col: 0 }, "east");
-      // Mark an inner wall inside other blocks that might match 1,1
       maze = markWall(maze, { row: 1, col: 1 }, "east");
       maze = markWall(maze, { row: 1, col: 1 }, "south");
-      
-      const goal = findGoalArea(maze);
-      expect(goal).toEqual([]);
+
+      expect(findGoalArea(maze)).toEqual([
+        { row: 1, col: 1 },
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 2, col: 2 },
+      ]);
     });
   });
 });

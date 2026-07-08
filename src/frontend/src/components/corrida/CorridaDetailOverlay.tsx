@@ -3,7 +3,7 @@ import { X, Clock, Gauge, MapPin, Target, ChevronRight, Activity } from "lucide-
 import { obterCorrida } from "../../services/corrida";
 import type { CorridaDetailResponse, CelulaResponse } from "../../types/corrida";
 import type { Cell, Position } from "../maze/types";
-import { createMaze, mazeToDisplayPosition } from "../maze/mazeUtils";
+import { createMaze, findGoalArea, mazeToDisplayPosition } from "../maze/mazeUtils";
 import ratImage from "../../assets/25.png";
 
 interface CorridaDetailOverlayProps {
@@ -137,17 +137,8 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
     }
   });
 
-  // 2. Objetivo Preciso: Ponto final da rota (1x1)
-  const ultimoPasso = percursoParaExibir.length > 0 ? percursoParaExibir[percursoParaExibir.length - 1] : null;
-  const ultimaCelulaData = ultimoPasso ? celulasList.find(c => c.id_celula === ultimoPasso.id_celula) : null;
-  const staticGoalPosition: Position | undefined = ultimaCelulaData 
-    ? mazeToDisplayPosition(
-        { x: ultimaCelulaData.coordenada_x, y: ultimaCelulaData.coordenada_y },
-        gridSize,
-      )
-    : undefined;
-
   const staticMaze = buildStaticMazeFromCells(gridSize, celulasList, cellsInRouteMap);
+  const goalAreaCells = findGoalArea(staticMaze);
 
   const formatarTempo = (ms: number | null) => {
     if (ms === null || ms === undefined) return "--:--.---";
@@ -249,9 +240,9 @@ export const CorridaDetailOverlay: React.FC<CorridaDetailOverlayProps> = ({
                       const isCurrent = pathPositions.length > 0 && 
                                        pathPositions[pathPositions.length - 1].row === y && 
                                        pathPositions[pathPositions.length - 1].col === x;
-                      const isGoal = staticGoalPosition && 
-                                    staticGoalPosition.row === y && 
-                                    staticGoalPosition.col === x;
+                      const isGoal = goalAreaCells.some((goalCell) =>
+                        goalCell.row === y && goalCell.col === x
+                      );
 
                       const backgroundColor = isCurrent ? "rgb(125 211 252)" : 
                                              isGoal ? "rgb(34 197 94)" : 

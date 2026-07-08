@@ -316,39 +316,16 @@ export const buildDrawablePathSegments = (
   return segments.filter((segment) => segment.length > 1);
 };
 
-// Encontra a área 2x2 que representa o objetivo.
-// Em um labirinto Micromouse, o objetivo é uma área 2x2 sem paredes internas.
+// Retorna a região 2x2 fixa no centro do labirinto.
 export const findGoalArea = (maze: Cell[][]): Position[] => {
-  if (!maze || maze.length === 0) return [];
+  if (!maze || maze.length < 2) return [];
   const size = maze.length;
-  for (let r = 0; r < size - 1; r++) {
-    for (let c = 0; c < size - 1; c++) {
-      const c1 = maze[r][c];       // Top-Left
-      const c2 = maze[r+1][c];     // Bottom-Left
-      const c3 = maze[r][c+1];     // Top-Right
-      const c4 = maze[r+1][c+1];   // Bottom-Right
+  const start = Math.floor(size / 2) - 1;
 
-      if (!c1 || !c2 || !c3 || !c4) continue;
-
-      // Verifica se as paredes internas entre essas 4 células estão ausentes
-      if (
-        !c1.walls.south && !c1.walls.east &&
-        !c2.walls.north && !c2.walls.east &&
-        !c3.walls.south && !c3.walls.west &&
-        !c4.walls.north && !c4.walls.west
-      ) {
-        // Retorna as 4 células que compõem o objetivo
-        // Apenas se pelo menos uma delas foi visitada (para evitar falsos positivos num labirinto não inicializado)
-        if (c1.visited || c2.visited || c3.visited || c4.visited) {
-          return [
-            { row: r, col: c },
-            { row: r + 1, col: c },
-            { row: r, col: c + 1 },
-            { row: r + 1, col: c + 1 },
-          ];
-        }
-      }
-    }
-  }
-  return [];
+  return [
+    { row: start, col: start },
+    { row: start + 1, col: start },
+    { row: start, col: start + 1 },
+    { row: start + 1, col: start + 1 },
+  ];
 };
